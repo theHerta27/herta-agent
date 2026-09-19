@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "herta-agent"
+version = "0.1.0"
+description = "A small, independent agent runtime built one learning phase at a time."
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.28,<0.29", "pydantic>=2.10,<3"]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.11,<1"]
+
+[project.scripts]
+herta-agent = "herta_agent.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["herta_agent"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]

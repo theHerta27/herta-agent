@@ -1,0 +1,24 @@
+# 本地参考快照与原始材料；不随 herta-agent 发布。
+/references/
+/hermes-agent-main.zip
+/大黑塔原始语料.md
+/大黑塔原始语料的整理思路.md
+/data/raw/
+
+# 密钥与机器本地配置。
+.env
+.env.*
+!.env.example
+/.local/
+
+# 后续阶段产生的环境、构建产物与缓存。
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+node_modules/
+dist/
+release/
+*.egg-info/
+.idea/
