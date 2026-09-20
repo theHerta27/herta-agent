@@ -1,6 +1,6 @@
 # Herta Agent V1 架构方案
 
-状态：V1 架构设计，2026-09-18；已完成 Phase 1 最小 Python 骨架。当前已实现 Message、内存 Session、LLMProvider、离线/HTTP Provider、非流式 CLI、单步循环骨架及模型请求 timeout/cancel 清理。其余类、API、事件和目录仍为后续计划。Phase 1 的当前目录、运行命令与实际验证见 docs/phase-1-walkthrough.md；下文第 3 节保留 Phase 0 当时的目录快照。
+状态：V1 架构设计；2026-09-19 已完成 Phase 2。当前已实现不可变文本/工具消息、内存 Session、LLMProvider、离线/HTTP Provider、Registry/Executor、echo、多步循环、模型与工具期限，以及 Windows CLI 取消当前轮后保留会话。其余类、API、事件和目录仍为后续计划。当前目录、运行命令与验证见 docs/phase-2-walkthrough.md；下文第 3 节保留 Phase 0 当时的目录快照。
 
 目标是一个独立桌面 Agent：Electron + React + TypeScript + Vite，连接本机 Python 3.12+ / FastAPI / Pydantic / asyncio Runtime。第一版只提供一个大黑塔风格 Persona。Hermes 仅作为参考。
 

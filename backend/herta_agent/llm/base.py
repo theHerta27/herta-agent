@@ -6,6 +6,8 @@ from herta_agent.runtime.messages import Message, ModelReply
 
 
 class LLMProvider(Protocol):
-    async def complete(self, messages: tuple[Message, ...]) -> ModelReply:
-        """Return a complete text reply, or raise an expected Provider/Agent error."""
+    async def complete(
+        self, messages: tuple[Message, ...], *, tools: tuple[dict, ...] = ()
+    ) -> ModelReply:
+        """Return a complete assistant message containing text or tool calls."""
         ...

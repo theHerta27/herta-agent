@@ -5,6 +5,48 @@ import unittest
 
 
 class CLITests(unittest.TestCase):
+    def test_single_message_sigint_exits_130_after_cleanup(self) -> None:
+        from pathlib import Path
+
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("cli_interrupt_probe.py")), "--single"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=5,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        )
+        self.assertEqual(result.returncode, 130, result.stderr)
+        self.assertIn("CLEANED:model", result.stdout)
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_tools_demo_success_and_timeout(self) -> None:
+        success = self.invoke("--demo-tools", "--message", "你好")
+        self.assertEqual(success.returncode, 0, success.stderr)
+        self.assertIn("[steps=2]", success.stdout)
+        self.assertIn('"text": "你好"', success.stdout)
+        timeout = self.invoke(
+            "--demo-tools", "--demo-delay", "1", "--tool-timeout", "0.02", "--message", "你好"
+        )
+        self.assertEqual(timeout.returncode, 0, timeout.stderr)
+        self.assertIn('"code": "timeout"', timeout.stdout)
+
+    def test_sigint_during_model_and_tool_preserves_interactive_session(self) -> None:
+        from pathlib import Path
+
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("cli_interrupt_probe.py"))],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=5,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("CLEANED:model", result.stdout)
+        self.assertIn("CLEANED:tool", result.stdout)
+        self.assertIn("RESUMED:turns=3", result.stdout)
+
     def invoke(self, *args: str, input_text: str | None = None) -> subprocess.CompletedProcess:
         env = {key: value for key, value in os.environ.items() if not key.startswith("HERTA_")}
         env.pop("PYTHONIOENCODING", None)

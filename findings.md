@@ -26,3 +26,10 @@
 - 参考官方 Python 3.12 asyncio、Pydantic JSON Schema、MDN SSE、Electron security 文档核验方案；没有用线上 Hermes 替代本地快照。
 - 最终决策：本阶段仅复用 LICENSE 文本，无业务代码 reuse/adapt；核心机制参考后重写。V1 采用独立异步 Runtime、SSE、本地 SQLite 历史及简单 NumPy 向量存储方案。
 - 三份原始输入哈希复核未变；24 个被行号引用的源码文件与 ZIP 哈希一致，13,888 个压缩包文件均已解压存在。
+# Phase 2 补充：Windows 工具闭环
+
+- 用户确认 Ctrl+C 取消当前轮、保留 Session。同步输入循环外持有 Runner，每轮只运行一个可取消任务；不用 stdin 线程、loop.add_signal_handler 或 Linux 进程信号写法。
+- 工具调用记录与结果必须配对。取消时只为 pending id 回填 cancelled，已完成结果保持不变；max_steps 最后一轮仍要求工具时不执行，而回填预算耗尽结果。
+- Registry 的同一参数模型既生成 schema，也供 Executor 严格验证 JSON；失败以 ok/data/error 回填，不把底层异常正文发给模型。
+- Windows 子进程内定时触发 SIGINT 已验证模型等待、工具等待、后续轮继续及单条消息退出 130；本地取消不保证远端模型停止计费。
+- 本阶段未引入新依赖或复制 Hermes 业务代码，原始语料仍留待 Phase 3。

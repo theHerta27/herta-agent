@@ -11,7 +11,6 @@ from herta_agent.runtime.errors import (
     ModelTimeoutError,
     ProviderError,
     ProviderProtocolError,
-    ToolsNotAvailableError,
 )
 from herta_agent.runtime.messages import Message
 from herta_agent.runtime.session import Session
@@ -124,7 +123,7 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
                 await OpenAICompatibleProvider(SETTINGS, client).complete(MESSAGES)
         self.assertNotIn("test-secret", str(caught.exception))
 
-    async def test_tool_calls_are_explicitly_rejected_even_with_stop(self) -> None:
+    async def test_tool_calls_are_accepted_with_stop_or_tool_calls(self) -> None:
         for finish_reason in ["stop", "tool_calls"]:
             body = completion("I will call a tool", finish_reason)
             body["choices"][0]["message"]["tool_calls"] = [
@@ -139,8 +138,8 @@ class ProviderTests(unittest.IsolatedAsyncioTestCase):
                     lambda _, payload=body: httpx.Response(200, json=payload)
                 )
             ) as client:
-                with self.assertRaises(ToolsNotAvailableError):
-                    await OpenAICompatibleProvider(SETTINGS, client).complete(MESSAGES)
+                reply = await OpenAICompatibleProvider(SETTINGS, client).complete(MESSAGES)
+                self.assertEqual(reply.message.tool_calls[0].id, "call_1")
 
     async def test_network_errors_are_mapped_without_exposing_exception_text(self) -> None:
         for network_error, expected in [

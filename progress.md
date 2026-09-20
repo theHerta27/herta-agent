@@ -1,4 +1,22 @@
-# Phase 0 工作记录
+# Herta Agent 工作记录
+
+## Phase 2 实施与交付
+- 用户明确选择 Ctrl+C 取消当前轮并保留会话；据此采用 Windows 标准 asyncio.Runner，多轮共用事件循环和 Session。
+- 在 phase-2-tools 分支原地实现，保留用户中文学习注释；未修改 Hermes 参考源码、原始语料或系统环境。
+- 先增加工具、循环、HTTP 与 CLI 测试并观察预期失败，再逐步实现；基线 26 项扩展到 42 项。
+- 完成 ToolSpec/Registry、Pydantic schema/严格校验、Executor/统一结果、echo、多 Step 回填、预算与取消闭合。
+- Windows 子进程验证模型和工具 SIGINT 取消后清理及第三轮同会话继续；补充实际 main 单条消息取消退出 130 的验证。
+- 独立审查没有阻塞问题；两项低优先级覆盖建议（退出 130、超量调用零执行）均已补齐。
+- 实测离线 echo 两步成功、工具超时回填、max_steps=1 停止；编写 phase-2-walkthrough.md 并更新 README、架构状态与复用记录。
+- 真实模型未联调；网络合约由 MockTransport 验证。Phase 3 未开始。
+- 最终验证：42 项 unittest 全部通过，Ruff check 与 format --check（23 个 Python 文件）通过，git diff --check 通过。本轮改动留在本地 phase-2-tools 分支工作区，未提交或推送。
+
+## Phase 2 设计核对
+- 用户要求启动 Phase 2，明确面向 Windows、架构疑点先问。
+- 检查到 agent.py 和 session.py 中的用户中文注释；保留，不覆盖。
+- 当前基线重新验证：26 项 unittest 与 Ruff check 全部通过。
+- 已提交澄清问题：Ctrl+C 取消当前轮后保留 Session，还是沿用 Phase 1 退出 CLI。
+- 编写 docs/phase-2-design.md 草案，区分已确认架构与待决定的取消交互；尚未写 Phase 2 业务代码。
 
 ## Phase 1 最终交付与验证
 - 已完成最小 Python Runtime、内存历史、Provider 接口、Demo/HTTP Provider、CLI、配置与清晰异常。

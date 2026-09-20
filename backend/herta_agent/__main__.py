@@ -11,44 +11,70 @@ import httpx
 from pydantic import ValidationError
 
 from herta_agent.config import ProviderSettings, RunSettings
-from herta_agent.llm.demo import DemoProvider
+from herta_agent.llm.demo import DemoProvider, ToolDemoProvider
 from herta_agent.llm.openai_compatible import OpenAICompatibleProvider
 from herta_agent.runtime.agent import Agent
 from herta_agent.runtime.errors import AgentError
+from herta_agent.runtime.messages import RunResult
 from herta_agent.runtime.session import Session
+from herta_agent.tools.echo import echo_registry
 
 
-async def chat(agent: Agent, message: str | None) -> None:
+async def run_turn(agent: Agent, session: Session, text: str) -> RunResult:
+    """Keep Windows' event loop waking so Python can dispatch pending Ctrl+C."""
+    loop = asyncio.get_running_loop()
+
+    def pulse() -> None:
+        nonlocal handle
+        handle = loop.call_later(0.1, pulse)
+
+    handle = loop.call_later(0.1, pulse)
+    try:
+        return await agent.run(session, text)
+    finally:
+        handle.cancel()
+
+
+def chat(agent: Agent, message: str | None, runner: asyncio.Runner) -> None:
     session = Session()
     if message is not None:
-        result = await agent.run(session, message)
+        result = runner.run(run_turn(agent, session, message))
         print(f"Assistant: {result.reply}\n[steps={result.steps}]")
         return
 
-    print("输入 /exit 退出；Ctrl+C 取消并退出。本阶段历史仅存在于当前进程。")
+    print("输入 /exit 退出；Ctrl+C 取消当前轮并保留会话。本阶段历史仅存在于当前进程。")
     while True:
         # This teaching CLI is idle here; no model task is running during input().
         try:
-            text = input("You: ")  # noqa: ASYNC250 -- CLI is idle; no active background runs.
+            text = input("You: ")
         except EOFError:
             return
+        except KeyboardInterrupt:
+            print("\n已取消输入；输入 /exit 退出。")
+            continue
         if text.strip() == "/exit":
             return
         if not text.strip():
             continue
         try:
-            result = await agent.run(session, text)
+            result = runner.run(run_turn(agent, session, text))
+        except KeyboardInterrupt:
+            print("\n已取消当前轮，会话已保留。", file=sys.stderr)
         except AgentError as exc:
             print(f"错误：{exc}", file=sys.stderr)
         else:
             print(f"Assistant: {result.reply}\n[steps={result.steps}]")
 
 
-async def run_cli(args: argparse.Namespace) -> None:
-    settings = RunSettings(max_steps=args.max_steps, request_timeout=args.timeout)
+def run_cli(args: argparse.Namespace, runner: asyncio.Runner) -> None:
+    settings = RunSettings(
+        max_steps=args.max_steps, request_timeout=args.timeout, tool_timeout=args.tool_timeout
+    )
+    registry = echo_registry()
     if args.provider == "demo":
         print("模式：离线演示（固定逻辑，不调用 LLM，不读取 API Key）")
-        await chat(Agent(DemoProvider(), settings), args.message)
+        provider = ToolDemoProvider(args.demo_delay) if args.demo_tools else DemoProvider()
+        chat(Agent(provider, settings, registry=registry), args.message, runner)
         return
 
     base_url = os.environ.get("HERTA_BASE_URL", "")
@@ -58,11 +84,12 @@ async def run_cli(args: argparse.Namespace) -> None:
     key = os.environ.get("HERTA_API_KEY") or getpass.getpass("API Key（不回显、不保存）: ")
     provider_settings = ProviderSettings(base_url=base_url, model=model, api_key=key)
     print("模式：真实模型（非流式）")
-    async with httpx.AsyncClient(
-        timeout=httpx.Timeout(settings.request_timeout, connect=10)
-    ) as client:
+    client = httpx.AsyncClient(timeout=httpx.Timeout(settings.request_timeout, connect=10))
+    try:
         provider = OpenAICompatibleProvider(provider_settings, client)
-        await chat(Agent(provider, settings), args.message)
+        chat(Agent(provider, settings, registry=registry), args.message, runner)
+    finally:
+        runner.run(client.aclose())
 
 
 def main() -> None:
@@ -70,14 +97,24 @@ def main() -> None:
     for stream in (sys.stdin, sys.stdout, sys.stderr):
         if isinstance(stream, io.TextIOWrapper) and not stream.isatty():
             stream.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Herta Agent — Phase 1 teaching runtime")
+    parser = argparse.ArgumentParser(description="Herta Agent — Phase 2 teaching runtime")
     parser.add_argument("--provider", choices=("demo", "openai"), default="demo")
     parser.add_argument("--message", help="发送一条消息后退出；省略则进入交互模式")
     parser.add_argument("--max-steps", type=int, default=8)
     parser.add_argument("--timeout", type=float, default=120.0, help="每次模型请求总期限（秒）")
+    parser.add_argument("--tool-timeout", type=float, default=10.0, help="每个工具执行期限（秒）")
+    parser.add_argument("--demo-tools", action="store_true", help="离线演示真实工具执行闭环")
+    parser.add_argument(
+        "--demo-delay", type=float, default=0.0, help="离线 echo 延时 0–30 秒，用于验证取消/超时"
+    )
     args = parser.parse_args()
+    if args.demo_tools and args.provider != "demo":
+        parser.error("--demo-tools 仅用于 --provider demo")
+    if args.demo_delay != 0 and not args.demo_tools:
+        parser.error("--demo-delay 需要 --demo-tools")
     try:
-        asyncio.run(run_cli(args))
+        with asyncio.Runner() as runner:
+            run_cli(args, runner)
     except KeyboardInterrupt:
         print("\n已取消，退出。", file=sys.stderr)
         raise SystemExit(130) from None

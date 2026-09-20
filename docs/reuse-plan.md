@@ -108,3 +108,7 @@ Phase 1 开始前仍需用户确认本次分析。Phase 3 才整理角色证据�
 用户“下一步”已确认进入 Phase 1。Agent、Session、消息模型、Provider 接口和 HTTP 适配器均为本项目独立编写，不依赖 references 目录、Hermes 配置或其虚拟环境。没有新增业务源码 reuse/adapt 条目。
 
 HTTP 适配器直接使用 HTTPX，而不是引入供应商 SDK；这使请求体、响应验证和取消边界更直观。运行依赖 Pydantic / HTTPX 及传递依赖由 backend/uv.lock 记录，开发工具为 Ruff。新增依赖不因 Hermes 的 MIT 许可证而自动归入该许可证；最终分发时按锁定依赖的实际元数据处理通知。
+
+## 8. Phase 2 实际落地
+
+Registry、ToolSpec、Executor、echo、工具消息与循环、Windows Runner CLI 均独立编写。没有复制 Hermes 业务源码，没有引入其 Linux 信号/进程实现，也没有新增第三方依赖。本次仅借鉴“显式注册 → schema 验证 → 执行 → 结果回填”的职责拆分。项目已在 Phase 1 后上传至用户私密 GitHub 仓库，上文 Phase 0 未发布状态为历史记录。

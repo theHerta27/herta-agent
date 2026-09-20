@@ -1,26 +1,63 @@
-"""Only the text-message types needed by Phase 1; tool messages arrive in Phase 2."""
+"""Immutable internal messages with explicit Chat Completions encoding."""
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+class ToolCall(BaseModel):
+    """Arguments remain raw JSON until the executor validates the registered schema."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(min_length=1, max_length=256, pattern=r"\S")
+    name: str = Field(min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    arguments: str
+
+    def to_wire(self) -> dict:
+        return {
+            "id": self.id,
+            "type": "function",
+            "function": {"name": self.name, "arguments": self.arguments},
+        }
 
 
 class Message(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    role: Literal["system", "user", "assistant"]
-    content: str
+    role: Literal["system", "user", "assistant", "tool"]
+    content: str | None = None
+    tool_calls: tuple[ToolCall, ...] = ()
+    tool_call_id: str | None = None
 
-    @field_validator("content")
-    @classmethod
-    def require_text(cls, value: str) -> str:
-        if not value.strip():
+    @model_validator(mode="after")
+    def validate_role(self) -> "Message":
+        if self.tool_calls:
+            if self.role != "assistant":
+                raise ValueError("Only assistant messages can call tools")
+            ids = [call.id for call in self.tool_calls]
+            if len(ids) != len(set(ids)):
+                raise ValueError("Duplicate tool call id")
+        elif self.content is None or not self.content.strip():
             raise ValueError("消息内容不能为空")
-        return value
+        if self.role == "tool":
+            if not self.tool_call_id or not self.tool_call_id.strip():
+                raise ValueError("Tool result requires a call id")
+        elif self.tool_call_id is not None:
+            raise ValueError("Only tool results can contain tool_call_id")
+        return self
+
+    def to_wire(self) -> dict:
+        result = {"role": self.role, "content": self.content}
+        if self.tool_calls:
+            result["tool_calls"] = [call.to_wire() for call in self.tool_calls]
+        if self.role == "tool":
+            result["tool_call_id"] = self.tool_call_id
+        return result
 
 
 class ModelReply(BaseModel):
-    """The adapter has already checked finish_reason and rejected tool calls."""
+    """The adapter has checked finish_reason and normalized any tool calls."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

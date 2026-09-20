@@ -1,6 +1,6 @@
 # herta-agent
 
-一个边实现边学习的独立桌面 Agent 项目。当前完成 **Phase 1：最小 Python Runtime 骨架**，还没有桌面 UI、工具执行、Persona 或 RAG。
+一个边实现边学习的 Windows 桌面 Agent 项目。当前完成 **Phase 2：工具调用闭环**，包含 Registry、参数校验、echo、多步骤执行与超时/取消；桌面 UI、Persona 与 RAG 属于后续阶段。
 
 ## 直接运行当前成果（PowerShell）
 
@@ -9,10 +9,11 @@
 ```powershell
 Set-Location -LiteralPath 'D:\Desktop\herta-agent'
 .\.venv\Scripts\python.exe -m herta_agent --message '你好，解释一下 Agent Loop'
+.\.venv\Scripts\python.exe -m herta_agent --demo-tools --message '你好，黑塔'
 .\.venv\Scripts\python.exe -m herta_agent
 ```
 
-默认是明确标注的离线回显演示，不调用 LLM。交互模式中输入 `/exit` 退出；进程退出后历史消失。
+默认是明确标注的离线回显演示，不调用 LLM。`--demo-tools` 会通过真实执行器完成两步 echo 闭环。交互模式中 Ctrl+C 取消当前轮并保留会话，输入 `/exit` 退出；进程退出后历史消失。
 
 ## 使用真实模型
 
@@ -34,7 +35,7 @@ $env:HERTA_MODEL = '你的模型名'
 .\.venv\Scripts\ruff.exe format --check backend
 ```
 
-已通过 26 项离线自动测试。HTTP 适配器使用 MockTransport 验证请求、响应及异常；尚未验证真实供应商和 API Key。
+已通过 42 项离线自动测试，覆盖工具闭环、预算、取消后继续和 Windows SIGINT 路径。HTTP 适配器使用 MockTransport 验证请求、响应及异常；尚未验证真实供应商和 API Key。
 
 ## 安装或重新建立环境
 
@@ -51,9 +52,10 @@ uv sync --project backend --extra dev --python 3.12 --locked
 
 ## 学习入口
 
+- [Phase 2 工具闭环复现教程](D:/Desktop/herta-agent/docs/phase-2-walkthrough.md)
 - [Phase 1 逐文件复现教程](D:/Desktop/herta-agent/docs/phase-1-walkthrough.md)
 - [完整架构方案](D:/Desktop/herta-agent/docs/architecture.md)
 - [Hermes 源码分析](D:/Desktop/herta-agent/docs/hermes-analysis.md)
 - [复用计划与许可证记录](D:/Desktop/herta-agent/docs/reuse-plan.md)
 
-当前核心：`用户消息 → 内存历史 → 普通 System Message → Provider → 完整文本 → 历史回填`。Phase 2 将加入工具调用与多步骤闭环；只在用户确认后继续。
+当前核心：`用户消息 → Provider → 工具请求 → 参数校验与执行 → 结果回填 → Provider → 最终文本`。Phase 2 完成后暂停，Phase 3 经确认后再加入 Persona。

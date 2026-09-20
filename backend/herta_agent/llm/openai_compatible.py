@@ -10,15 +10,25 @@ from herta_agent.runtime.errors import (
     ModelTimeoutError,
     ProviderError,
     ProviderProtocolError,
-    ToolsNotAvailableError,
 )
-from herta_agent.runtime.messages import Message, ModelReply
+from herta_agent.runtime.messages import Message, ModelReply, ToolCall
+
+
+class _WireFunction(BaseModel):
+    name: str
+    arguments: str
+
+
+class _WireToolCall(BaseModel):
+    id: str
+    type: Literal["function"]
+    function: _WireFunction
 
 
 class _WireMessage(BaseModel):
     role: Literal["assistant"]
     content: str | None = None
-    tool_calls: list[dict[str, object]] | None = None
+    tool_calls: list[_WireToolCall] | None = None
     function_call: dict[str, object] | None = None
 
 
@@ -36,16 +46,21 @@ class OpenAICompatibleProvider:
         self.settings = settings
         self.client = client  # Owned and closed by the caller, shared across turns.
 
-    async def complete(self, messages: tuple[Message, ...]) -> ModelReply:
+    async def complete(
+        self, messages: tuple[Message, ...], *, tools: tuple[dict, ...] = ()
+    ) -> ModelReply:
+        body = {
+            "model": self.settings.model,
+            "messages": [message.to_wire() for message in messages],
+            "stream": False,
+        }
+        if tools:
+            body["tools"] = list(tools)
         try:
             response = await self.client.post(
                 f"{self.settings.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.settings.api_key.get_secret_value()}"},
-                json={
-                    "model": self.settings.model,
-                    "messages": [message.model_dump() for message in messages],
-                    "stream": False,
-                },
+                json=body,
                 follow_redirects=False,
             )
         except httpx.TimeoutException:
@@ -68,17 +83,24 @@ class OpenAICompatibleProvider:
             raise ProviderProtocolError("模型响应不是受支持的 Chat Completions JSON。") from None
 
         choice = completion.choices[0]
-        if (
-            choice.message.tool_calls
-            or choice.message.function_call is not None
-            or choice.finish_reason in {"tool_calls", "function_call"}
-        ):
-            raise ToolsNotAvailableError("Phase 1 尚未执行工具；工具闭环将在 Phase 2 实现。")
-        if choice.finish_reason != "stop":
+        if choice.message.function_call is not None or choice.finish_reason == "function_call":
+            raise ProviderProtocolError("不支持旧 function_call 协议，请使用 tool_calls。")
+        if choice.finish_reason not in {"stop", "tool_calls"}:
             raise ProviderProtocolError("模型未正常结束回复，可能被截断或过滤；未保存为完整回答。")
+        if choice.finish_reason == "tool_calls" and not choice.message.tool_calls:
+            raise ProviderProtocolError("模型声明工具调用但没有提供调用内容。")
         try:
             return ModelReply(
-                message=Message(role="assistant", content=choice.message.content or "")
+                message=Message(
+                    role="assistant",
+                    content=choice.message.content,
+                    tool_calls=tuple(
+                        ToolCall(
+                            id=call.id, name=call.function.name, arguments=call.function.arguments
+                        )
+                        for call in choice.message.tool_calls or ()
+                    ),
+                )
             )
         except ValidationError:
-            raise ProviderProtocolError("模型没有返回非空文本回答。") from None
+            raise ProviderProtocolError("模型没有返回有效的文本或工具调用。") from None

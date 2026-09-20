@@ -15,7 +15,7 @@ class RecordingProvider:
     def __init__(self) -> None:
         self.calls: list[tuple[Message, ...]] = []
 
-    async def complete(self, messages: tuple[Message, ...]) -> ModelReply:
+    async def complete(self, messages: tuple[Message, ...], *, tools=()) -> ModelReply:
         self.calls.append(messages)
         return ModelReply(message=Message(role="assistant", content="answer"))
 
@@ -25,7 +25,7 @@ class WaitingProvider:
         self.started = asyncio.Event()
         self.cleaned_up = False
 
-    async def complete(self, messages: tuple[Message, ...]) -> ModelReply:
+    async def complete(self, messages: tuple[Message, ...], *, tools=()) -> ModelReply:
         self.started.set()
         try:
             await asyncio.Event().wait()
@@ -84,7 +84,7 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         class BrokenProvider:
             calls = 0
 
-            async def complete(self, messages: tuple[Message, ...]) -> ModelReply:
+            async def complete(self, messages: tuple[Message, ...], *, tools=()) -> ModelReply:
                 self.calls += 1
                 raise ProviderError("expected failure")
 

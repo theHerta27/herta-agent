@@ -10,6 +10,7 @@ class RunSettings(BaseModel):
 
     max_steps: int = Field(default=8, strict=True, ge=1, le=100)
     request_timeout: float = Field(default=120.0, strict=True, gt=0, le=600)
+    tool_timeout: float = Field(default=10.0, strict=True, gt=0, le=600)
 
 
 class ProviderSettings(BaseModel):

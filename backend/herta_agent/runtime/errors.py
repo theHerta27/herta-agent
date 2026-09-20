@@ -17,13 +17,13 @@ class ModelTimeoutError(ProviderError):
     """The model request exceeded its deadline."""
 
 
-class ToolsNotAvailableError(AgentError):
-    """Tool execution is intentionally deferred to Phase 2."""
-
-
 class SessionBusyError(AgentError):
     """Another run is already using this in-memory session."""
 
 
 class StepLimitExceeded(AgentError):
     """No model request may start after the run budget is exhausted."""
+
+
+class ToolCallLimitExceeded(AgentError):
+    """The model returned more calls than the per-response budget permits."""
