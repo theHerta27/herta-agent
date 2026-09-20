@@ -10,7 +10,18 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-Phase 3 已完成：用户确认 A（人格加载失败停止、不降级），独立 Context Builder、完整 soul.md 快照与测试文档已落地。52 项测试、Ruff 和独立审查通过。改动在本地 phase-3-context 工作区，未提交/推送；main 保留 Phase 1，phase-2-tools 保留已推送 Phase 2。停在 Phase 3。
+Phase 3 commit 66a5d177aae9560f7972644e9715a55e57e48c25。用户已确认远程Embedding并授权编码；Phase 4工程实现在本地phase-4-rag完成，未提交/推送/合并。93项离线测试通过，真实服务合约、dev校准和check/聊天效果仍待本地环境配置后验收。main及其他远端分支未改。
+
+## Phase 4 设计与资料准备
+- [x] 阅读 Phase 1–3 架构、Persona 与现有角色材料，讨论检索目标与取舍。
+- [x] 按用户决定锁定现有角色事实、人物关系、故事事件；不扩充语料。
+- [x] 整理20个知识单元、来源manifest和28题评测集（dev17/check11）。
+- [x] 完成 docs/phase-4-design.md、phase-4-plan.md，不写业务代码。
+- [x] 静态核验JSON、唯一ID、预期证据引用、原始来源行号与SHA256。
+- [x] 用户确认一个远程兼容Embedding适配器，独立配置，Key只读本地环境。
+- [x] 完成Phase 4切分、索引、检索、Tool、评测和教学文档。
+- [x] 回归、Ruff、独立局部审查及原始材料hash核验。
+- [ ] 本地配置真实服务后验证合约、校准dev、冻结参数跑check及28题正式聊天。
 
 ## Phase 3 任务
 - [x] 阅读 Phase 2 架构、Runtime 和完整角色语料及整理建议；重跑 42 项基线测试与 Ruff。

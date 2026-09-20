@@ -1,6 +1,6 @@
 # herta-agent
 
-一个边实现边学习的 Windows 桌面 Agent 项目。当前完成 **Phase 3：独立 Context Builder 与 Persona**，在 Phase 2 工具闭环上加入 soul.md 全文注入、每轮稳定快照与哈希；桌面 UI 与 RAG 属于后续阶段。
+一个边实现边学习的 Windows 桌面 Agent 项目。当前实现 **Phase 4：角色知识 RAG**，保留独立 Context Builder 与 Persona，新增远程 Embedding、本地精确向量检索、模型主动调用的 search_knowledge 和可解释评测入口。真实模型效果尚待本地配置后验收；桌面 UI 属于后续阶段。
 
 ## 直接运行当前成果（PowerShell）
 
@@ -27,7 +27,18 @@ $env:HERTA_MODEL = '你的模型名'
 .\.venv\Scripts\python.exe -m herta_agent --provider openai
 ```
 
-程序会提示输入不回显的 API Key，不保存到文件。也可由你自行设置当前终端的 `HERTA_API_KEY` 环境变量。接口是非流式 Chat Completions；Base URL 不要包含 `/chat/completions`。
+Key 仅从当前终端的 `HERTA_API_KEY` 环境变量读取，不再由应用提示输入。接口是非流式 Chat Completions；Base URL 不要包含 `/chat/completions`。
+
+Embedding 使用独立的 `HERTA_EMBEDDING_BASE_URL`、`HERTA_EMBEDDING_MODEL`、`HERTA_EMBEDDING_API_KEY`，不默认复用聊天服务。Key 不写文件、索引或日志。本地安全输入方法、完整配置与评测说明见 [Phase 4 教程](D:/Desktop/herta-agent/docs/phase-4-walkthrough.md)。配置后：
+
+```powershell
+.\.venv\Scripts\python.exe -m herta_agent.rag build
+.\.venv\Scripts\python.exe -m herta_agent.rag inspect '黑塔如何评价螺丝咕姆？'
+.\.venv\Scripts\python.exe -m herta_agent.rag eval --mode retrieval --split dev
+.\.venv\Scripts\python.exe -m herta_agent --provider openai
+```
+
+建库发送知识片段给 Embedding 服务；查询发送 query。检索证据经工具消息提供给聊天模型，不进入 system。默认阈值尚未校准，score 不代表事实置信度。RAG 不可用会明确提示，普通聊天仍可继续；人格文件失败仍停止当前轮。
 
 ## 检查代码
 
@@ -37,7 +48,7 @@ $env:HERTA_MODEL = '你的模型名'
 .\.venv\Scripts\ruff.exe format --check backend
 ```
 
-已通过 52 项离线自动测试，覆盖 Persona 快照与失败恢复、HTTP 全文注入、工具闭环、预算、取消后继续和 Windows SIGINT 路径。HTTP 适配器使用 MockTransport 验证请求、响应及异常；尚未验证真实供应商和实际人格表现。
+已通过 93 项离线自动测试，包含原有52项回归，新增切分/来源、索引完整性与发布、精确排名、Embedding协议、独立服务装配、评测与Tool错误测试。HTTP使用MockTransport；未配置真实服务，因此尚未验证实际语义召回、模型路由和据证回答。
 
 ## 安装或重新建立环境
 
@@ -54,6 +65,8 @@ uv sync --project backend --extra dev --python 3.12 --locked
 
 ## 学习入口
 
+- [Phase 4 RAG 复现教程与验收边界](D:/Desktop/herta-agent/docs/phase-4-walkthrough.md)
+- [Phase 4 设计](D:/Desktop/herta-agent/docs/phase-4-design.md) / [实施计划](D:/Desktop/herta-agent/docs/phase-4-plan.md)
 - [Phase 3 Persona 与 Context 复现教程](D:/Desktop/herta-agent/docs/phase-3-walkthrough.md)
 - [Phase 2 工具闭环复现教程](D:/Desktop/herta-agent/docs/phase-2-walkthrough.md)
 - [Phase 1 逐文件复现教程](D:/Desktop/herta-agent/docs/phase-1-walkthrough.md)
@@ -61,4 +74,4 @@ uv sync --project backend --extra dev --python 3.12 --locked
 - [Hermes 源码分析](D:/Desktop/herta-agent/docs/hermes-analysis.md)
 - [复用计划与许可证记录](D:/Desktop/herta-agent/docs/reuse-plan.md)
 
-当前核心：`用户消息 → 本轮人格快照 → system + 历史 → Provider → 工具执行与回填 → 同一快照 + 新历史 → 最终文本`。停在 Phase 3，等待下一阶段确认。
+当前核心：`用户消息 → 本轮人格快照 → system + 历史 → Provider → 工具执行与知识检索回填 → 同一快照 + 新历史 → 最终文本`。停在 Phase 4，未进入下一阶段。

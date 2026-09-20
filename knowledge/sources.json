@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "corpus_id": "herta-canon-v1",
+  "document": "herta.md",
+  "content_kind": "human_paraphrase_of_user_snapshot",
+  "source": {
+    "file": "大黑塔原始语料.md",
+    "sha256": "d7f04d60b19b244b271f42e45b02dc2e2f6cecf1b3eeebfa05b38f68f097660f",
+    "url": "https://wiki.biligame.com/sr/%E5%A4%A7%E9%BB%91%E5%A1%94",
+    "retrieved_at": null,
+    "reviewed_at": "2026-09-20",
+    "note": "用户提供的本地摘录，非本次抓取；采集时间未知。范围仅此快照，不代表完整或最新官方设定。"
+  },
+  "units": [
+    {"id":"K01","source_spans":[[257,261]],"section":"角色介绍"},
+    {"id":"K02","source_spans":[[16,18],[255,255]],"section":"关于自己•头衔及重复宣传介绍"},
+    {"id":"K03","source_spans":[[48,50]],"section":"分享"},
+    {"id":"K04","source_spans":[[60,62]],"section":"关于阮•梅"},
+    {"id":"K05","source_spans":[[64,66]],"section":"关于螺丝咕姆"},
+    {"id":"K06","source_spans":[[68,70]],"section":"关于艾丝妲"},
+    {"id":"K07","source_spans":[[72,74]],"section":"关于银狼"},
+    {"id":"K08","source_spans":[[76,78]],"section":"关于姬子"},
+    {"id":"K09","source_spans":[[80,82]],"section":"关于瓦尔特"},
+    {"id":"K10","source_spans":[[56,58]],"section":"关于开拓者"},
+    {"id":"K11","source_spans":[[32,34],[40,42]],"section":"闲谈•穿着、爱好"},
+    {"id":"K12","source_spans":[[36,38]],"section":"闲谈•论文"},
+    {"id":"K13","source_spans":[[24,26]],"section":"习惯"},
+    {"id":"K14","source_spans":[[269,269]],"section":"角色故事一"},
+    {"id":"K15","source_spans":[[271,271]],"section":"角色故事二：研讨会"},
+    {"id":"K16","source_spans":[[271,271],[28,30]],"section":"角色故事二：理论说明、关于自己•研究"},
+    {"id":"K17","source_spans":[[273,273]],"section":"角色故事三：事务委托"},
+    {"id":"K18","source_spans":[[273,273]],"section":"角色故事三：四面镜"},
+    {"id":"K19","source_spans":[[275,275]],"section":"角色故事四：求问"},
+    {"id":"K20","source_spans":[[275,275]],"section":"角色故事四：揭露"}
+  ]
+}

@@ -1,8 +1,11 @@
 """Validated configuration. No automatic .env loading or credential persistence."""
 
+import os
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
+
+from herta_agent.runtime.errors import AgentError
 
 
 class RunSettings(BaseModel):
@@ -18,7 +21,20 @@ class ProviderSettings(BaseModel):
 
     base_url: str
     model: str = Field(min_length=1)
-    api_key: SecretStr
+    api_key: SecretStr = Field(exclude=True, repr=False)
+
+    @classmethod
+    def from_env(cls) -> "ProviderSettings":
+        try:
+            return cls(
+                base_url=os.environ["HERTA_BASE_URL"],
+                model=os.environ["HERTA_MODEL"],
+                api_key=os.environ["HERTA_API_KEY"],
+            )
+        except (KeyError, ValueError):
+            raise AgentError(
+                "请设置有效的 HERTA_BASE_URL、HERTA_MODEL 和 HERTA_API_KEY 环境变量。"
+            ) from None
 
     @field_validator("base_url")
     @classmethod

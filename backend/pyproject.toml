@@ -7,7 +7,7 @@ name = "herta-agent"
 version = "0.1.0"
 description = "A small, independent agent runtime built one learning phase at a time."
 requires-python = ">=3.12"
-dependencies = ["httpx>=0.28,<0.29", "pydantic>=2.10,<3"]
+dependencies = ["httpx>=0.28,<0.29", "pydantic>=2.10,<3", "numpy>=2,<3"]
 
 [project.optional-dependencies]
 dev = ["ruff>=0.11,<1"]

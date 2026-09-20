@@ -6,6 +6,7 @@ import math
 
 from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 
+from herta_agent.runtime.errors import ToolExecutionError
 from herta_agent.runtime.messages import ToolCall
 from herta_agent.tools.registry import ToolRegistry
 
@@ -47,13 +48,15 @@ class ToolExecutor:
                 "invalid_arguments", "参数不符合工具 JSON schema，请检查字段和类型。"
             )
         try:
-            async with asyncio.timeout(self.timeout):
+            async with asyncio.timeout(spec.timeout if spec.timeout is not None else self.timeout):
                 data = await spec.handler(parameters)
             result = ToolResult(ok=True, data=data)
             result.to_json()  # Reject invalid/nonfinite output before it reaches history.
             return result
         except TimeoutError:
             return ToolResult.failure("timeout", "工具执行超时。")
+        except ToolExecutionError as exc:
+            return ToolResult.failure(exc.code, str(exc))
         except Exception:
             # CancelledError inherits BaseException and deliberately propagates to Runtime.
             return ToolResult.failure("execution_error", "工具执行失败。")

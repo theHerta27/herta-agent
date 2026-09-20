@@ -1,5 +1,22 @@
 # Herta Agent 工作记录
 
+## Phase 4 工程实现（2026-09-20）
+- 用户确认独立远程Embedding与Key边界后授权编码，从Phase 3建立本地phase-4-rag。
+- 先观察ingest/store/retriever/adapter/tool/CLI测试失败，再实现相应行为。只新增NumPy到项目venv和锁文件；网络受限后使用批准的安装权限，未修改其他项目环境。
+- 完成白名单切分/来源、不可变索引/原子指针、精确余弦排名/过滤说明、单一远程适配器、search_knowledge装配、独立检索及正式聊天评测。
+- 独立局部审查发现NPZ载入、bool数组、来源行号类型问题，已复现并修复；补齐总HTTP期限，保留Windows Runner取消路径。
+- 更新README、架构、复用记录和Phase 4教程。93项离线测试覆盖原52项回归；真实服务环境未配置，实际模型质量与阈值校准未执行。
+- 原始两份材料hash未变；main=32f2c29、phase-2-tools=7e5fa96、phase-3-context=66a5d17未移动。不提交、推送、合并或进入Phase 5。
+
+## Phase 4 设计与资料准备（2026-09-20）
+- 用户明确“仍先不要编码”，本轮只新增knowledge/evals资料及设计/计划文档，backend和依赖文件未变。
+- 按Superpowers brainstorming与writing-plans收敛已确认范围；未开始实施任务、安装依赖、建库或调用Embedding。
+- 完成knowledge/herta.md（20单元）、sources.json、README；完成evals/rag/questions.jsonl（28题）及评测说明；dev17/check11。
+- 资料问题分为13可回答、4跨段、7不足、4无需检索；required_evidence绑定稳定K单元，公开检查题不冒称盲测。
+- 静态验证全部JSON可解析、ID唯一、证据引用有效、source spans合法、原始快照SHA256不变；git diff --check通过。没有执行新业务测试或声称检索效果已通过。
+- 完成docs/phase-4-design.md与phase-4-plan.md，保留单一Embedding适配器的未决执行方式；已单独询问用户，其他工作先完成。
+- 当前文档/数据未提交或推送，停在设计阶段。
+
 ## Phase 3 完成（2026-09-20）
 - 用户确认 A 后，更新设计并写实施计划；从 Phase 2 新建本地 phase-3-context 分支，未移动 main/phase-2-tools。
 - 先写 Context/Persona 和 CLI 测试，观察模块缺失、参数未支持等预期失败，再实现并验证。初次 Ruff 提示长行与未使用导入，格式化/导入修复后通过。

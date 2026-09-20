@@ -5,6 +5,14 @@ class AgentError(Exception):
     """Base class for expected runtime errors."""
 
 
+class ToolExecutionError(AgentError):
+    """Expected tool failure; callers must supply a safe, credential-free message."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class ContextError(AgentError):
     """Required system context could not be loaded or constructed."""
 

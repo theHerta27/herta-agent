@@ -1,5 +1,6 @@
 """A tool's schema and its handler are registered together."""
 
+import math
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -17,12 +18,20 @@ class ToolSpec:
     description: str
     parameters: type[ToolParameters]
     handler: Callable[[ToolParameters], Awaitable[object]]
+    timeout: float | None = None
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", self.name):
             raise ValueError("Invalid tool name")
         if not self.description.strip() or not issubclass(self.parameters, ToolParameters):
             raise ValueError("A tool requires a description and ToolParameters model")
+        if self.timeout is not None and (
+            isinstance(self.timeout, bool)
+            or not isinstance(self.timeout, (int, float))
+            or not math.isfinite(self.timeout)
+            or not 0 < self.timeout <= 600
+        ):
+            raise ValueError("Tool timeout must be finite and within (0, 600]")
 
 
 class ToolRegistry:

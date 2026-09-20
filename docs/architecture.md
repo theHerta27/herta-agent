@@ -1,6 +1,6 @@
 # Herta Agent V1 架构方案
 
-状态：V1 架构设计；2026-09-20 已完成 Phase 3。在 Phase 2 工具闭环上加入独立 Context Builder、soul.md 完整快照与哈希、CLI 必需 Persona 及加载失败后的会话恢复。Runtime 只依赖上下文接口，不含角色文件路径或人格规则。API、持久化、事件、RAG 和桌面仍为后续计划。当前运行命令与验证见 docs/phase-3-walkthrough.md；下文第 3 节保留 Phase 0 当时的目录快照。
+状态：2026-09-20 已实现 Phase 4 工程链路：独立远程Embedding、本地精确索引、search_knowledge及检索/聊天评测。真实模型效果尚待配置后验收，见 docs/phase-4-walkthrough.md。Runtime仍只依赖Context Builder和通用Tool接口，不含人格或检索算法。API、持久化、事件和桌面为后续计划；下文第3节保留Phase 0目录快照。
 
 目标是一个独立桌面 Agent：Electron + React + TypeScript + Vite，连接本机 Python 3.12+ / FastAPI / Pydantic / asyncio Runtime。第一版只提供一个大黑塔风格 Persona。Hermes 仅作为参考。
 
@@ -234,13 +234,13 @@ Phase 3 实际边界：CLI 注入 PersonaContextBuilder，ContextSnapshot 在每
 
 ### RAG：可追溯知识事实
 
-原始人格材料位于 data/raw/persona；整理后的世界观知识进入 knowledge；同一原材料可支持人格观察和知识事实，但运行目录与产物不能混在一起。
+原始角色材料仍留在项目根目录并被Git忽略；知识正文为 knowledge/herta.md，来源在 sources.json。只收录现有角色事实、关系、故事，不扩充世界观资料或索引技术笔记。
 
-V1 先支持 UTF-8 Markdown / TXT：
+Phase 4 仅支持明确白名单中的 UTF-8 Markdown：
 
 ```text
 knowledge/*.md / *.txt
-  → 按段落和字符窗口分块（起点：500 字符，重叠 80）
+  → 按K单元/段落分块（最多600字符，仅长段内重叠80）
   → embedding
   → 本地向量矩阵与 chunk 元数据
   → query embedding
@@ -248,15 +248,15 @@ knowledge/*.md / *.txt
   → top-k（默认 4）
 ```
 
-采用 NumPy 矩阵做精确相似度检索，作为小语料的简单 Vector Store；不部署额外数据库服务。保存向量、chunk_id、source、标题、文本、内容哈希与索引 manifest。零向量/非有限数必须拒绝，空库返回空结果而不是伪造命中。
+采用 NumPy float32矩阵做精确相似度检索，不部署数据库。保存chunk_id/unit_id、来源、标题、正文、规范化位置和hash。零向量/非有限数、空库均报错；合法索引过滤后无结果才返回成功的空chunks。
 
-manifest 记录 embedding provider/model、维度、分块参数及语料哈希。文档向量和查询向量必须使用同一模型；配置或维度变更时明确要求重建。重建先写临时索引，再切换，避免查询读到半份索引。
+manifest记录模型、编码配置指纹、维度、分块版本、语料hash和文件校验和。服务、模型或前缀等编码配置变更须重建。先写不可变版本并自检，再同盘替换current.json指针；Windows不覆盖在用矩阵，进程持有固定快照，重建后重启聊天。
 
-embedding 配置与聊天模型配置分开。聊天服务不一定支持 embeddings；Phase 4 根据实际可用端点确定模型，提供独立 embedding Base URL / Key / Model 配置，允许显式复用可用配置，不默认所有聊天模型都能向量化。
+Embedding配置与聊天模型分开，独立 HERTA_EMBEDDING_BASE_URL/MODEL/API_KEY 环境变量。只实现一个兼容远程适配器，Key不序列化；保留embed_documents/embed_query边界，不实现本机模型。每批有限总期限，无隐式重试或后端切换。
 
-search_knowledge 只暴露 `query: str`，top-k 由应用配置控制。返回 chunks、相似度与来源，向 UI 报告 query、数量、耗时和状态。RAG 内容按资料处理，不得把检索文本里的指令提升成 System Context。
+search_knowledge只暴露1–1000字符query；k/阈值由应用控制。结果正文总计最多2400字符，返回chunk、相似度和来源；inspect额外显示全排名及过滤原因。资料经tool消息回填，不提升为system。ToolSpec可选期限默认沿用全局，search默认20秒。没有UI事件实现。
 
-V1 不加入 Hybrid Search、BM25、reranker、长期 Memory。相关度阈值在 Phase 4 用小样例调试；零命中不等于工具失败，模型应明确知识库暂未提供足够证据。
+不加入Hybrid、BM25、reranker、长期Memory。默认阈值0.0未校准；28题dev/check分别评测证据覆盖、工具触发与回答。资料不足不等于零命中；引用存在不等于语义支持。真实效果验收仍待本地配置，不能以mock测试替代。
 
 ## 8. 本机 API 与 SSE 事件方案
 
@@ -308,7 +308,7 @@ Electron 主进程启动一个后台 Python 子进程，不弹终端窗口；绑
 
 Electron 使用 contextIsolation、关闭 renderer 的 nodeIntegration、保持沙箱与窄 IPC 接口；Markdown 默认不执行原始 HTML，外链有明确打开策略。依据见 [Electron 安全文档](https://www.electronjs.org/docs/latest/tutorial/security)。
 
-API Key 不写在源码、Git、URL、聊天历史、事件或日志中。V1 默认只在内存保留 Key，退出后重新输入；Base URL 和 Model 可持久化。若以后明确加入“记住 Key”，再用操作系统保护的凭据存储，不以明文 JSON 或 localStorage 代替。
+API Key不写源码、Git、URL、聊天历史、事件或日志。当前CLI仅从本地环境读取Key、装入内存并排除序列化；未来桌面凭据交互须另行确认，不沿用早期方案中的“退出后重新输入”假设。
 
 界面范围：左侧 New Chat + Conversation list；中间 Markdown messages + streaming + input；工具事件可折叠；设置至少有 Base URL、API Key、Model。深浅配色与角色视觉在 Phase 6 再设计，不提前放入 Live2D 或动画工程。
 

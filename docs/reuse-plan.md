@@ -116,3 +116,7 @@ Registry、ToolSpec、Executor、echo、工具消息与循环、Windows Runner C
 ## 9. Phase 3 实际落地
 
 Context Builder、冻结快照与 Persona 文件加载器为本项目独立实现，没有复制 Hermes SOUL 加载、扫描或截断逻辑，没有新增第三方依赖。角色证据来自用户提供的本地快照，输入哈希与定位见 data/derived/README.md；衍生观察、行为规则和原创示例不代表原始角色材料属于 Hermes MIT 许可证。原始资料仍按原忽略规则留在本机，未随代码复制进运行包。
+
+## 10. Phase 4 实际落地
+
+切分、远程Embedding适配器、精确检索、版本化索引、Tool装配和评测均独立编写，没有复制Hermes业务模块或Linux进程/信号代码。只新增NumPy，版本由backend/uv.lock锁定；许可证为BSD-3-Clause，二进制发行附带的组件声明应在最终打包时按安装包元数据保留，不由Hermes MIT代替。知识正文是用户现有快照的人工转述，来源与边界见knowledge/README.md；没有新增外部抓取语料。
