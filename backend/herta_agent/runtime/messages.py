@@ -77,3 +77,4 @@ class RunResult(BaseModel):
     session_id: str
     reply: str
     steps: int
+    context_hash: str | None = None

@@ -1,5 +1,15 @@
 # Phase 0 发现
 
+## Phase 3 阅读与设计发现
+- 完整读取大黑塔原始语料.md（275 行，含互动/战斗语音、宣传介绍及四段角色故事）和整理思路全文。后者是分析建议，不冒充原始角色证据。
+- 已有架构明确每 Run 读取全文、记录哈希，该 Run 所有 Step 使用同一快照；不用重新询问已确认的加载周期。
+- 现有 Agent.run 内拼接 DEFAULT_SYSTEM + history，需要移至可注入 Context Builder。Runtime 不应知道大黑塔名字、soul 路径或 Persona 规则。
+- 主要人格证据：自然自信、问题驱动、敢于质疑、把失败视为研究信息、按能力评价他人、轻微戏谑与审美偏好。故事三的事务委托与研究专注、故事四的求问和怀疑具有较强行为证据；战斗语音只辅助风格，空的 2x 条目不作为证据。
+- Windows CLI 路径须与启动工作目录解耦，UTF-8/BOM 和 CRLF 需要测试；不采用 Hermes 配置目录、Unix 信号或 shell 脚本。
+- 用户已确认 A：soul 缺失/空/不可读/解析失败均停止当前轮，不降级；Session 保留，修复后下一轮重新读取。
+- 11 条 evidence 已完成并校验原文行号；两份原始文件 SHA256 未变。未重新抓取线上语料，没有把分析建议当成原作证据。
+- 已实现冻结快照和实际注入正文哈希，system 单次注入、不存 Session.history；BOM 去除、CRLF 保留。CLI 的默认资源路径与 cwd 无关，自定义 Windows 路径通过测试。
+
 ## Phase 1 决策
 - Phase 1 已完成，26 项离线测试与 Ruff 检查通过。教学说明见 docs/phase-1-walkthrough.md；真实模型联调尚未执行。
 - 默认 Python 是 Hermes 的 3.11.9，改用 uv 在项目 .local/python 内安装 3.12，再建立根目录 .venv；不在 Hermes 环境安装依赖。

@@ -10,7 +10,14 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-Phase 0、Phase 1 与 Phase 2 已完成。用户确认 Ctrl+C 取消当前轮、保留会话并继续输入。实现保留原有学习注释，独立审查无阻塞问题；停在 Phase 2，等待下一阶段授权。
+Phase 3 已完成：用户确认 A（人格加载失败停止、不降级），独立 Context Builder、完整 soul.md 快照与测试文档已落地。52 项测试、Ruff 和独立审查通过。改动在本地 phase-3-context 工作区，未提交/推送；main 保留 Phase 1，phase-2-tools 保留已推送 Phase 2。停在 Phase 3。
+
+## Phase 3 任务
+- [x] 阅读 Phase 2 架构、Runtime 和完整角色语料及整理建议；重跑 42 项基线测试与 Ruff。
+- [x] 确定 Persona 文件加载失败策略，完成最小设计。
+- [x] 从原文形成带来源的 evidence 和 soul.md，保留原始文件。
+- [x] 实现独立 Context Builder、每 Run 快照及 CLI 装配，补充测试。
+- [x] 更新教程与架构文档，验证后停在 Phase 3。
 
 ## Phase 2 任务
 - [x] 检查当前代码、已有设计和用户未提交的学习注释，运行基线测试。

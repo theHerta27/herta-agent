@@ -5,7 +5,8 @@ from pydantic import ValidationError
 
 from herta_agent.config import ProviderSettings, RunSettings
 from herta_agent.llm.demo import DemoProvider
-from herta_agent.runtime.agent import DEFAULT_SYSTEM, Agent
+from herta_agent.runtime.agent import Agent
+from herta_agent.runtime.context import DEFAULT_SYSTEM
 from herta_agent.runtime.errors import ModelTimeoutError, ProviderError, SessionBusyError
 from herta_agent.runtime.messages import Message, ModelReply
 from herta_agent.runtime.session import Session

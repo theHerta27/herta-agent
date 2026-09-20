@@ -1,6 +1,6 @@
 # Herta Agent V1 架构方案
 
-状态：V1 架构设计；2026-09-19 已完成 Phase 2。当前已实现不可变文本/工具消息、内存 Session、LLMProvider、离线/HTTP Provider、Registry/Executor、echo、多步循环、模型与工具期限，以及 Windows CLI 取消当前轮后保留会话。其余类、API、事件和目录仍为后续计划。当前目录、运行命令与验证见 docs/phase-2-walkthrough.md；下文第 3 节保留 Phase 0 当时的目录快照。
+状态：V1 架构设计；2026-09-20 已完成 Phase 3。在 Phase 2 工具闭环上加入独立 Context Builder、soul.md 完整快照与哈希、CLI 必需 Persona 及加载失败后的会话恢复。Runtime 只依赖上下文接口，不含角色文件路径或人格规则。API、持久化、事件、RAG 和桌面仍为后续计划。当前运行命令与验证见 docs/phase-3-walkthrough.md；下文第 3 节保留 Phase 0 当时的目录快照。
 
 目标是一个独立桌面 Agent：Electron + React + TypeScript + Vite，连接本机 Python 3.12+ / FastAPI / Pydantic / asyncio Runtime。第一版只提供一个大黑塔风格 Persona。Hermes 仅作为参考。
 
@@ -217,7 +217,7 @@ SQLite 是 V1 会话存储方案；Phase 1 可先使用内存历史，后续完�
 
 ### Persona：稳定行为规则
 
-Phase 3 才开始处理：
+Phase 3 已完成如下链路（原始文件仍保留在项目根目录，不移动）：
 
 ```text
 原始文件及来源定位
@@ -229,6 +229,8 @@ Phase 3 才开始处理：
 soul.md 使用 Identity、Core Personality、Intellectual Attitude、Values、Social Behavior、Speaking Style、Behavioral Rules、Boundaries、Style Examples。以抽象规则为主，只保留少量必要例子。source 记录原始文件、段落/行号和原链接；整理建议属于分析材料，不能替代原始证据。Phase 0 不生成占位人格。
 
 每个 Run 读取完整 soul.md，记录内容哈希便于复现；该 Run 的全部 Step 使用同一份全文。Persona 不进入向量库。上下文超限时不截断 Persona，不剪掉半组工具调用；初版直接提示新建会话，不引入自动压缩系统。
+
+Phase 3 实际边界：CLI 注入 PersonaContextBuilder，ContextSnapshot 在每 Step 组合一个 system 和最新 history；Agent 不认识 Persona 文件。UTF-8 解码去 BOM、保留 CRLF 与完整正文；缺失、空、不可读、无效 UTF-8 或 NUL 均报 ContextError，停止当前轮且不降级。已提交的 user 消息保留，释放 Session 后可修复再试。Session.context_hash 与 RunResult.context_hash 记录注入正文 SHA256，CLI 展示；加载失败清空当轮哈希。当前未增加 token 预算预检，服务商上下文超限仍经已有 HTTP 错误路径停止，不擅自裁剪内容。
 
 ### RAG：可追溯知识事实
 

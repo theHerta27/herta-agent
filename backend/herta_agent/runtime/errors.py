@@ -5,6 +5,10 @@ class AgentError(Exception):
     """Base class for expected runtime errors."""
 
 
+class ContextError(AgentError):
+    """Required system context could not be loaded or constructed."""
+
+
 class ProviderError(AgentError):
     """A model request failed."""
 

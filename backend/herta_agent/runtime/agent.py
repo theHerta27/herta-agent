@@ -13,13 +13,12 @@ import asyncio
 
 from herta_agent.config import RunSettings
 from herta_agent.llm.base import LLMProvider
+from herta_agent.runtime.context import ContextBuilder, StaticContextBuilder
 from herta_agent.runtime.errors import ModelTimeoutError, StepLimitExceeded, ToolCallLimitExceeded
 from herta_agent.runtime.messages import Message, RunResult
 from herta_agent.runtime.session import Session
 from herta_agent.tools.executor import ToolExecutor, ToolResult
 from herta_agent.tools.registry import ToolRegistry
-
-DEFAULT_SYSTEM = "You are a helpful assistant. Answer clearly and accurately."
 
 
 class Agent:
@@ -29,20 +28,27 @@ class Agent:
         settings: RunSettings | None = None,
         *,
         registry: ToolRegistry | None = None,
+        context_builder: ContextBuilder | None = None,
     ) -> None:
         self.provider = provider
         self.settings = settings or RunSettings()
         self.registry = registry if registry is not None else ToolRegistry()
         self.executor = ToolExecutor(self.registry, timeout=self.settings.tool_timeout)
+        self.context_builder = (
+            context_builder if context_builder is not None else StaticContextBuilder()
+        )
 
     async def run(self, session: Session, user_text: str) -> RunResult:
         """One step is one model request. Every stored call gets exactly one result."""
         user_message = Message(role="user", content=user_text)
         session.begin_turn(user_message)
         try:
+            session.context_hash = None
+            context = self.context_builder.snapshot()
+            session.context_hash = context.sha256
             for step in range(1, self.settings.max_steps + 1):
                 await asyncio.sleep(0)  # Cancellation checkpoint even for immediate providers.
-                messages = (Message(role="system", content=DEFAULT_SYSTEM), *session.history)
+                messages = context.build_messages(session.history)
                 try:
                     async with asyncio.timeout(self.settings.request_timeout):
                         response = await self.provider.complete(
@@ -74,7 +80,10 @@ class Agent:
                     continue
                 session.complete_turn(response.message)
                 return RunResult(
-                    session_id=session.session_id, reply=response.message.content, steps=step
+                    session_id=session.session_id,
+                    reply=response.message.content,
+                    steps=step,
+                    context_hash=context.sha256,
                 )
             raise StepLimitExceeded("达到 max_steps，停止请求模型。")
         except asyncio.CancelledError:

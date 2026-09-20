@@ -12,6 +12,7 @@ from herta_agent.runtime.messages import Message
 @dataclass
 class Session:
     session_id: str = field(default_factory=lambda: uuid4().hex)
+    context_hash: str | None = field(default=None, init=False)
     _messages: list[Message] = field(default_factory=list, init=False, repr=False)
     _busy: bool = field(default=False, init=False, repr=False)
     _pending: dict[str, None] = field(default_factory=dict, init=False, repr=False)

@@ -112,3 +112,7 @@ HTTP 适配器直接使用 HTTPX，而不是引入供应商 SDK；这使请求�
 ## 8. Phase 2 实际落地
 
 Registry、ToolSpec、Executor、echo、工具消息与循环、Windows Runner CLI 均独立编写。没有复制 Hermes 业务源码，没有引入其 Linux 信号/进程实现，也没有新增第三方依赖。本次仅借鉴“显式注册 → schema 验证 → 执行 → 结果回填”的职责拆分。项目已在 Phase 1 后上传至用户私密 GitHub 仓库，上文 Phase 0 未发布状态为历史记录。
+
+## 9. Phase 3 实际落地
+
+Context Builder、冻结快照与 Persona 文件加载器为本项目独立实现，没有复制 Hermes SOUL 加载、扫描或截断逻辑，没有新增第三方依赖。角色证据来自用户提供的本地快照，输入哈希与定位见 data/derived/README.md；衍生观察、行为规则和原创示例不代表原始角色材料属于 Hermes MIT 许可证。原始资料仍按原忽略规则留在本机，未随代码复制进运行包。

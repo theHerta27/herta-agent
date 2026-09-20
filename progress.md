@@ -1,5 +1,21 @@
 # Herta Agent 工作记录
 
+## Phase 3 完成（2026-09-20）
+- 用户确认 A 后，更新设计并写实施计划；从 Phase 2 新建本地 phase-3-context 分支，未移动 main/phase-2-tools。
+- 先写 Context/Persona 和 CLI 测试，观察模块缺失、参数未支持等预期失败，再实现并验证。初次 Ruff 提示长行与未使用导入，格式化/导入修复后通过。
+- 新增 ContextBuilder/ContextSnapshot/StaticContextBuilder 与 PersonaContextBuilder；Agent 只委托构建并记录哈希，不认识角色文件。CLI 两条 Provider 装配路径均要求 soul 成功加载。
+- 新增 persona/soul.md、11 条 persona_evidence.jsonl 与来源说明；全部读完的两份原始材料保留原位，SHA256 复核一致，证据行号有效。
+- Windows 完整 52 项 unittest 通过（Phase 2 的 42 项保留），Ruff check 与 format --check 通过（27 个 Python 文件）；独立审查无问题且再次验证 52 项通过。git diff --check、教程文件链接检查通过。
+- CLI 实测工具两步闭环与 context_sha256；测试验证人格加载失败不调用模型、修复后同会话恢复、文件中途修改不影响本轮、下一轮重载、HTTP 每 Step 注入全文、BOM/CRLF 和中文路径。
+- 已更新 README、架构、复用记录，新增 phase-3-walkthrough.md。真实供应商及人格生成表现尚未验证；未加入 RAG/Memory/Skills/MCP/UI。
+- 工作区改动未提交或推送；main=32f2c29，phase-2-tools=7e5fa96，停在 Phase 3 等待后续指示。
+
+## Phase 3 开始（2026-09-20）
+- 用户授权 Context Builder + soul.md，明确 Runtime 解耦且不做 RAG/长期 Memory/Skills/MCP/UI。
+- 起点为已推送的 Phase 2 commit 7e5fa9634fb3e84ac230b3350db7ca5a41ecc446；开始时工作区干净。
+- 阅读当前架构、Runtime、CLI/测试接口及两份角色材料全文；基线 42 项测试、Ruff check 通过。
+- 按既有设计采用每 Run 全文快照；向用户询问 Persona 加载失败策略，其余工作先做设计和来源整理。
+
 ## Phase 2 实施与交付
 - 用户明确选择 Ctrl+C 取消当前轮并保留会话；据此采用 Windows 标准 asyncio.Runner，多轮共用事件循环和 Session。
 - 在 phase-2-tools 分支原地实现，保留用户中文学习注释；未修改 Hermes 参考源码、原始语料或系统环境。
