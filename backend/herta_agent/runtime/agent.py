@@ -10,15 +10,23 @@
 """
 
 import asyncio
+from contextlib import aclosing, nullcontext
 from functools import partial
 from uuid import uuid4
 
 from herta_agent.config import RunSettings
 from herta_agent.llm.base import LLMProvider
+from herta_agent.llm.streaming import ReplyCompleted, TextDelta
 from herta_agent.runtime.context import ContextBuilder, StaticContextBuilder
-from herta_agent.runtime.errors import ModelTimeoutError, StepLimitExceeded, ToolCallLimitExceeded
+from herta_agent.runtime.errors import (
+    ModelTimeoutError,
+    ProviderError,
+    ProviderProtocolError,
+    StepLimitExceeded,
+    ToolCallLimitExceeded,
+)
 from herta_agent.runtime.events import EventSink, NullSink, RuntimeEvent
-from herta_agent.runtime.messages import Message, RunResult
+from herta_agent.runtime.messages import Message, ModelReply, RunResult
 from herta_agent.runtime.session import Session
 from herta_agent.runtime.turn import MemoryTurn, TurnIO
 from herta_agent.tools.executor import ToolExecutor
@@ -33,7 +41,13 @@ class Agent:
         *,
         registry: ToolRegistry | None = None,
         context_builder: ContextBuilder | None = None,
+        streaming: bool = False,
     ) -> None:
+        if type(streaming) is not bool or (
+            streaming and not callable(getattr(provider, "stream", None))
+        ):
+            raise ProviderError("流式模式需要提供受支持的stream入口。")
+        self.streaming = streaming
         self.provider = provider
         self.settings = settings or RunSettings()
         self.registry = registry if registry is not None else ToolRegistry()
@@ -41,6 +55,40 @@ class Agent:
         self.context_builder = (
             context_builder if context_builder is not None else StaticContextBuilder()
         )
+
+    async def _request(self, messages, sink, step, message_id):
+        if not self.streaming:
+            return await self.provider.complete(messages, tools=self.registry.definitions())
+        response = None
+        stream = self.provider.stream(messages, tools=self.registry.definitions())
+        cleanup = (
+            aclosing(stream) if callable(getattr(stream, "aclose", None)) else nullcontext(stream)
+        )
+        async with cleanup:
+            async for event in stream:
+                if response is not None:
+                    raise ProviderProtocolError("完整回复之后仍收到流式事件。")
+                if isinstance(event, TextDelta) and isinstance(event.text, str):
+                    await sink.emit(
+                        RuntimeEvent(
+                            type="llm.delta",
+                            step=step,
+                            message_id=message_id,
+                            payload={"text": event.text},
+                        )
+                    )
+                elif isinstance(event, ReplyCompleted) and isinstance(event.reply, ModelReply):
+                    try:
+                        response = ModelReply.model_validate_json(
+                            event.reply.model_dump_json(), strict=True
+                        )
+                    except ValueError:
+                        raise ProviderProtocolError("流式完整回复结构无效。") from None
+                else:
+                    raise ProviderProtocolError("流式入口返回了不支持的事件。")
+        if response is None:
+            raise ProviderProtocolError("模型流结束但没有完整回复。")
+        return response
 
     async def run(
         self,
@@ -66,9 +114,7 @@ class Agent:
                 await sink.emit(RuntimeEvent(type="llm.started", step=step, message_id=message_id))
                 try:
                     async with asyncio.timeout(self.settings.request_timeout):
-                        response = await self.provider.complete(
-                            messages, tools=self.registry.definitions()
-                        )
+                        response = await self._request(messages, sink, step, message_id)
                 except TimeoutError:
                     raise ModelTimeoutError("模型请求超过本轮设置的时间限制。") from None
 

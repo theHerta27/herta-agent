@@ -1,5 +1,13 @@
 # Herta Agent 工作记录
 
+## Phase 5 Task 8–9实施
+- 用户已手动推送e8d0fa7并要求下一步；沿现有计划执行Task 8、9，完成后停，不进入FastAPI装配，无真实API调用。沿用executing-plans/TDD及当前分支。
+- Task 8 complete：测试先因streaming模块缺失失败；实现字节级SSE帧、工具分片累计、结束校验和256KiB帧/4MiB总响应上限。补测CR-only末帧先失败后修复；8项定向与完整150项通过。
+- Task 9：5项测试先因streaming构造参数缺失失败；单一Loop的请求位置接入stream，增量只发observer。实现后5项及完整155项通过；新增HTTP流式、知识Tool与真实PersonaContextBuilder组合离线验收。
+- 独立审查：公共AsyncIterator契约不要求aclose，原清理代码错误地强制调用。新增测试观察AttributeError后改为仅在可用时关闭；真实HTTP生成器关闭保障不变。
+- Task 9 complete：最终Provider定向8项、Runtime定向7项及完整157项通过；Ruff check与format --check通过（65文件）。停止于Task 9，不进入Task 10；更新文档后提交当前分支。
+
+
 ## Phase 5 Task 4–7实施
 - 用户继续下一批；按现有依赖执行Task 4–7，完成验证后提交/push当前分支，不merge，不调用真实API。沿用executing-plans和TDD，保留既有工作区及根记录。
 - Task 4 complete：新测试先因TurnIO模块缺失失败，实现后定向3项/完整121项通过。单一Loop委托提交，MemoryTurn保持原CLI行为；restore只接收闭合历史。

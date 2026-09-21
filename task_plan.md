@@ -10,7 +10,7 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-phase-5-service已完成Task 1–7；本批Task 4–7及其142项完整回归/Ruff核验完成，提交并push后停止，不merge、不进入Task 8。Phase 4真实RAG效果仍待验收。
+phase-5-service已完成Task 1–9。本批Task 8、9流式工程实现完成，157项完整回归及Ruff通过，独立审查问题已复现并修复；停止，不进入Task 10。用户确认上批e8d0fa7已手动推送。没有真实API调用，Phase 4真实RAG效果仍待验收。
 
 ## Phase 5设计讨论
 - [x] 阅读Phase 1–4实际代码、设计和roadmap，区分既定约定与未决项。

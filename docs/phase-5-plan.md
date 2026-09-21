@@ -1,6 +1,6 @@
 # Phase 5 实施计划：本机服务、持久会话与SSE
 
-> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前批次在phase-5-service完成Task 4–7并提交/push；完成后停止，不执行Task 8及后续，不调用真实API、不merge。
+> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前批次在phase-5-service完成Task 8、9；完成后停止，不执行Task 10及后续，不调用真实API、不merge。
 
 **目标：** 在现有单一Agent Loop上接入SQLite SessionStore、RunManager、真实模型流式和FastAPI/SSE，使后续UI能可靠读取历史、观察及取消执行。
 
@@ -12,7 +12,7 @@
 
 ## 全局约束
 
-- 按用户逐批授权执行；当前Task 4–7完成并提交/push后停止，不进入Task 8，不merge。
+- 按用户逐批授权执行；当前Task 8、9完成后停止，不进入Task 10，不merge。
 - 保留现有唯一的 `Agent.run` 模型→工具→模型循环；CLI和HTTP服务不各写一份Loop。
 - 保留原有93项离线回归的行为含义，不删除、跳过或弱化断言以迁就新接口。
 - 单进程、单worker，绑定127.0.0.1，支持Windows中文/空格路径、目录外启动；无fork或Unix信号依赖。
@@ -241,13 +241,13 @@ self.assertEqual(manager.active_count, 0)
 
 **接口：** 定义TextDelta(text:str)、ReplyCompleted(reply:ModelReply)不可变类型；StreamingLLMProvider提供 `stream(messages, *, tools=()) -> AsyncIterator[TextDelta | ReplyCompleted]`。complete签名保持不变。流式和非流式共用最终Message/ToolCall校验，不共享不兼容的原始响应结构假设。
 
-- [ ] 用HTTPX AsyncByteStream/MockTransport编写分片fixture：中文UTF-8跨字节块、SSE行/JSON跨块、空注释、role片段、多段content、分片工具参数、多个tool index交错和尾部合法usage记录。
-- [ ] 写失败fixture：提前EOF、无合法finish_reason、无结束标志、截断/过滤、非法JSON、冲突id/类型、重复终结、零个/多个最终reply、超大帧或累计响应、旧function_call。均不得产出ReplyCompleted。
-- [ ] 运行 `test_provider_streaming.py`确认失败；请求stream=True，使用HTTPX响应流生命周期，按SSE帧解析，不假设每个网络chunk就是一个事件。仅支持单choice与现代tool_calls。
-- [ ] 按tool index累计调用，finish_reason与结束标志验证成功后只产出一次ReplyCompleted；不向工具执行器暴露未完成arguments，不转发隐藏推理字段。
-- [ ] 定义明确的帧/累计响应大小保护并写边界测试；HTTP错误只报安全状态，不转发body/URL。取消关闭响应，超时不隐式重试。完整流总期限由Task 9的Runtime包围，HTTP连接/读取期限继续有效。
-- [ ] 验收时间顺序：服务器被屏障阻塞在结束标志前时，消费者已能收到TextDelta，但尚未有ReplyCompleted；拒绝“收到完整JSON再切字”。
-- [ ] 定向及全套回归通过，仍无真实服务请求。
+- [x] 用HTTPX AsyncByteStream/MockTransport编写分片fixture：中文UTF-8跨字节块、SSE行/JSON跨块、空注释、role片段、多段content、分片工具参数、多个tool index交错和尾部合法usage记录。
+- [x] 写失败fixture：提前EOF、无合法finish_reason、无结束标志、截断/过滤、非法JSON、冲突id/类型、重复终结、零个/多个最终reply、超大帧或累计响应、旧function_call。均不得产出ReplyCompleted。
+- [x] 运行 `test_provider_streaming.py`确认失败；请求stream=True，使用HTTPX响应流生命周期，按SSE帧解析，不假设每个网络chunk就是一个事件。仅支持单choice与现代tool_calls。
+- [x] 按tool index累计调用，finish_reason与结束标志验证成功后只产出一次ReplyCompleted；不向工具执行器暴露未完成arguments，不转发隐藏推理字段。
+- [x] 定义明确的帧/累计响应大小保护并写边界测试；HTTP错误只报安全状态，不转发body/URL。取消关闭响应，超时不隐式重试。完整流总期限由Task 9的Runtime包围，HTTP连接/读取期限继续有效。
+- [x] 验收时间顺序：服务器被屏障阻塞在结束标志前时，消费者已能收到TextDelta，但尚未有ReplyCompleted；拒绝“收到完整JSON再切字”。
+- [x] 定向及全套回归通过，仍无真实服务请求。
 
 ```python
 self.assertIsInstance(await anext(events), TextDelta)
@@ -261,12 +261,12 @@ self.assertFalse(server_finish_released.is_set())
 
 **接口：** Agent构造新增显式 `streaming=False`选项；服务真实模式使用True，CLI原默认False。选择流式但Provider不支持时明确配置错误，不悄悄退回或伪造delta。演示模式可明确使用complete，仅测试fixture提供可控假增量并标注其用途。
 
-- [ ] 写单一Loop测试：流式文本→完整工具调用→工具结果→下一Step流式回答；每次请求使用同Run Persona快照，历史仅包含已提交Message。
-- [ ] 写partial隔离测试：输出数个delta后取消、协议失败、总超时、提交失败；关闭/重开Store后不含未提交assistant，下一轮Provider输入也不含它。即便全部文本已到达但finish非法也不例外。
-- [ ] 运行 `test_runtime_streaming.py`确认失败；在原请求位置消费stream或complete，二者得到同一个ModelReply后走原工具/终止分支。
-- [ ] llm.delta绑定请求前分配的message_id且仅送observer；llm.completed在完整消息提交后发。请求期限包围整个流消费，timeout/cancel清理迭代器与HTTP响应。
-- [ ] 验证最后Step工具预算、最多4个调用、工具错误回填、无partial落库、RAG工具结果照常传给下一步。Task 7唯一终态规则不被事件发送失败绕过。
-- [ ] 定向与全套回归通过，演示不会被称为真实流式模型验证。
+- [x] 写单一Loop测试：流式文本→完整工具调用→工具结果→下一Step流式回答；每次请求使用同Run Persona快照，历史仅包含已提交Message。
+- [x] 写partial隔离测试：输出数个delta后取消、协议失败、总超时、提交失败；关闭/重开Store后不含未提交assistant，下一轮Provider输入也不含它。即便全部文本已到达但finish非法也不例外。
+- [x] 运行 `test_runtime_streaming.py`确认失败；在原请求位置消费stream或complete，二者得到同一个ModelReply后走原工具/终止分支。
+- [x] llm.delta绑定请求前分配的message_id且仅送observer；llm.completed在完整消息提交后发。请求期限包围整个流消费，timeout/cancel清理迭代器与HTTP响应。
+- [x] 验证最后Step工具预算、最多4个调用、工具错误回填、无partial落库、RAG工具结果照常传给下一步。Task 7唯一终态规则不被事件发送失败绕过。
+- [x] 定向与全套回归通过，演示不会被称为真实流式模型验证。
 
 ```python
 self.assertTrue(any(e.type == "llm.delta" for e in events))

@@ -1,4 +1,4 @@
-"""A small non-streaming Chat Completions HTTP adapter, without vendor SDK coupling."""
+"""Chat Completions HTTP adapter with separate complete and streaming protocols."""
 
 from typing import Literal
 
@@ -6,6 +6,7 @@ import httpx
 from pydantic import BaseModel, Field, ValidationError
 
 from herta_agent.config import ProviderSettings
+from herta_agent.llm.streaming import parse_stream
 from herta_agent.runtime.errors import (
     ModelTimeoutError,
     ProviderError,
@@ -45,6 +46,35 @@ class OpenAICompatibleProvider:
     def __init__(self, settings: ProviderSettings, client: httpx.AsyncClient) -> None:
         self.settings = settings
         self.client = client  # Owned and closed by the caller, shared across turns.
+
+    async def stream(self, messages: tuple[Message, ...], *, tools: tuple[dict, ...] = ()):
+        body = {
+            "model": self.settings.model,
+            "messages": [m.to_wire() for m in messages],
+            "stream": True,
+        }
+        if tools:
+            body["tools"] = list(tools)
+        try:
+            async with self.client.stream(
+                "POST",
+                f"{self.settings.base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {self.settings.api_key.get_secret_value()}"},
+                json=body,
+                follow_redirects=False,
+            ) as response:
+                if response.status_code in {401, 403}:
+                    raise ProviderError("模型服务拒绝鉴权，请检查 API Key 和访问权限。")
+                if not response.is_success:
+                    raise ProviderError(
+                        f"模型服务返回 HTTP {response.status_code}，本次没有自动重试。"
+                    )
+                async for event in parse_stream(response.aiter_bytes()):
+                    yield event
+        except httpx.TimeoutException:
+            raise ModelTimeoutError("模型连接或读取超时。") from None
+        except httpx.RequestError:
+            raise ProviderError("无法连接模型服务，请检查地址、网络或代理配置。") from None
 
     async def complete(
         self, messages: tuple[Message, ...], *, tools: tuple[dict, ...] = ()
