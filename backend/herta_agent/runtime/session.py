@@ -17,6 +17,40 @@ class Session:
     _busy: bool = field(default=False, init=False, repr=False)
     _pending: dict[str, None] = field(default_factory=dict, init=False, repr=False)
 
+    @classmethod
+    def restore(cls, session_id: str, history) -> "Session":
+        """Restore a closed, validated history without exposing mutable storage."""
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("Invalid session id")
+        session = cls(session_id=session_id)
+        finished = False
+        for value in history:
+            if not isinstance(value, Message):
+                raise ValueError("Invalid history message")
+            message = Message.model_validate_json(value.model_dump_json(), strict=True)
+            if message.role == "user":
+                if session._pending:
+                    raise ValueError("Unclosed tool calls")
+                session.end_turn()
+                session.begin_turn(message)
+                finished = False
+            elif finished:
+                raise ValueError("Message after final answer")
+            elif message.role == "assistant":
+                if message.tool_calls:
+                    session.record_calls(message)
+                else:
+                    session.complete_turn(message)
+                    finished = True
+            elif message.role == "tool":
+                session.record_result(message.tool_call_id, message.content)
+            else:
+                raise ValueError("System messages are not history")
+        if session._pending:
+            raise ValueError("Unclosed tool calls")
+        session.end_turn()
+        return session
+
     @property
     def history(self) -> tuple[Message, ...]:
         """Return an immutable snapshot, not the mutable internal list."""

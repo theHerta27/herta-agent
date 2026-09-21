@@ -1,6 +1,6 @@
 # Phase 5 实施计划：本机服务、持久会话与SSE
 
-> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前用户授权在phase-5-service完成Task 2、3并提交/push；完成后停止，不执行Task 4及后续，不调用真实API、不merge。
+> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前批次在phase-5-service完成Task 4–7并提交/push；完成后停止，不执行Task 8及后续，不调用真实API、不merge。
 
 **目标：** 在现有单一Agent Loop上接入SQLite SessionStore、RunManager、真实模型流式和FastAPI/SSE，使后续UI能可靠读取历史、观察及取消执行。
 
@@ -12,7 +12,7 @@
 
 ## 全局约束
 
-- 按用户逐批授权执行；当前Task 2、3完成并提交/push后停止，不进入Task 4，不merge。
+- 按用户逐批授权执行；当前Task 4–7完成并提交/push后停止，不进入Task 8，不merge。
 - 保留现有唯一的 `Agent.run` 模型→工具→模型循环；CLI和HTTP服务不各写一份Loop。
 - 保留原有93项离线回归的行为含义，不删除、跳过或弱化断言以迁就新接口。
 - 单进程、单worker，绑定127.0.0.1，支持Windows中文/空格路径、目录外启动；无fork或Unix信号依赖。
@@ -156,12 +156,12 @@ await turn.abort(*, cancelled: bool, error_code: str, safe_message: str, step: i
 
 协议绑定本Run的Session；history仍由Session提供。增加 `Session.restore(session_id, history)`公共恢复入口，验证完整历史与配对，不允许路由修改私有属性。message_id由Runtime在每次模型请求前分配，供后续delta/提交共用。
 
-- [ ] 写RecordingTurn测试：begin→context→assistant调用提交→tool结果提交→最终complete顺序；提交抛错后不执行下一个工具或再次请求模型。
-- [ ] 写恢复测试：非法历史拒绝，两个恢复的Session不共享可变列表，缺失Persona仍保留本轮user且不请求模型。
-- [ ] 运行 `test_runtime_commits.py`确认失败，然后把现有Loop里的同步追加转为await TurnIO；MemoryTurn内部使用原Session行为，工具、步数限制不变。
-- [ ] 完成仅一次的abort/清理路径；提交失败后不把未提交内容追加到内存。取消、预算到顶、协议失败仍闭合pending调用。
-- [ ] 服务的PersistentTurn留给Task 6，实现时begin只映射Task 1已落库user到内存，不能再次调用admit_run。此任务通过假Turn证明接口，而非提前写服务层。
-- [ ] 定向及全部93项基线保持通过；若需要适配测试内部观察点，只能保留或加强原行为断言。
+- [x] 写RecordingTurn测试：begin→context→assistant调用提交→tool结果提交→最终complete顺序；提交抛错后不执行下一个工具或再次请求模型。
+- [x] 写恢复测试：非法历史拒绝，两个恢复的Session不共享可变列表，缺失Persona仍保留本轮user且不请求模型。
+- [x] 运行 `test_runtime_commits.py`确认失败，然后把现有Loop里的同步追加转为await TurnIO；MemoryTurn内部使用原Session行为，工具、步数限制不变。
+- [x] 完成仅一次的abort/清理路径；提交失败后不把未提交内容追加到内存。取消、预算到顶、协议失败仍闭合pending调用。
+- [x] 服务的PersistentTurn留给Task 6，实现时begin只映射Task 1已落库user到内存，不能再次调用admit_run。此任务通过假Turn证明接口，而非提前写服务层。
+- [x] 定向及全部93项基线保持通过；若需要适配测试内部观察点，只能保留或加强原行为断言。
 
 ```python
 self.assertEqual(provider_call_count, 1)
@@ -175,11 +175,11 @@ self.assertEqual(executed_tool_names, [])
 
 **接口：** RuntimeEvent包含type、step、message_id、tool_call_id及JSON安全payload；不含SSE格式。EventSink协议 `async emit(event: RuntimeEvent) -> None`；Agent.run新增可选observer，默认空接收器。Executor增加可选 `on_started`异步回调，在参数验证成功后、进入handler前调用。
 
-- [ ] 写事件测试：llm.started→已提交的llm.completed；合法工具的started/结果顺序；unknown_tool/参数错误不产生虚假的tool.started；每Step独立message_id。
-- [ ] 写基础设施错误测试：on_started/消息提交失败不能被Executor转换为execution_error后继续循环；handler普通异常仍按原约定清洗为ToolResult失败。
-- [ ] 运行 `test_runtime_events.py`确认失败；在唯一Loop的实际节点发事件，完成类事件只在相应提交成功后发。当前complete Provider不产生llm.delta。
-- [ ] 验收工具结果包含完整既有JSON格式；Runtime不判断search_knowledge名称，RAG专用事件映射推迟Task 11。
-- [ ] 定向和全套回归通过。终态服务事件由Manager负责，Runtime不再次发送run.completed/failed/cancelled。
+- [x] 写事件测试：llm.started→已提交的llm.completed；合法工具的started/结果顺序；unknown_tool/参数错误不产生虚假的tool.started；每Step独立message_id。
+- [x] 写基础设施错误测试：on_started/消息提交失败不能被Executor转换为execution_error后继续循环；handler普通异常仍按原约定清洗为ToolResult失败。
+- [x] 运行 `test_runtime_events.py`确认失败；在唯一Loop的实际节点发事件，完成类事件只在相应提交成功后发。当前complete Provider不产生llm.delta。
+- [x] 验收工具结果包含完整既有JSON格式；Runtime不判断search_knowledge名称，RAG专用事件映射推迟Task 11。
+- [x] 定向和全套回归通过。终态服务事件由Manager负责，Runtime不再次发送run.completed/failed/cancelled。
 
 ```python
 self.assertNotIn("tool.started", event_types_for_invalid_arguments)
@@ -196,13 +196,13 @@ self.assertLess(commit_position, completed_event_position)
 
 PersistentTurn消费Task 4的TurnIO，调用Task 1 Store。接纳后从Admission定位user序号，恢复此前已提交历史；begin校验同一user已落库，再映射到内存一次。append先Store提交后更新Session；complete/abort委托Manager统一终态操作，不各自独立决定状态。
 
-- [ ] 写测试：两个Session同时进入阻塞Provider；同Session第二次submit立即失败；全局设1时其他Session满额失败；失败前后历史和Run数量完全不变。
-- [ ] 使用同时到达的协程测试原子预占；不得先await DB再记占用。接纳写入失败、Task创建失败须释放预占，若Run已落库则进入Task 7收尾，不静默遗留。
-- [ ] 运行 `test_run_admission.py`确认失败；实现同步短临界段检查/预占，不用await semaphore排队。给拒绝定义服务错误码session_busy、run_capacity_exceeded，HTTP映射留Task 10。
-- [ ] start_run提交后才emit run.started；RunTask强引用保留到完成和清理。不同Run的Session、事件序号、取消状态互相隔离。
-- [ ] 本任务同时实现正常complete和普通异常abort的最小持久闭环，验证提交最终回答并释放名额后可接纳下一Run；Task 7在同一入口补强取消竞争与关闭，不留下只能启动不能收尾的组件。
-- [ ] 验证严格配置拒绝bool、0、负数、>32和非整数；配置改变不影响单Session消息语义。显式测试user只追加一次。
-- [ ] 定向和全套回归通过；测试使用现有complete Provider，不等待流式功能。
+- [x] 写测试：两个Session同时进入阻塞Provider；同Session第二次submit立即失败；全局设1时其他Session满额失败；失败前后历史和Run数量完全不变。
+- [x] 使用同时到达的协程测试原子预占；不得先await DB再记占用。接纳写入失败、Task创建失败须释放预占，若Run已落库则进入Task 7收尾，不静默遗留。
+- [x] 运行 `test_run_admission.py`确认失败；实现同步短临界段检查/预占，不用await semaphore排队。给拒绝定义服务错误码session_busy、run_capacity_exceeded，HTTP映射留Task 10。
+- [x] start_run提交后才emit run.started；RunTask强引用保留到完成和清理。不同Run的Session、事件序号、取消状态互相隔离。
+- [x] 本任务同时实现正常complete和普通异常abort的最小持久闭环，验证提交最终回答并释放名额后可接纳下一Run；Task 7在同一入口补强取消竞争与关闭，不留下只能启动不能收尾的组件。
+- [x] 验证严格配置拒绝bool、0、负数、>32和非整数；配置改变不影响单Session消息语义。显式测试user只追加一次。
+- [x] 定向和全套回归通过；测试使用现有complete Provider，不等待流式功能。
 
 ```python
 before = await store.load_history(second_session)
@@ -219,13 +219,13 @@ RunCapacityError与SessionConflictError定义于service/runs.py，均携带固�
 
 **接口：** 新增 `await manager.cancel(run_id, reason) -> CancelResult`；CancelResult含accepted、持久status和cancel_requested，不能把请求成功称为已经cancelled。实现PersistentTurn complete/abort与Manager共享的终态提交入口，调用Store.finish_run。
 
-- [ ] 写屏障测试：Task尚未进入Runtime就取消；重复cancel；工具中途取消；模型超时/Persona失败；completed后再cancel；完成提交与cancel两种先后顺序。
-- [ ] 写在途事务测试：submit调用方在admit事务中取消，事务最终成功时仍必须由Manager收尾；terminal提交中取消不能提前释放Session或全局名额。
-- [ ] 运行 `test_run_lifecycle.py`确认失败；Manager登记接纳过程的所有权，不能到返回RunHandle后才登记。首次取消中断工作；重复取消不再打断最终清理。
-- [ ] 在同一Run终态临界段裁决：已进入最终提交则等待提交结果；此前已接受取消则拒绝新成功提案。Store终态不可重复改写，completed后的通知失败不回滚为cancelled。
-- [ ] 清理资源、闭合pending和终态提交结束后释放名额。Task从未开始的路径由Manager补收尾，不依赖Agent finally。存储不可写则拒绝新Run，发persisted=false服务故障，保留磁盘事实供重启修复。
-- [ ] shutdown停止接纳→取消/等待任务及在途事务→关闭资源；设置有限协作清理等待，超时不能假称线程已停或数据已提交，硬退出留给恢复。测试不引入Linux信号。
-- [ ] 定向与全套回归通过；下一Session和同Session后续Run都能在真实释放后继续。
+- [x] 写屏障测试：Task尚未进入Runtime就取消；重复cancel；工具中途取消；模型超时/Persona失败；completed后再cancel；完成提交与cancel两种先后顺序。
+- [x] 写在途事务测试：submit调用方在admit事务中取消，事务最终成功时仍必须由Manager收尾；terminal提交中取消不能提前释放Session或全局名额。
+- [x] 运行 `test_run_lifecycle.py`确认失败；Manager登记接纳过程的所有权，不能到返回RunHandle后才登记。首次取消中断工作；重复取消不再打断最终清理。
+- [x] 在同一Run终态临界段裁决：已进入最终提交则等待提交结果；此前已接受取消则拒绝新成功提案。Store终态不可重复改写，completed后的通知失败不回滚为cancelled。
+- [x] 清理资源、闭合pending和终态提交结束后释放名额。Task从未开始的路径由Manager补收尾，不依赖Agent finally。存储不可写则拒绝新Run，发persisted=false服务故障，保留磁盘事实供重启修复。
+- [x] shutdown停止接纳→取消/等待任务及在途事务→关闭资源；设置有限协作清理等待，超时不能假称线程已停或数据已提交，硬退出留给恢复。测试不引入Linux信号。
+- [x] 定向与全套回归通过；下一Session和同Session后续Run都能在真实释放后继续。
 
 ```python
 await manager.cancel(run_id, "user")

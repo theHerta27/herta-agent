@@ -3,6 +3,7 @@
 import asyncio
 import json
 import math
+from collections.abc import Awaitable, Callable
 
 from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 
@@ -37,7 +38,9 @@ class ToolExecutor:
             raise ValueError("Tool timeout must be finite and within (0, 600]")
         self.registry, self.timeout = registry, timeout
 
-    async def execute(self, call: ToolCall) -> ToolResult:
+    async def execute(
+        self, call: ToolCall, *, on_started: Callable[[], Awaitable[None]] | None = None
+    ) -> ToolResult:
         spec = self.registry.get(call.name)
         if spec is None:
             return ToolResult.failure("unknown_tool", "没有注册此工具，请使用提供的工具名称。")
@@ -47,6 +50,8 @@ class ToolExecutor:
             return ToolResult.failure(
                 "invalid_arguments", "参数不符合工具 JSON schema，请检查字段和类型。"
             )
+        if on_started is not None:
+            await on_started()  # Infrastructure errors must not become tool failures.
         try:
             async with asyncio.timeout(spec.timeout if spec.timeout is not None else self.timeout):
                 data = await spec.handler(parameters)

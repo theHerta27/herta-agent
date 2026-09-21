@@ -1,5 +1,15 @@
 # Herta Agent 工作记录
 
+## Phase 5 Task 4–7实施
+- 用户继续下一批；按现有依赖执行Task 4–7，完成验证后提交/push当前分支，不merge，不调用真实API。沿用executing-plans和TDD，保留既有工作区及根记录。
+- Task 4 complete：新测试先因TurnIO模块缺失失败，实现后定向3项/完整121项通过。单一Loop委托提交，MemoryTurn保持原CLI行为；restore只接收闭合历史。
+- Task 5 complete：事件测试先因events模块缺失失败；实现后定向3项/完整124项通过。参数验证成功才发tool.started，提交后发completed，基础设施错误不清洗为工具错误。
+- Task 6 complete：接纳测试先因service模块缺失失败；定向5项/完整129项通过。预占在await前，跨Session并行，满额拒绝，user只入库一次，正常及失败终态释放名额。
+- Task 7 complete：失败测试复现cancel/shutdown缺失和admit取消留下created Run；实现接纳所有权、终态优先级与关闭等待后通过。补齐任务创建失败、关闭超时、通知失败不改变终态等测试。
+- Final review：独立审查发现取消被模型适配器吞掉后仍执行新工具；测试先实际观察工具执行（RED），再在PersistentTurn.append/RunHandle.emit检查取消标志；模型/handler吞取消两种路径均通过。
+- 最终定向3+3+5+13项，完整142项通过；Ruff check和format --check通过（62文件）。Task 4–7已完成，停止于Task 7，按本批授权提交/push，不merge。没有真实API调用，真实RAG仍未验收。
+
+
 ## Phase 5 Task 2–3实施（2026-09-21）
 - 本轮授权连续完成Task 2、3并提交/push phase-5-service，完成后停止。沿用当前分支和根目录执行记录，不引入额外工作树或Linux脚本。
 - Task 2：6项行为测试先观察恢复接口缺失/非成功终态拒绝/缺少接纳门禁的失败；最小实现后定向6项及全套112项通过。恢复显式调用，单事务按持久历史闭合pending，已完成结果不修改，不执行工具。
