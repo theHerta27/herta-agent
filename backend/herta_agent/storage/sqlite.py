@@ -1,0 +1,391 @@
+"""Task 1: explicit SQLite facts and atomic commits, independent of the Runtime.
+
+Async API names reserve the planned interface. This first stage executes short SQL
+transactions synchronously and must not yet be used as the service's I/O adapter.
+Dedicated-thread execution/cancellation belongs to Task 3; recovery to Task 2.
+"""
+
+import re
+import sqlite3
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
+from uuid import uuid4
+
+from herta_agent.runtime.messages import Message
+from herta_agent.storage.models import (
+    Admission,
+    MessageRecord,
+    RunConfig,
+    RunRecord,
+    SessionRecord,
+    StoreError,
+)
+
+SCHEMA_VERSION = 1
+SCHEMA = (
+    """CREATE TABLE sessions (
+        session_id TEXT PRIMARY KEY NOT NULL,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""",
+    """CREATE TABLE runs (
+        run_id TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT NOT NULL REFERENCES sessions(session_id),
+        status TEXT NOT NULL CHECK(status IN
+            ('created','running','completed','failed','cancelled','interrupted')),
+        created_at TEXT NOT NULL, started_at TEXT, ended_at TEXT,
+        steps INTEGER NOT NULL CHECK(steps BETWEEN 0 AND 100),
+        context_hash TEXT, config_json TEXT NOT NULL, error TEXT,
+        UNIQUE(run_id, session_id))""",
+    """CREATE UNIQUE INDEX one_active_run ON runs(session_id)
+        WHERE status IN ('created','running')""",
+    """CREATE TABLE messages (
+        message_id TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT NOT NULL REFERENCES sessions(session_id),
+        run_id TEXT NOT NULL,
+        seq INTEGER NOT NULL CHECK(seq > 0),
+        step INTEGER NOT NULL CHECK(step BETWEEN 0 AND 100),
+        message_json TEXT NOT NULL,
+        UNIQUE(session_id, seq),
+        FOREIGN KEY(run_id, session_id) REFERENCES runs(run_id, session_id))""",
+    "CREATE INDEX run_messages ON messages(run_id, seq)",
+)
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
+
+
+def _invalid() -> StoreError:
+    return StoreError("store_invalid", "存储输入或消息顺序无效。")
+
+
+def _identifier(value: str) -> str:
+    if not isinstance(value, str) or not value.strip() or len(value) > 256:
+        raise _invalid()
+    return value
+
+
+def _integer(value: int, low: int, high: int | None = None) -> int:
+    if type(value) is not int or value < low or (high is not None and value > high):
+        raise _invalid()
+    return value
+
+
+def _message(value: Message) -> Message:
+    if not isinstance(value, Message):
+        raise _invalid()
+    # Revalidate even model_construct/model_copy objects instead of trusting their type.
+    return Message.model_validate_json(value.model_dump_json(), strict=True)
+
+
+def _check_history(records: tuple[MessageRecord, ...]) -> tuple[set[str], int, bool]:
+    """Validate complete batches or a legal unfinished prefix; return last Run state."""
+    pending: set[str] = set()
+    run_id, last_step, finished = None, 0, False
+    seen_runs = set()
+    for record in records:
+        message = record.message
+        if message.role == "user":
+            if pending or record.run_id in seen_runs or record.step != 0:
+                raise _invalid()
+            run_id, last_step, finished = record.run_id, 0, False
+            seen_runs.add(run_id)
+        elif record.run_id != run_id or finished:
+            raise _invalid()
+        elif message.role == "assistant":
+            if pending or record.step <= last_step:
+                raise _invalid()
+            last_step = record.step
+            pending = {call.id for call in message.tool_calls}
+            finished = not pending
+        elif message.role == "tool":
+            if message.tool_call_id not in pending or record.step != last_step:
+                raise _invalid()
+            pending.remove(message.tool_call_id)
+        else:
+            raise _invalid()
+    return pending, last_step, finished
+
+
+class SQLiteSessionStore:
+    def __init__(self, path: Path):
+        self.path = Path(path).absolute()
+        self._connection: sqlite3.Connection | None = None
+
+    async def open(self) -> None:
+        if self._connection is not None:
+            raise StoreError("store_state", "数据库已经打开。")
+        connection = None
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            connection = sqlite3.connect(self.path, isolation_level=None, timeout=1.0)
+            connection.row_factory = sqlite3.Row
+            connection.execute("PRAGMA foreign_keys = ON")
+            version = connection.execute("PRAGMA user_version").fetchone()[0]
+            tables = {
+                row[0]
+                for row in connection.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                )
+            }
+            if version == 0 and not tables:
+                connection.execute("BEGIN IMMEDIATE")
+                for statement in SCHEMA:
+                    connection.execute(statement)
+                connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+                connection.commit()
+            elif version != SCHEMA_VERSION or tables != {"sessions", "runs", "messages"}:
+                raise StoreError("store_schema", "数据库版本或结构不兼容；未重建数据库。")
+            # Check expected columns without repairing an existing database.
+            connection.execute("SELECT session_id, created_at, updated_at FROM sessions LIMIT 0")
+            connection.execute(
+                "SELECT run_id, session_id, status, created_at, started_at, ended_at, "
+                "steps, context_hash, config_json, error FROM runs LIMIT 0"
+            )
+            connection.execute(
+                "SELECT message_id, session_id, run_id, seq, step, "
+                "message_json FROM messages LIMIT 0"
+            )
+            self._connection = connection
+        except (OSError, sqlite3.Error, StoreError) as error:
+            if connection is not None:
+                connection.close()
+            if isinstance(error, StoreError):
+                raise
+            raise StoreError("store_open", "无法打开有效的会话数据库。") from None
+
+    async def close(self) -> None:
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
+
+    @contextmanager
+    def _transaction(self, *, write=False):
+        connection = self._connection
+        if connection is None:
+            raise StoreError("store_state", "数据库尚未打开。")
+        try:
+            connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            yield connection
+            connection.commit()
+        except BaseException as error:
+            connection.rollback()
+            if isinstance(error, StoreError):
+                raise
+            if isinstance(error, (sqlite3.Error, ValueError, TypeError)):
+                raise StoreError(
+                    "store_operation", "会话数据库操作失败；本次事务未提交。"
+                ) from None
+            raise
+
+    @staticmethod
+    def _session(connection, session_id) -> SessionRecord:
+        row = connection.execute(
+            "SELECT * FROM sessions WHERE session_id=?", (_identifier(session_id),)
+        ).fetchone()
+        if row is None:
+            raise StoreError("store_not_found", "会话不存在。")
+        return SessionRecord(**dict(row))
+
+    @staticmethod
+    def _run(connection, run_id) -> RunRecord:
+        row = connection.execute(
+            "SELECT * FROM runs WHERE run_id=?", (_identifier(run_id),)
+        ).fetchone()
+        if row is None:
+            raise StoreError("store_not_found", "Run不存在。")
+        fields = dict(row)
+        fields["config"] = RunConfig.model_validate_json(fields.pop("config_json"))
+        return RunRecord(**fields)
+
+    @staticmethod
+    def _records(connection, session_id) -> tuple[MessageRecord, ...]:
+        records = []
+        for row in connection.execute(
+            "SELECT * FROM messages WHERE session_id=? ORDER BY seq", (session_id,)
+        ):
+            fields = dict(row)
+            fields["message"] = Message.model_validate_json(fields.pop("message_json"), strict=True)
+            records.append(MessageRecord(**fields))
+        if [record.seq for record in records] != list(range(1, len(records) + 1)):
+            raise _invalid()
+        _check_history(tuple(records))
+        return tuple(records)
+
+    @staticmethod
+    def _insert(connection, record: MessageRecord):
+        connection.execute(
+            "INSERT INTO messages VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                record.message_id,
+                record.session_id,
+                record.run_id,
+                record.seq,
+                record.step,
+                record.message.model_dump_json(),
+            ),
+        )
+        connection.execute(
+            "UPDATE sessions SET updated_at=? WHERE session_id=?", (_now(), record.session_id)
+        )
+
+    async def create_session(self) -> SessionRecord:
+        with self._transaction(write=True) as connection:
+            now = _now()
+            session = SessionRecord(session_id=uuid4().hex, created_at=now, updated_at=now)
+            connection.execute(
+                "INSERT INTO sessions VALUES (?, ?, ?)", (session.session_id, now, now)
+            )
+            return session
+
+    async def get_session(self, session_id: str) -> SessionRecord:
+        with self._transaction() as connection:
+            return self._session(connection, session_id)
+
+    async def list_sessions(self, after_id=None, limit=50) -> tuple[SessionRecord, ...]:
+        with self._transaction() as connection:
+            _integer(limit, 1, 100)
+            cursor = "" if after_id is None else _identifier(after_id)
+            rows = connection.execute(
+                "SELECT * FROM sessions WHERE session_id > ? ORDER BY session_id LIMIT ?",
+                (cursor, limit),
+            )
+            return tuple(SessionRecord(**dict(row)) for row in rows)
+
+    async def load_history(self, session_id: str, before_seq=None) -> tuple[MessageRecord, ...]:
+        with self._transaction() as connection:
+            self._session(connection, session_id)
+            if before_seq is not None:
+                _integer(before_seq, 1)
+            records = self._records(connection, session_id)
+            return tuple(r for r in records if before_seq is None or r.seq < before_seq)
+
+    async def list_messages(self, session_id: str, after_seq=0, limit=100):
+        with self._transaction() as connection:
+            self._session(connection, session_id)
+            _integer(after_seq, 0)
+            _integer(limit, 1, 100)
+            return tuple(r for r in self._records(connection, session_id) if r.seq > after_seq)[
+                :limit
+            ]
+
+    async def admit_run(self, session_id: str, run_id: str, user: Message, config) -> Admission:
+        with self._transaction(write=True) as connection:
+            self._session(connection, session_id)
+            _identifier(run_id)
+            user = _message(user)
+            if user.role != "user":
+                raise _invalid()
+            if isinstance(config, RunConfig):
+                config = RunConfig.model_validate_json(config.model_dump_json())
+            else:
+                config = RunConfig.model_validate(config)
+            history = self._records(connection, session_id)
+            record = MessageRecord(
+                message_id=uuid4().hex,
+                session_id=session_id,
+                run_id=run_id,
+                seq=len(history) + 1,
+                step=0,
+                message=user,
+            )
+            _check_history((*history, record))
+            connection.execute(
+                "INSERT INTO runs (run_id,session_id,status,created_at,steps,config_json) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (run_id, session_id, "created", _now(), 0, config.model_dump_json()),
+            )
+            self._insert(connection, record)
+            return Admission(run=self._run(connection, run_id), user=record)
+
+    async def get_run(self, run_id: str) -> RunRecord:
+        with self._transaction() as connection:
+            return self._run(connection, run_id)
+
+    async def start_run(self, run_id: str) -> RunRecord:
+        with self._transaction(write=True) as connection:
+            if self._run(connection, run_id).status != "created":
+                raise StoreError("store_transition", "只有created Run可以开始。")
+            connection.execute(
+                "UPDATE runs SET status='running', started_at=? WHERE run_id=?", (_now(), run_id)
+            )
+            return self._run(connection, run_id)
+
+    async def set_context(self, run_id: str, context_hash: str) -> None:
+        with self._transaction(write=True) as connection:
+            if (
+                self._run(connection, run_id).status != "running"
+                or not isinstance(context_hash, str)
+                or not re.fullmatch("[0-9a-f]{64}", context_hash)
+            ):
+                raise _invalid()
+            connection.execute(
+                "UPDATE runs SET context_hash=? WHERE run_id=?", (context_hash, run_id)
+            )
+
+    async def append_message(
+        self, run_id: str, message_id: str, step: int, message: Message
+    ) -> MessageRecord:
+        with self._transaction(write=True) as connection:
+            run = self._run(connection, run_id)
+            if run.status != "running":
+                raise StoreError("store_transition", "只能向running Run追加工具消息。")
+            _integer(step, 1, run.config.settings.max_steps)
+            message = _message(message)
+            if message.role != "tool" and not (message.role == "assistant" and message.tool_calls):
+                raise _invalid()  # Text-only answers belong exclusively to finish_run.
+            history = self._records(connection, run.session_id)
+            record = MessageRecord(
+                message_id=message_id,
+                session_id=run.session_id,
+                run_id=run_id,
+                seq=len(history) + 1,
+                step=step,
+                message=message,
+            )
+            _check_history((*history, record))
+            self._insert(connection, record)
+            connection.execute("UPDATE runs SET steps=? WHERE run_id=?", (step, run_id))
+            return record
+
+    async def finish_run(
+        self,
+        run_id: str,
+        status: str,
+        *,
+        steps: int,
+        final_message: MessageRecord | None = None,
+        error=None,
+    ) -> RunRecord:
+        """Commit the validated final answer and completed status in the same transaction.
+
+        Task 1 intentionally rejects non-success finalization; pending repair and
+        failure/cancellation terminal commits are Task 2, not a silent fallback.
+        The caller must already have validated the provider's completion protocol.
+        """
+        with self._transaction(write=True) as connection:
+            run = self._run(connection, run_id)
+            if status != "completed" or run.status != "running" or error is not None:
+                raise StoreError("store_transition", "当前只支持running Run的完整成功提交。")
+            _integer(steps, 1, run.config.settings.max_steps)
+            if not isinstance(final_message, MessageRecord):
+                raise _invalid()
+            final = MessageRecord.model_validate_json(final_message.model_dump_json())
+            message = _message(final.message)
+            history = self._records(connection, run.session_id)
+            if (
+                final.session_id != run.session_id
+                or final.run_id != run_id
+                or final.seq != len(history) + 1
+                or final.step != steps
+                or message.role != "assistant"
+                or message.tool_calls
+            ):
+                raise _invalid()
+            _check_history((*history, final))
+            self._insert(connection, final)
+            connection.execute(
+                "UPDATE runs SET status='completed', steps=?, ended_at=? WHERE run_id=?",
+                (steps, _now(), run_id),
+            )
+            return self._run(connection, run_id)

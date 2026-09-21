@@ -10,7 +10,17 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-Phase 3 commit 66a5d177aae9560f7972644e9715a55e57e48c25。用户已确认远程Embedding并授权编码；Phase 4工程实现在本地phase-4-rag完成，未提交/推送/合并。93项离线测试通过，真实服务合约、dev校准和check/聊天效果仍待本地环境配置后验收。main及其他远端分支未改。
+Phase 4基线ae72541ea9ea7c64d768d2b469c479a311661828；真实RAG效果仍待验收。用户已授权Phase 5编码但本轮仅Task 1；已从phase-4-rag创建phase-5-service，Task 1独立存储实现与核验已完成，停在本任务。禁止Task 2及后续、提交/push/merge。
+
+## Phase 5设计讨论
+- [x] 阅读Phase 1–4实际代码、设计和roadmap，区分既定约定与未决项。
+- [x] 分析服务边界、持久化提交点、Run生命周期、SSE与断连语义。
+- [x] 用户选择A：partial仅SSE展示，不持久化、不恢复、不进入下一轮上下文。
+- [x] 用户确认跨Session并行、同Session互斥、服务全局上限满额立即拒绝，不排队。
+- [x] 用户已确认docs/phase-5-design.md整体设计。
+- [x] 编写docs/phase-5-plan.md，按指定依赖顺序拆成12个可独立验证任务。
+- [x] 用户授权创建phase-5-service并仅执行Task 1，已观察失败测试后实现。
+- [x] Task 1最终测试/代码核验与交付；13项定向、106项全套及Ruff检查通过，停止，不进入Task 2。
 
 ## Phase 4 设计与资料准备
 - [x] 阅读 Phase 1–3 架构、Persona 与现有角色材料，讨论检索目标与取舍。

@@ -1,5 +1,23 @@
 # Herta Agent 工作记录
 
+## Phase 5 Task 1实施（2026-09-21）
+- 用户仅授权Task 1，不提交、不push、不merge、不执行后续任务。从phase-4-rag/ae72541创建phase-5-service，保留此前未提交设计文档。
+- 先读现有Message/Session/测试及Task 1契约，重跑原93项全部通过；新增13个存储行为测试，首次因storage模块不存在而按预期失败，再实现后13项通过。
+- 新增storage包和test_session_store.py；故障触发器验证真实SQLite事务回滚，包含中文路径、重复调用ID、非法消息、状态、配置白名单、版本不匹配等。
+- Ruling：按用户限定停在Task 1，非成功终态/中断恢复不实现（Task 2）；async接口当前内部同步短SQL，线程与取消保障不提前实现（Task 3）。原CLI与Agent仍只用内存。
+- Ruling：使用当前项目中新建的用户指定分支和已有progress/task_plan作为执行记录，不复制未提交设计到另一工作树，不使用Linux脚本或自动提交。
+- 首轮Ruff发现新文件排版/长行，已针对新文件格式化；最终定向13项通过，全套106项通过（原93项保留），Ruff check通过，format --check共50文件通过。独立只读审查未发现Task 1范围内具体缺陷。新增docs/phase-5-task-1.md说明数据入口和未实现边界，停在Task 1。
+
+## Phase 5设计讨论（2026-09-21）
+- 用户确认整体设计，仅授权实施计划。新增phase-5-plan.md，按SessionStore→Runtime边界→RunManager→Provider真流式→FastAPI/SSE与Windows集成拆为12任务，明确文件、接口、失败测试和验收。未编码、安装、启动服务或执行API调用。
+- 用户确认并发方案A，授权默认数值/同步细节按现有配置体系设计。收敛设计建议默认4（可配置1–32），区分接纳容量与Session生命周期；新增phase-5-design.md，仍未编码。
+- 用户确认partial方案A：仅SSE展示；assistant必须完整协议校验并提交成功才进入历史。已更新分析与验收条件，尚未编码；下一项讨论不同会话并发。
+- Phase 4实际已按用户要求提交并push ae72541；历史条目中的“未提交”描述当时状态，真实RAG效果仍未验收。
+- 用户授权本轮分析，不授权编码。核对Agent.run、内存Session、非流式Provider、工具执行、Context/Persona、RAG装配与roadmap。
+- 新增docs/phase-5-analysis.md，建议RunManager + SQLite SessionStore + 通用提交/事件边界，保留一个Loop。
+- 不重新询问roadmap已经规定的断连取消、不重放、重启interrupted；先询问未完成回答的持久化程度，不同会话并发随后讨论。
+- 本轮无业务代码、依赖安装、服务启动、模型API调用或Git发布。官方文档浏览与本地分析不构成真实效果验证。
+
 ## Phase 4 工程实现（2026-09-20）
 - 用户确认独立远程Embedding与Key边界后授权编码，从Phase 3建立本地phase-4-rag。
 - 先观察ingest/store/retriever/adapter/tool/CLI测试失败，再实现相应行为。只新增NumPy到项目venv和锁文件；网络受限后使用批准的安装权限，未修改其他项目环境。
