@@ -10,7 +10,7 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-Phase 4基线ae72541ea9ea7c64d768d2b469c479a311661828；真实RAG效果仍待验收。用户已授权Phase 5编码但本轮仅Task 1；已从phase-4-rag创建phase-5-service，Task 1独立存储实现与核验已完成，停在本任务。禁止Task 2及后续、提交/push/merge。
+当前phase-5-service，Task 1已提交48f2d41；本轮授权Task 2、3及提交/push，不merge。Task 2、3实现与核验完成（118项测试及Ruff通过），停止，不进入Task 4。原93项回归保留，Phase 4真实RAG效果仍待验收。
 
 ## Phase 5设计讨论
 - [x] 阅读Phase 1–4实际代码、设计和roadmap，区分既定约定与未决项。

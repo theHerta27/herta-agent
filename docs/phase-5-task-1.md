@@ -1,5 +1,7 @@
 # Phase 5 Task 1：SQLite记录与原子消息提交
 
+> 本文保留Task 1交付时的记录；其中“尚未实现”的Task 2、3现已完成，见[后续记录](phase-5-task-2-3.md)。
+
 本轮只完成Task 1。分支从phase-4-rag的ae72541创建为phase-5-service；未提交、push或merge。
 
 ## 新增的东西

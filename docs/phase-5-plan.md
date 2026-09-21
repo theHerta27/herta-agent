@@ -1,6 +1,6 @@
 # Phase 5 实施计划：本机服务、持久会话与SSE
 
-> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前用户仅授权在phase-5-service实施Task 1；Task 2及后续尚未授权，不调用真实API，不提交、push或merge。
+> 执行者须同时阅读本计划与设计。真正获准实施后使用 `superpowers:executing-plans` 按任务执行；如用户另选逐任务子代理方式，则使用 `superpowers:subagent-driven-development`。当前用户授权在phase-5-service完成Task 2、3并提交/push；完成后停止，不执行Task 4及后续，不调用真实API、不merge。
 
 **目标：** 在现有单一Agent Loop上接入SQLite SessionStore、RunManager、真实模型流式和FastAPI/SSE，使后续UI能可靠读取历史、观察及取消执行。
 
@@ -12,7 +12,7 @@
 
 ## 全局约束
 
-- 按用户逐任务授权执行；当前Task 1完成即停止，不自动继续、提交、合并或push。
+- 按用户逐批授权执行；当前Task 2、3完成并提交/push后停止，不进入Task 4，不merge。
 - 保留现有唯一的 `Agent.run` 模型→工具→模型循环；CLI和HTTP服务不各写一份Loop。
 - 保留原有93项离线回归的行为含义，不删除、跳过或弱化断言以迁就新接口。
 - 单进程、单worker，绑定127.0.0.1，支持Windows中文/空格路径、目录外启动；无fork或Unix信号依赖。
@@ -106,11 +106,11 @@ self.assertEqual((await store.get_run(run_id)).status, "running")
 
 **消费/产出：** 使用Task 1的事务与记录；新增 `await store.recover_interrupted() -> tuple[RunRecord, ...]`，完成finish_run的非成功分支。读取已提交消息推导pending，不能依赖崩溃前内存字典。
 
-- [ ] 写测试：遗留created、模型等待中的running、工具声明后部分完成的running；重开DB后修复为interrupted，仅给真正pending调用追加中断/结果未知结果，保留成功结果。
-- [ ] 写测试：连续恢复两次不重复补工具结果、不改变已有终态；恢复事务失败不得部分修复后接受新Run；损坏的历史配对明确失败，不编造或删除历史。
-- [ ] 运行 `test_store_recovery.py`确认失败，再实现单事务修复；错误结果使用现有ToolResult格式，但保留中断原因，不假称用户取消。
-- [ ] 验证两个Session、跨Step重复tool_call_id均不串线；没有模型、Embedding或工具handler被恢复流程调用。
-- [ ] 定向和全套回归通过。验收恢复后的历史可以构造合法下一轮模型输入。
+- [x] 写测试：遗留created、模型等待中的running、工具声明后部分完成的running；重开DB后修复为interrupted，仅给真正pending调用追加中断/结果未知结果，保留成功结果。
+- [x] 写测试：连续恢复两次不重复补工具结果、不改变已有终态；恢复事务失败不得部分修复后接受新Run；损坏的历史配对明确失败，不编造或删除历史。
+- [x] 运行 `test_store_recovery.py`确认失败，再实现单事务修复；错误结果使用现有ToolResult格式，但保留中断原因，不假称用户取消。
+- [x] 验证两个Session、跨Step重复tool_call_id均不串线；没有模型、Embedding或工具handler被恢复流程调用。
+- [x] 定向和全套回归通过。验收恢复后的历史可以构造合法下一轮模型输入。
 
 ```python
 await store.recover_interrupted()
@@ -126,12 +126,12 @@ self.assertEqual(tool_handler_calls, 0)
 
 **接口：** Task 1外部异步方法不变。Store内部单个专用线程拥有连接，提交的工作有受跟踪的Future；本任务完成后才让Runtime依赖其取消保证。增加只读 `store.writable`供服务健康与接纳检查。
 
-- [ ] 使用threading.Event控制事务“执行中/已提交/释放”，编写调用协程被取消但底层事务尚未结束的测试；同时断言事件循环能继续执行另一个协程。
-- [ ] 写锁冲突、open/close失败、重复close以及close期间仍有事务的测试；错误不得泄露SQL参数、配置或动态生成的假凭据。
-- [ ] 运行 `test_store_cancellation.py`确认失败，再实现短事务串行执行、有限SQLite锁等待（起点1秒）及在途工作跟踪；禁止把一个连接任意交给线程池多线程使用。
-- [ ] 取消时受控等待已提交线程工作的真实结果，再传播取消；不能将 `shield` 当作工作已经完成，也不能让被取消的await丢掉Future所有权。
-- [ ] 提交失败标记不可写；不做后台重试。close等待在途工作完成后由所属线程关闭连接，拒绝close后的新操作。
-- [ ] 验收：在途Future完成前close不能宣称结束；取消后的“晚写”不会与下一轮写入交叉。保留硬进程退出只能依靠下次恢复的边界。
+- [x] 使用threading.Event控制事务“执行中/已提交/释放”，编写调用协程被取消但底层事务尚未结束的测试；同时断言事件循环能继续执行另一个协程。
+- [x] 写锁冲突、open/close失败、重复close以及close期间仍有事务的测试；错误不得泄露SQL参数、配置或动态生成的假凭据。
+- [x] 运行 `test_store_cancellation.py`确认失败，再实现短事务串行执行、有限SQLite锁等待（起点1秒）及在途工作跟踪；禁止把一个连接任意交给线程池多线程使用。
+- [x] 取消时受控等待已提交线程工作的真实结果，再传播取消；不能将 `shield` 当作工作已经完成，也不能让被取消的await丢掉Future所有权。
+- [x] 提交失败标记不可写；不做后台重试。close等待在途工作完成后由所属线程关闭连接，拒绝close后的新操作。
+- [x] 验收：在途Future完成前close不能宣称结束；取消后的“晚写”不会与下一轮写入交叉。保留硬进程退出只能依靠下次恢复的边界。
 
 ```python
 caller.cancel()
@@ -351,4 +351,4 @@ git -c safe.directory=D:/Desktop/herta-agent diff --check
 | API与共享资源/Windows路径 | 10、12 |
 | Persona/RAG边界与真实效果声明 | 4、9、10、11、12 |
 
-计划只定义任务与验收，不声称这些测试已经运行或功能已经存在。文件名、类型来源与任务消费接口已交叉核对；没有把Store专属线程升级为Run队列，也没有把框架事件传输当作数据库事实。实施方法在后续明确授权时沿用/确认，本轮到此停止。
+任务完成状态以勾选及progress.md实测记录为准，未勾选任务尚未实现。保留全部12个Task与依赖顺序；Store专属线程不是Run队列，框架事件传输不是数据库事实。

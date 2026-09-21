@@ -1,14 +1,12 @@
-"""Task 1: explicit SQLite facts and atomic commits, independent of the Runtime.
+"""SQLite facts, recovery and a single connection-owning worker thread."""
 
-Async API names reserve the planned interface. This first stage executes short SQL
-transactions synchronously and must not yet be used as the service's I/O adapter.
-Dedicated-thread execution/cancellation belongs to Task 3; recovery to Task 2.
-"""
-
+import asyncio
 import re
 import sqlite3
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from functools import partial, wraps
 from pathlib import Path
 from uuid import uuid4
 
@@ -21,6 +19,7 @@ from herta_agent.storage.models import (
     SessionRecord,
     StoreError,
 )
+from herta_agent.tools.executor import ToolResult
 
 SCHEMA_VERSION = 1
 SCHEMA = (
@@ -107,12 +106,82 @@ def _check_history(records: tuple[MessageRecord, ...]) -> tuple[set[str], int, b
     return pending, last_step, finished
 
 
+async def _settle(future):
+    """Cancellation is delivered only after the owned work has actually settled."""
+    cancelled = False
+    while not future.done():
+        try:
+            await asyncio.shield(future)
+        except asyncio.CancelledError:
+            cancelled = True
+        except Exception:
+            break
+    try:
+        return future.result()  # Always observe the worker's real result/error.
+    finally:
+        if cancelled:
+            raise asyncio.CancelledError
+
+
+def _on_worker(method):
+    @wraps(method)
+    async def invoke(self, *args, **kwargs):
+        if not self._ready or self._closing is not None:
+            raise StoreError("store_state", "数据库未打开或正在关闭。")
+        future = asyncio.wrap_future(self._executor.submit(partial(method, self, *args, **kwargs)))
+        return await _settle(future)
+
+    return invoke
+
+
 class SQLiteSessionStore:
     def __init__(self, path: Path):
         self.path = Path(path).absolute()
         self._connection: sqlite3.Connection | None = None
+        self._recovery_required = False
+        self._writable = False
+        self._ready = False
+        self._executor: ThreadPoolExecutor | None = None
+        self._closing: asyncio.Task | None = None
+
+    @property
+    def writable(self) -> bool:
+        return (
+            self._ready and self._closing is None and self._writable and not self._recovery_required
+        )
 
     async def open(self) -> None:
+        if self._executor is not None:
+            raise StoreError("store_state", "数据库已经打开或正在切换状态。")
+        self._closing = None
+        self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="herta-sqlite")
+        try:
+            await _settle(asyncio.wrap_future(self._executor.submit(self._open)))
+            self._ready = True
+        except BaseException:
+            await self.close()
+            raise
+
+    async def close(self) -> None:
+        if self._executor is None:
+            return
+        if self._closing is None:
+            self._ready = False
+            self._closing = asyncio.create_task(self._shutdown())
+        await _settle(self._closing)
+
+    async def _shutdown(self):
+        executor = self._executor
+        try:
+            # FIFO: this runs after every operation already accepted by the worker.
+            await _settle(asyncio.wrap_future(executor.submit(self._close)))
+        finally:
+            await asyncio.to_thread(executor.shutdown, wait=True)
+            self._executor = None
+            self._writable = False
+            self._ready = False
+
+    def _open(self) -> None:
         if self._connection is not None:
             raise StoreError("store_state", "数据库已经打开。")
         connection = None
@@ -147,29 +216,61 @@ class SQLiteSessionStore:
                 "message_json FROM messages LIMIT 0"
             )
             self._connection = connection
+            self._writable = True
+            self._recovery_required = (
+                connection.execute(
+                    "SELECT 1 FROM runs WHERE status IN ('created','running') LIMIT 1"
+                ).fetchone()
+                is not None
+            )
         except (OSError, sqlite3.Error, StoreError) as error:
             if connection is not None:
-                connection.close()
+                try:
+                    connection.close()
+                except sqlite3.Error:
+                    pass
+            self._connection = None
+            self._writable = False
             if isinstance(error, StoreError):
                 raise
             raise StoreError("store_open", "无法打开有效的会话数据库。") from None
 
-    async def close(self) -> None:
-        if self._connection is not None:
-            self._connection.close()
+    def _close(self) -> None:
+        try:
+            if self._connection is not None:
+                self._connection.close()
+        except sqlite3.Error:
+            raise StoreError("store_close", "会话数据库关闭失败。") from None
+        finally:
             self._connection = None
+            self._writable = False
 
     @contextmanager
     def _transaction(self, *, write=False):
         connection = self._connection
         if connection is None:
             raise StoreError("store_state", "数据库尚未打开。")
+        if write and not self._writable:
+            raise StoreError("store_unwritable", "数据库不可写；需要关闭并重新打开恢复。")
+        committing = False
         try:
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             yield connection
+            committing = True
             connection.commit()
         except BaseException as error:
-            connection.rollback()
+            # Expected input/uniqueness rejection does not mean storage is broken.
+            if isinstance(error, sqlite3.Error) and (
+                committing
+                or not isinstance(error, sqlite3.IntegrityError)
+                or getattr(error, "sqlite_errorcode", None) == sqlite3.SQLITE_CONSTRAINT_TRIGGER
+            ):
+                self._writable = False
+            try:
+                connection.rollback()
+            except sqlite3.Error:
+                self._writable = False
+                raise StoreError("store_operation", "会话数据库回滚失败；存储不可写。") from None
             if isinstance(error, StoreError):
                 raise
             if isinstance(error, (sqlite3.Error, ValueError, TypeError)):
@@ -229,7 +330,8 @@ class SQLiteSessionStore:
             "UPDATE sessions SET updated_at=? WHERE session_id=?", (_now(), record.session_id)
         )
 
-    async def create_session(self) -> SessionRecord:
+    @_on_worker
+    def create_session(self) -> SessionRecord:
         with self._transaction(write=True) as connection:
             now = _now()
             session = SessionRecord(session_id=uuid4().hex, created_at=now, updated_at=now)
@@ -238,11 +340,13 @@ class SQLiteSessionStore:
             )
             return session
 
-    async def get_session(self, session_id: str) -> SessionRecord:
+    @_on_worker
+    def get_session(self, session_id: str) -> SessionRecord:
         with self._transaction() as connection:
             return self._session(connection, session_id)
 
-    async def list_sessions(self, after_id=None, limit=50) -> tuple[SessionRecord, ...]:
+    @_on_worker
+    def list_sessions(self, after_id=None, limit=50) -> tuple[SessionRecord, ...]:
         with self._transaction() as connection:
             _integer(limit, 1, 100)
             cursor = "" if after_id is None else _identifier(after_id)
@@ -252,7 +356,8 @@ class SQLiteSessionStore:
             )
             return tuple(SessionRecord(**dict(row)) for row in rows)
 
-    async def load_history(self, session_id: str, before_seq=None) -> tuple[MessageRecord, ...]:
+    @_on_worker
+    def load_history(self, session_id: str, before_seq=None) -> tuple[MessageRecord, ...]:
         with self._transaction() as connection:
             self._session(connection, session_id)
             if before_seq is not None:
@@ -260,7 +365,8 @@ class SQLiteSessionStore:
             records = self._records(connection, session_id)
             return tuple(r for r in records if before_seq is None or r.seq < before_seq)
 
-    async def list_messages(self, session_id: str, after_seq=0, limit=100):
+    @_on_worker
+    def list_messages(self, session_id: str, after_seq=0, limit=100):
         with self._transaction() as connection:
             self._session(connection, session_id)
             _integer(after_seq, 0)
@@ -269,8 +375,11 @@ class SQLiteSessionStore:
                 :limit
             ]
 
-    async def admit_run(self, session_id: str, run_id: str, user: Message, config) -> Admission:
+    @_on_worker
+    def admit_run(self, session_id: str, run_id: str, user: Message, config) -> Admission:
         with self._transaction(write=True) as connection:
+            if self._recovery_required:
+                raise StoreError("store_recovery", "必须先完成中断恢复才能接纳Run。")
             self._session(connection, session_id)
             _identifier(run_id)
             user = _message(user)
@@ -298,11 +407,13 @@ class SQLiteSessionStore:
             self._insert(connection, record)
             return Admission(run=self._run(connection, run_id), user=record)
 
-    async def get_run(self, run_id: str) -> RunRecord:
+    @_on_worker
+    def get_run(self, run_id: str) -> RunRecord:
         with self._transaction() as connection:
             return self._run(connection, run_id)
 
-    async def start_run(self, run_id: str) -> RunRecord:
+    @_on_worker
+    def start_run(self, run_id: str) -> RunRecord:
         with self._transaction(write=True) as connection:
             if self._run(connection, run_id).status != "created":
                 raise StoreError("store_transition", "只有created Run可以开始。")
@@ -311,7 +422,8 @@ class SQLiteSessionStore:
             )
             return self._run(connection, run_id)
 
-    async def set_context(self, run_id: str, context_hash: str) -> None:
+    @_on_worker
+    def set_context(self, run_id: str, context_hash: str) -> None:
         with self._transaction(write=True) as connection:
             if (
                 self._run(connection, run_id).status != "running"
@@ -323,7 +435,8 @@ class SQLiteSessionStore:
                 "UPDATE runs SET context_hash=? WHERE run_id=?", (context_hash, run_id)
             )
 
-    async def append_message(
+    @_on_worker
+    def append_message(
         self, run_id: str, message_id: str, step: int, message: Message
     ) -> MessageRecord:
         with self._transaction(write=True) as connection:
@@ -348,7 +461,8 @@ class SQLiteSessionStore:
             connection.execute("UPDATE runs SET steps=? WHERE run_id=?", (step, run_id))
             return record
 
-    async def finish_run(
+    @_on_worker
+    def finish_run(
         self,
         run_id: str,
         status: str,
@@ -357,14 +471,16 @@ class SQLiteSessionStore:
         final_message: MessageRecord | None = None,
         error=None,
     ) -> RunRecord:
-        """Commit the validated final answer and completed status in the same transaction.
+        """Commit a terminal state and its messages together.
 
-        Task 1 intentionally rejects non-success finalization; pending repair and
-        failure/cancellation terminal commits are Task 2, not a silent fallback.
-        The caller must already have validated the provider's completion protocol.
+        The caller validates completion protocol and supplies only safe error text.
         """
         with self._transaction(write=True) as connection:
             run = self._run(connection, run_id)
+            if status in ("failed", "cancelled"):
+                if final_message is not None:
+                    raise _invalid()
+                return self._abort(connection, run, status, steps, error)
             if status != "completed" or run.status != "running" or error is not None:
                 raise StoreError("store_transition", "当前只支持running Run的完整成功提交。")
             _integer(steps, 1, run.config.settings.max_steps)
@@ -389,3 +505,64 @@ class SQLiteSessionStore:
                 (steps, _now(), run_id),
             )
             return self._run(connection, run_id)
+
+    def _abort(self, connection, run, status, steps, error=None) -> RunRecord:
+        if run.status not in ("created", "running"):
+            raise StoreError("store_transition", "Run已经结束。")
+        _integer(steps, run.steps, run.config.settings.max_steps)
+        if error is not None and (not isinstance(error, str) or len(error) > 2000):
+            raise _invalid()
+        reason = {
+            "interrupted": "进程中断，工具结果未知；未重新执行。",
+            "cancelled": "本轮已取消，未提交的工具结果未知。",
+            "failed": "本轮失败，未提交的工具结果未知。",
+        }[status]
+        history = self._records(connection, run.session_id)
+        if not history or history[-1].run_id != run.run_id:
+            raise _invalid()
+        pending, step, finished = _check_history(history)
+        if finished:
+            raise _invalid()
+        # Preserve the declaration order; IDs are scoped to the latest batch.
+        calls = next((r.message.tool_calls for r in reversed(history) if r.message.tool_calls), ())
+        for call in calls:
+            if call.id not in pending:
+                continue
+            record = MessageRecord(
+                message_id=uuid4().hex,
+                session_id=run.session_id,
+                run_id=run.run_id,
+                seq=len(history) + 1,
+                step=step,
+                message=Message(
+                    role="tool",
+                    tool_call_id=call.id,
+                    content=ToolResult.failure(status, reason).to_json(),
+                ),
+            )
+            self._insert(connection, record)
+            history = (*history, record)
+        _check_history(history)
+        connection.execute(
+            "UPDATE runs SET status=?, steps=?, ended_at=?, error=? WHERE run_id=?",
+            (status, steps, _now(), error or reason, run.run_id),
+        )
+        return self._run(connection, run.run_id)
+
+    @_on_worker
+    def recover_interrupted(self) -> tuple[RunRecord, ...]:
+        """Startup-only repair; no model requests or tool handlers are invoked."""
+        self._recovery_required = True
+        with self._transaction(write=True) as connection:
+            ids = [
+                row[0]
+                for row in connection.execute(
+                    "SELECT run_id FROM runs WHERE status IN ('created','running') ORDER BY run_id"
+                )
+            ]
+            repaired = []
+            for run_id in ids:
+                run = self._run(connection, run_id)
+                repaired.append(self._abort(connection, run, "interrupted", run.steps))
+        self._recovery_required = False
+        return tuple(repaired)

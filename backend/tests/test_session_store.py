@@ -104,6 +104,11 @@ class SessionStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.sql("SELECT COUNT(*) FROM runs"), [(0,)])
         self.assertEqual(await self.store.load_history(self.session.session_id), ())
         self.sql("DROP TRIGGER stop_admit")
+        self.assertFalse(self.store.writable)
+        with self.assertRaises(StoreError):
+            await self.admit()
+        await self.store.close()
+        await self.store.open()
         self.assertEqual((await self.admit()).user.seq, 1)
 
     async def test_completion_fault_rolls_back_answer_and_terminal_state(self):
@@ -121,8 +126,15 @@ class SessionStoreTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.store.load_history(self.session.session_id), before)
         self.assertEqual((await self.store.get_run("run-1")).status, "running")
         self.sql("DROP TRIGGER stop_finish")
+        self.assertFalse(self.store.writable)
+        await self.store.close()
+        await self.store.open()
+        await self.store.recover_interrupted()
+        self.assertEqual((await self.store.get_run("run-1")).status, "interrupted")
+        await self.admit("run-2")
+        await self.store.start_run("run-2")
         await self.store.finish_run(
-            "run-1", "completed", steps=1, final_message=await self.final_record()
+            "run-2", "completed", steps=1, final_message=await self.final_record("run-2")
         )
 
     async def test_pairing_is_scoped_to_each_assistant_batch_and_session(self):
@@ -268,6 +280,9 @@ class SessionStoreTests(unittest.IsolatedAsyncioTestCase):
             await self.admit()
         self.assertNotIn(secret, str(caught.exception))
         self.sql("DROP TRIGGER stop_secret")
+        self.assertFalse(self.store.writable)
+        await self.store.close()
+        await self.store.open()
         await self.admit()
         saved = self.sql("SELECT config_json FROM runs")[0][0]
         self.assertEqual(set(json.loads(saved)), {"model", "settings"})
@@ -288,7 +303,7 @@ class SessionStoreTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StoreError):
             await self.store.load_history(self.session.session_id)
 
-    async def test_task_one_does_not_recover_or_close_pending_automatically(self):
+    async def test_open_does_not_implicitly_recover_pending(self):
         await self.admit()
         await self.store.start_run("run-1")
         await self.store.append_message(
@@ -299,8 +314,6 @@ class SessionStoreTests(unittest.IsolatedAsyncioTestCase):
                 role="assistant", tool_calls=(ToolCall(id="pending", name="echo", arguments="{}"),)
             ),
         )
-        with self.assertRaises(StoreError):
-            await self.store.finish_run("run-1", "cancelled", steps=1)
         await self.store.close()
         await self.store.open()
         self.assertEqual((await self.store.get_run("run-1")).status, "running")
