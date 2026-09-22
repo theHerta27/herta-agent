@@ -1,0 +1,2 @@
+:root { color-scheme: dark; --background:#17181c; --surface:#1f2126; --hover:#2a2d34; --border:#343842; --text:#ededf1; --muted:#acb1be; --accent:#b7a4ee; --on-accent:#1a1622; --danger:#ff9898; --success:#8bd1ac; }
+:root[data-theme="light"] { color-scheme:light; --background:#fafaf9; --surface:#f1f1f0; --hover:#e9e9e8; --border:#dadcdf; --text:#212229; --muted:#5c626d; --accent:#69529b; --on-accent:#fff; --danger:#b23b3b; --success:#256645; }

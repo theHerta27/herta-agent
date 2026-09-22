@@ -68,3 +68,12 @@ Phase 1 不实现工具执行、Persona、RAG、FastAPI、Electron 或 SSE。
 - [x] 查看Codex/Cyrene截图、Cyrene关键UI源码、ui-ux-pro-max及全部Herta素材。
 - [x] 确认最小Settings与环境Key约束。
 - [x] 完成docs/phase-6-ui-design.md与7阶段phase-6-plan.md，核对接口和范围后停止，不编码。
+
+
+## Phase 6 阶段2–5交付（2026-09-23）
+- 阶段1已单独提交 a36613061886e89d7dd1535ea081ee9fb16e5e28。按本轮授权连续完成阶段2–5，不进入Settings或阶段7。
+- 新增会话/流式传输与应用级状态、Sidebar/Welcome/Composer、Markdown回答、工具/RAG活动、取消及持久历史恢复。后端业务源码未修改。
+- 行为测试先失败再实现；真实桌面测试发现并修复中文组字事件读取问题。独立只读审查无阻塞发现。提前取消但未找到持久Run时按既定设计保持未知并禁止重复提交，不凭空推断失败。
+- typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
+- e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
+- 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。

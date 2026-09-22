@@ -1,6 +1,6 @@
 # herta-agent
 
-一个边实现边学习的 Windows 桌面 Agent 项目。已实现 Phase 5 本机后端服务，以及 **Phase 6 阶段1：桌面启动、连接与退出**。Electron 会自动管理现有 Python/FastAPI 后端，当前窗口仅展示状态，聊天尚未接入。真实供应商流式兼容性与真实 RAG 效果仍待配置后验收。
+一个边实现边学习的 Windows 桌面 Agent 项目。已实现 Phase 5 本机后端服务，以及 **Phase 6 阶段1–5：桌面启动、会话、流式聊天与工具活动**。Electron 自动管理现有 Python/FastAPI 后端，可新建/切换会话、流式显示回答、查看工具证据并取消运行。真实供应商流式兼容性与真实 RAG 效果仍待配置后验收。
 
 ## 打开 Windows 桌面窗口
 
@@ -9,9 +9,9 @@ Set-Location -LiteralPath 'D:\Desktop\herta-agent'
 npm --prefix frontend run dev
 ```
 
-只需一个终端。窗口显示“正在启动”，随后显示“服务就绪”或“配置未就绪”；后者表示本机服务已连接，但缺少聊天配置。点击窗口右上角关闭会一并清理自管 Python；再运行同一命令即可重新打开。聊天输入在阶段1保持禁用。桌面数据库独立位于 `.local/desktop/sessions.sqlite3`。
+只需一个终端。窗口显示“正在启动”，随后显示“服务就绪”或“配置未就绪”；后者表示本机服务已连接，但缺少聊天配置。点击窗口右上角关闭会一并清理自管 Python；再运行同一命令即可重新打开。聊天配置就绪后可直接发送；历史在重开后保留。桌面数据库独立位于 `.local/desktop/sessions.sqlite3`。
 
-依赖安装、离线验证与验收范围见 [阶段1启动说明](D:/Desktop/herta-agent/docs/phase-6-stage-1.md)。
+真实模型配置与手工验证见 [桌面聊天说明](D:/Desktop/herta-agent/docs/phase-6-chat.md)，依赖安装见 [阶段1启动说明](D:/Desktop/herta-agent/docs/phase-6-stage-1.md)。
 
 ## 运行持久化服务（PowerShell）
 
@@ -97,4 +97,4 @@ uv sync --project backend --extra dev --python 3.12 --locked
 - [Hermes 源码分析](D:/Desktop/herta-agent/docs/hermes-analysis.md)
 - [复用计划与许可证记录](D:/Desktop/herta-agent/docs/reuse-plan.md)
 
-当前核心：`用户消息 → 本轮人格快照 → system + 历史 → Provider → 工具执行与知识检索回填 → 同一快照 + 新历史 → 最终文本`。停在 Phase 4，未进入下一阶段。
+当前核心：`用户消息 → 本轮人格快照 → system + 历史 → Provider → 工具执行与知识检索回填 → 同一快照 + 新历史 → 最终文本`。当前桌面完成 Phase 6 阶段1–5；Settings 与阶段7完整验收尚未实施。

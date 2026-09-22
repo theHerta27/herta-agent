@@ -47,7 +47,7 @@ test('three real window cycles from outside cwd; owned Python exits and SQLite r
     const page = await launch(env);
     await expect(page.getByRole('heading', { name: 'Herta', exact: true })).toBeVisible();
     await expect(page.getByRole('status')).toHaveText('服务就绪');
-    await expect(page.getByRole('textbox')).toBeDisabled();
+    await expect(page.getByRole('textbox')).toBeEnabled();
     const state = await owned();
     expect(alive(state.pid)).toBe(true);
     const health = await fetch(state.endpoint + '/health').then(r => r.json());
@@ -55,7 +55,7 @@ test('three real window cycles from outside cwd; owned Python exits and SQLite r
     expect(await page.evaluate(() => ({
       node: typeof (window as unknown as { require?: unknown }).require,
       bridge: Object.keys(window.herta),
-    }))).toEqual({ node: 'undefined', bridge: ['getBackendStatus', 'onBackendStatus'] });
+    }))).toEqual({ node: 'undefined', bridge: ['getBackendStatus', 'listSessions', 'createSession', 'getSession', 'getRun', 'startRun', 'cancelRequest', 'onRunEvents', 'onBackendStatus'] });
     if (i === 0) await page.screenshot({ path: join(root, '.local/phase6-stage1-window.png') });
     const exited = desktop!.waitForEvent('close');
     await desktop!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());

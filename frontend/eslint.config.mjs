@@ -7,4 +7,5 @@ export default ts.config(
   js.configs.recommended,
   ...ts.configs.recommended,
   { languageOptions: { globals: { ...globals.node, ...globals.browser } } },
+  { files: ['tests/fixtures/*.cjs'], rules: { '@typescript-eslint/no-require-imports': 'off' } },
 );

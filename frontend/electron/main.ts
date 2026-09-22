@@ -1,7 +1,10 @@
-import { app, BrowserWindow, ipcMain, session } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BackendProcess } from './backend-process';
+import { BackendClient } from './backend-client';
+import { RunTransport } from './run-transport';
+import { randomUUID } from 'node:crypto';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -17,6 +20,11 @@ export const backend = new BackendProcess({
 let window: BrowserWindow | undefined;
 let quitting = false;
 let closing = false;
+let transport: RunTransport | undefined;
+export const client = new BackendClient(() => {
+  if (!backend.endpoint || closing) throw new Error('backend_unavailable');
+  return backend.endpoint;
+});
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -31,6 +39,7 @@ if (!app.requestSingleInstanceLock()) {
     event.preventDefault();
     if (closing) return;
     closing = true;
+    transport?.dispose();
     void backend.stop().then(() => { quitting = true; app.quit(); }).catch(() => { closing = false; });
   });
   // Electron's Windows GUI subsystem has no reliable stdin; the dev runner uses IPC.
@@ -51,7 +60,11 @@ if (!app.requestSingleInstanceLock()) {
     });
     window.setMenu(null);
     window.on('close', event => {
-      if (!quitting) { event.preventDefault(); app.quit(); }
+      if (!quitting) {
+        event.preventDefault();
+        if (transport?.activeCount && dialog.showMessageBoxSync(window!, { type: 'question', message: '取消运行并退出？', buttons: ['取消运行并退出', '返回'], defaultId: 1, cancelId: 1 }) !== 0) return;
+        app.quit();
+      }
     });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
@@ -59,6 +72,29 @@ if (!app.requestSingleInstanceLock()) {
       if (event.senderFrame !== window?.webContents.mainFrame) throw new Error('invalid_sender');
       return backend.status;
     });
+    const checkSender = (event: Electron.IpcMainInvokeEvent) => {
+      if (event.senderFrame !== window?.webContents.mainFrame) throw new Error('invalid_sender');
+    };
+    let subscribed = false;
+    const acknowledgements = new Map<string, () => void>();
+    transport = new RunTransport(client, packet => new Promise((resolve, reject) => {
+      if (!subscribed || !window || window.isDestroyed()) { reject(new Error('renderer_unavailable')); return; }
+      const batchId = randomUUID();
+      const timer = setTimeout(() => { acknowledgements.delete(batchId); reject(new Error('renderer_slow')); }, 2000);
+      acknowledgements.set(batchId, () => { clearTimeout(timer); acknowledgements.delete(batchId); resolve(); });
+      window.webContents.send('herta:run-events', packet, batchId);
+    }));
+    ipcMain.on('herta:subscribe-runs', event => { if (event.senderFrame === window?.webContents.mainFrame) subscribed = true; });
+    ipcMain.on('herta:run-ack', (event, batchId) => { if (event.senderFrame === window?.webContents.mainFrame) acknowledgements.get(batchId)?.(); });
+    ipcMain.handle('herta:start-run', (event, request) => { checkSender(event); if (!subscribed) throw new Error('renderer_unavailable'); transport!.start(request); });
+    ipcMain.handle('herta:cancel-request', (event, id) => { checkSender(event); return transport!.cancel(id); });
+    const dropStreams = () => { subscribed = false; transport?.dispose(); };
+    window.webContents.on('render-process-gone', dropStreams);
+    window.webContents.on('did-start-navigation', (_event, _url, inPlace, mainFrame) => { if (mainFrame && !inPlace) dropStreams(); });
+    ipcMain.handle('herta:list-sessions', (event, after, limit) => { checkSender(event); return client.listSessions(after, limit); });
+    ipcMain.handle('herta:create-session', event => { checkSender(event); return client.createSession(); });
+    ipcMain.handle('herta:get-session', (event, id, after, limit) => { checkSender(event); return client.getSession(id, after, limit); });
+    ipcMain.handle('herta:get-run', (event, id) => { checkSender(event); return client.getRun(id); });
     backend.subscribe(status => {
       if (window && !window.isDestroyed()) window.webContents.send('herta:backend-status-changed', status);
     });

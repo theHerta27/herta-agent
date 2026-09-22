@@ -1,6 +1,6 @@
 # Herta Agent V1 架构方案
 
-状态：2026-09-22 已完成 Phase 5 工程实现与 Phase 6 阶段1桌面启动闭环。Electron 位于 frontend/，Main 自管现有 Python/FastAPI，Renderer 仅展示启动状态；聊天 UI 与阶段2以后能力未实现。SQLite、RunManager、Runtime 等后端语义不变。真实供应商流式兼容性、Phase 4 真实 RAG 效果仍待验收。下文目录树保留早期规划，实际服务入口位于 service/ 而非 api/。
+状态：2026-09-23 已完成 Phase 5 工程与 Phase 6 阶段1–5。Electron Main 自管 Python/FastAPI，通过固定 IPC 转发 HTTP/SSE；React 展示会话、流式回答、工具与 RAG 证据，终态以 SQLite 历史为准。partial 只在内存展示。后端 Agent Loop、Persona、RAG 与 Store 语义未修改。Settings 与阶段7完整验收未实施；真实供应商流式兼容性、Phase 4 真实 RAG 效果仍待验收。下文目录树保留早期规划，实际服务入口位于 service/ 而非 api/。
 
 目标是一个独立桌面 Agent：Electron + React + TypeScript + Vite，连接本机 Python 3.12+ / FastAPI / Pydantic / asyncio Runtime。第一版只提供一个大黑塔风格 Persona。Hermes 仅作为参考。
 

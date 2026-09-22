@@ -179,4 +179,6 @@ git -c safe.directory=D:/Desktop/herta-agent diff --check
 
 七阶段均有可操作成果，没有只搭底座却看不到效果的长阶段。首批阶段1先证明桌面自管后端，再阶段2稳定视觉，不需要先扩展Agent业务。接口映射、Settings用户选择、素材取舍、未知状态与错误诊断限制均已纳入设计与验收。
 
-当前已完成阶段1，9项进程测试与6项真实Electron测试通过，178项后端回归保持通过。启动方法见 `docs/phase-6-stage-1.md`。阶段2–7仍为未来交付项，本轮不进入阶段2。
+当前已完成阶段1–5。按用户本轮收敛要求，测试覆盖关键闭环，不扩展原计划的全部边界矩阵；上方阶段2–5清单保留原始验收范围，不代表所有边界已逐项验收。实际交付包括布局素材、分页历史、应用级会话状态、固定 IPC/HTTP/SSE、流式回答、Stop、工具/RAG摘要与重启恢复。组件按最小实现合并，未机械创建每个规划文件。
+
+2026-09-23：前端 typecheck、lint、21项单元测试、7项真实 Electron e2e（含 build）通过；后端178项 unittest、Ruff check/format、diff check通过。真实窗口测试采用离线 Provider 和临时 SQLite；没有调用真实模型或 Embedding API，不证明真实 RAG 质量。启动与验收见 `docs/phase-6-chat.md`。停在阶段5，阶段6/7未开始。

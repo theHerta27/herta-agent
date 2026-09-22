@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "main": "dist/electron/main.cjs",
-  "engines": { "node": ">=22.16.0" },
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
@@ -13,7 +15,11 @@
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test"
   },
-  "dependencies": { "react": "^19.2.0", "react-dom": "^19.2.0" },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
     "@playwright/test": "^1.56.0",

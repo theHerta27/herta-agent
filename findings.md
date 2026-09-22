@@ -93,3 +93,12 @@
 - Playwright主进程evaluate环境无全局require，测试使用process.getBuiltinModule('module').createRequire。Windows process.title不适合充当测试信号，单实例测试直接验证已最小化窗口恢复。
 - 受限工具环境中Electron renderer/GPU进程失败；正常桌面权限运行6项真实测试通过，未关闭contextIsolation/sandbox或webSecurity来绕过。
 - stage1.css仅服务最小启动状态页，未接入角色图或开始阶段2Design System。后端已有业务文件无改动。
+
+
+## Phase 6 阶段2–5交付（2026-09-23）
+- 阶段1已单独提交 a36613061886e89d7dd1535ea081ee9fb16e5e28。按本轮授权连续完成阶段2–5，不进入Settings或阶段7。
+- 新增会话/流式传输与应用级状态、Sidebar/Welcome/Composer、Markdown回答、工具/RAG活动、取消及持久历史恢复。后端业务源码未修改。
+- 行为测试先失败再实现；真实桌面测试发现并修复中文组字事件读取问题。独立只读审查无阻塞发现。提前取消但未找到持久Run时按既定设计保持未知并禁止重复提交，不凭空推断失败。
+- typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
+- e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
+- 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。

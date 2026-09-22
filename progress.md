@@ -188,3 +188,12 @@
 
 - Phase 6设计交付：新增两份文档，设计覆盖布局/素材/Token/组件/三层职责/状态与实际API缺口，计划7阶段均含可见成果、文件、行为测试和验收。用户确认的Settings决定已写入。
 - 自检：两份文档UTF-8正常、代码围栏成对、无TODO/TBD；7个实施阶段；Codex图片尺寸实读为1603×915并修正文案；关键文字Token对比度实算通过；git diff --check通过。无工程代码/依赖/图片修改，无真实API，不重跑既有178项测试，不提交/push/merge。
+
+
+## Phase 6 阶段2–5交付（2026-09-23）
+- 阶段1已单独提交 a36613061886e89d7dd1535ea081ee9fb16e5e28。按本轮授权连续完成阶段2–5，不进入Settings或阶段7。
+- 新增会话/流式传输与应用级状态、Sidebar/Welcome/Composer、Markdown回答、工具/RAG活动、取消及持久历史恢复。后端业务源码未修改。
+- 行为测试先失败再实现；真实桌面测试发现并修复中文组字事件读取问题。独立只读审查无阻塞发现。提前取消但未找到持久Run时按既定设计保持未知并禁止重复提交，不凭空推断失败。
+- typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
+- e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
+- 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。
