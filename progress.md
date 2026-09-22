@@ -1,5 +1,17 @@
 # Herta Agent 工作记录
 
+## Phase 5 Task 10–12实施
+- 沿用户手动提交后的33f10e2基线实施最后三项，不调整12个Task，不自动提交/push/merge；无真实API。
+- Task 10 complete：先写API测试确认缺模块失败，最小实现后6项及完整163项通过。缺聊天配置保留health/历史、运行503；独立入口只允许loopback单worker。
+- Task 10 Ruling：PyPI官方源连续TLS失败，uv通过公开清华镜像安装并锁定FastAPI/Uvicorn；原有依赖版本未升级。代价是后续安装依赖该镜像可达性。
+- Task 11 complete：SSE测试先因events缺失失败，UTF-8帧、有界队列、发送期限、接纳断连所有权实现后8项/完整171项通过。额外rag摘要只在服务适配层派生，终态不可被通知失败改写。
+- Task 12：6项真实socket测试先因probe不存在失败。实现离线子进程夹具后，修正临时事件迭代器提前关闭连接和SQLite测试连接句柄未关闭；最终6项通过（11.251秒）。
+- Task 12 Ruling：Windows venv的python.exe是启动器，杀启动器无法可靠证明实际解释器退出；测试通过stdin触发实际解释器os._exit(91)，不执行finally/lifespan，再等待启动器回收。这是真实进程骤停和SQLite恢复验证，不宣称验证任意系统强杀方式。清理此前夹具遗留进程后不使用Linux信号。
+- 独立只读审查发现P2：取消后仍可发送队列中尚未显示的delta。新增test_cancelled_run_does_not_send_buffered_delta实际复现取消终态后仍有llm.delta（RED），发送前过滤后9项SSE测试通过（GREEN）。首轮测试夹具发送期限过短，调大该屏障测试期限后确认真实缺陷；生产期限未改。
+- Final: fixed 取消后缓冲delta仍发送 — 上述测试RED→GREEN，完整178/178通过（25.977秒）；无待处理minor。没有第二次审查或扩展功能。
+- Final: Ruling: 审查不判断真实供应商流式/RAG效果与任意系统强杀方式 — 保持原验收边界：离线fixture只证明协议、实际socket和os._exit后的恢复；错误外推会误认为真实服务或所有终止方式已验收，文档明确不作该声明。
+- Task 12 complete：本批21项（API6/SSE9/socket6），累计178项，原93项保留；Ruff check、format --check（74文件）、git diff --check均通过。文档、教程、12项清单及规划记录已更新，Phase 5完成。保留工作区不提交/push/merge，不进入Phase 6。
+
 ## Phase 5 Task 8–9实施
 - 用户已手动推送e8d0fa7并要求下一步；沿现有计划执行Task 8、9，完成后停，不进入FastAPI装配，无真实API调用。沿用executing-plans/TDD及当前分支。
 - Task 8 complete：测试先因streaming模块缺失失败；实现字节级SSE帧、工具分片累计、结束校验和256KiB帧/4MiB总响应上限。补测CR-only末帧先失败后修复；8项定向与完整150项通过。
@@ -151,3 +163,17 @@
 - 未运行 Hermes、未导入其模块、未安装项目依赖、未调用真实模型。
 - 本阶段不含业务代码，未运行 pytest；上述是文档与来源静态检查，不是 Runtime 功能测试。
 - 三份正式分析文档及手动复现教程已交付。Phase 0 完成，停在这里等待用户确认，未进入 Phase 1。
+
+## Phase 6 设计阅读（2026-09-22）
+- 用户仅授权设计与两个文档，不创建Electron工程、不安装依赖、不改Runtime。沿用文件规划记录，当前phase-5-service仍包含上批未提交实现和用户新增frontend素材，不把HEAD当完整Phase 5基线。
+- 已阅读实际service/storage/runtime接口、Phase 5设计/12项计划/walkthrough；旧architecture中Settings API、事件arguments/duration/final_message_id是规划字段，实际不存在。design/plan开头“Task 1–9”也是过期批次描述。
+- 参考图各1张，均为浅色；Codex侧栏约占21%，正文/输入区同轴且留白，Cyrene参考图是Work界面，不能当Herta要复制的聊天需求。
+- 已查看全部8张Herta素材；bust 900x764、avatar 1490x1490、rag-reading 1024x1024首选，其余先不用。bust含原图文字标识，不作为Herta应用品牌。
+- Cyrene已阅读ChatPage装配、ChatComposer、ChatMessageList关键渲染/滚动/Activity、Sidebar、RunStageIndicator、StatusFloat和theme/tokens/base；只学职责和布局，不复制庞大业务/资源/浮动装饰/未知状态默认成功逻辑。
+- ui-ux-pro-max搜索的营销落地页、活泼色块、远程英文字体建议不匹配，不采用；采用对比度、键盘焦点、reduced motion、排版和稳定滚动原则。拟议token关键文字对比度已离线计算达到4.5:1以上。
+- 用户已确认Settings：可改非敏感Base URL/模型名，Key仅读环境，无活跃Run时重启桌面自管后端。
+- 后端可支撑核心UI；列表无标题且按ID分页、无CORS/Settings/结构化启动握手、错误原因多为run_aborted、无SSE重放。设计使用有限桌面传输/进程适配，不擅自扩展业务API。
+- PowerShell内嵌Python引号导致一次只读图片元数据命令失败，改here-string后读取成功；没有修改图片。
+
+- Phase 6设计交付：新增两份文档，设计覆盖布局/素材/Token/组件/三层职责/状态与实际API缺口，计划7阶段均含可见成果、文件、行为测试和验收。用户确认的Settings决定已写入。
+- 自检：两份文档UTF-8正常、代码围栏成对、无TODO/TBD；7个实施阶段；Codex图片尺寸实读为1603×915并修正文案；关键文字Token对比度实算通过；git diff --check通过。无工程代码/依赖/图片修改，无真实API，不重跑既有178项测试，不提交/push/merge。

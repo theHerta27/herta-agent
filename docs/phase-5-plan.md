@@ -282,12 +282,12 @@ self.assertFalse(any(m.message.role == "assistant" for m in failed_turn_records)
 
 **接口：** `create_app(settings, *, provider=None) -> FastAPI`允许测试注入Provider；生产设置从环境/启动参数读取。新增 `python -m herta_agent.service`入口；不要改原 `python -m herta_agent` 的CLI行为。FastAPI/Uvicorn选兼容Python 3.12的明确版本范围并用项目uv更新锁文件；不顺带升级无关依赖。
 
-- [ ] 写lifespan测试：open Store→recover_interrupted→装配独立HTTP客户端、Persona/RAG和Manager→接纳；退出先manager.shutdown再关客户端和Store；启动失败关闭已创建资源。
-- [ ] 写普通API测试：创建/分页列表/读取会话、读取Run、幂等取消、404、422、409、429、存储不可写503、未配置模型时health/读历史可用但运行不可用。POST runs在本任务先验证接纳前拒绝路径，成功SSE由Task 11验证；不以临时JSON成功响应代替。health不访问远程接口、不泄露Key。
-- [ ] 运行 `test_service_api.py`确认预期失败；在本任务才安装依赖并实现上述API。POST runs的接纳逻辑复用Manager，SSE完整传输在Task 11交付，不先做另一种JSON后台Run接口。
-- [ ] DTO仅接受用户文本和指定标识，拒绝客户端注入system、任意文件路径、Key或模型消息历史；限制输入长度与分页范围并写边界测试。
-- [ ] 真模型与显式demo分别装配；缺聊天配置不暗自用demo，RAG不可用只影响工具能力；Key不通过API更新。入口只启单worker/loopback，拒绝不支持的多worker使用方式。
-- [ ] 定向及全套回归通过。默认DB位于.local、配置路径不依赖cwd；不同客户端使用共享资源但不共享Session状态。
+- [x] 写lifespan测试：open Store→recover_interrupted→装配独立HTTP客户端、Persona/RAG和Manager→接纳；退出先manager.shutdown再关客户端和Store；启动失败关闭已创建资源。
+- [x] 写普通API测试：创建/分页列表/读取会话、读取Run、幂等取消、404、422、409、429、存储不可写503、未配置模型时health/读历史可用但运行不可用。POST runs在本任务先验证接纳前拒绝路径，成功SSE由Task 11验证；不以临时JSON成功响应代替。health不访问远程接口、不泄露Key。
+- [x] 运行 `test_service_api.py`确认预期失败；在本任务才安装依赖并实现上述API。POST runs的接纳逻辑复用Manager，SSE完整传输在Task 11交付，不先做另一种JSON后台Run接口。
+- [x] DTO仅接受用户文本和指定标识，拒绝客户端注入system、任意文件路径、Key或模型消息历史；限制输入长度与分页范围并写边界测试。
+- [x] 真模型与显式demo分别装配；缺聊天配置不暗自用demo，RAG不可用只影响工具能力；Key不通过API更新。入口只启单worker/loopback，拒绝不支持的多worker使用方式。
+- [x] 定向及全套回归通过。默认DB位于.local、配置路径不依赖cwd；不同客户端使用共享资源但不共享Session状态。
 
 ```python
 self.assertEqual(conflict.status_code, 409)
@@ -302,13 +302,13 @@ self.assertNotIn(dynamic_test_secret, response.text)
 
 **接口：** ServiceEvent为schema_version=1的外部JSON事件，含设计规定的公共字段；内部RunHandle通道消费RuntimeEvent并赋予run_id/session_id/seq。`encode_event(event) -> bytes`固定UTF-8 SSE编码。SSE实现可使用锁定FastAPI版本的响应支持，但实际断连/取消职责必须在测试中验证，不靠默认行为猜测。
 
-- [ ] 写POST SSE协议测试：Content-Type、id/event/data、换行边界、中文、心跳、seq递增、first run.started、每Step独立message_id、唯一终态、提交前失败仍返回普通HTTP错误。
-- [ ] 写有界通道测试：起点128条事件，生产端/发送端有限等待；单事件与累计缓冲有大小限制。正常压力下不静默丢关键事件，持续背压则关闭流并请求取消，清理和DB终态不能等待消费者腾空队列。
-- [ ] 运行 `test_service_sse.py`确认失败；POST /sessions/{id}/runs直接返回流。接纳过程与响应finally都有明确Run所有权，首事件前断连、接纳await期间取消和流生成器关闭都要触发同一Manager取消路径。
-- [ ] 映射Runtime提交后的tool事件；对已成功提交的search_knowledge结果额外派生rag.retrieved（query、index_id、chunk来源摘要）。映射位于服务事件适配层，不能改Agent按工具名分支。
-- [ ] 全局资源故障发送service.error/persisted=false，不能冒充run.failed已落库。终态已提交后断连只丢通知，不改变事实。拒绝SSE恢复请求或明确不支持，不重发原POST，不新增事件数据库。
-- [ ] 验证真实结果中source/score可展示但不表示效果通过；事件不暴露Key、供应商错误正文或隐藏推理。
-- [ ] 定向、全套回归通过；再由Task 12证明真实socket行为，不能仅用内存ASGITransport宣称断连取消成立。
+- [x] 写POST SSE协议测试：Content-Type、id/event/data、换行边界、中文、心跳、seq递增、first run.started、每Step独立message_id、唯一终态、提交前失败仍返回普通HTTP错误。
+- [x] 写有界通道测试：起点128条事件，生产端/发送端有限等待；单事件与累计缓冲有大小限制。正常压力下不静默丢关键事件，持续背压则关闭流并请求取消，清理和DB终态不能等待消费者腾空队列。
+- [x] 运行 `test_service_sse.py`确认失败；POST /sessions/{id}/runs直接返回流。接纳过程与响应finally都有明确Run所有权，首事件前断连、接纳await期间取消和流生成器关闭都要触发同一Manager取消路径。
+- [x] 映射Runtime提交后的tool事件；对已成功提交的search_knowledge结果额外派生rag.retrieved（query、index_id、chunk来源摘要）。映射位于服务事件适配层，不能改Agent按工具名分支。
+- [x] 全局资源故障发送service.error/persisted=false，不能冒充run.failed已落库。终态已提交后断连只丢通知，不改变事实。拒绝SSE恢复请求或明确不支持，不重发原POST，不新增事件数据库。
+- [x] 验证真实结果中source/score可展示但不表示效果通过；事件不暴露Key、供应商错误正文或隐藏推理。
+- [x] 定向、全套回归通过；再由Task 12证明真实socket行为，不能仅用内存ASGITransport宣称断连取消成立。
 
 ```python
 self.assertEqual(terminal_events, ["run.completed"])
@@ -320,13 +320,13 @@ self.assertEqual((await store.get_run(run_id)).status, "completed")
 
 **文件：** 新增 `backend/tests/test_service_integration.py`、`backend/tests/service_probe.py`（仅测试用离线Provider服务）；新增 `docs/phase-5-walkthrough.md`；更新README、architecture.md、reuse-plan.md及三份规划记录。必要测试数据仅临时生成，不提交Key、DB或SSE日志。
 
-- [ ] 用sys.executable在Windows启动本机子进程服务，动态分配端口并用health等待就绪；设置进程超时和finally清理，避免遗留服务器。只有显式注入的离线Provider，禁止真实远程API。
-- [ ] 真实HTTP验证：两Session并行、同Session冲突、全局拒绝、事件逐步到达、主动cancel、消费端直接关socket、首事件前断连、慢消费者、取消后同会话继续。
-- [ ] 强制结束测试子进程后重启同一临时DB：created/running变interrupted，pending配对被修复，已完成结果不丢、不重复；partial无历史记录，工具执行计数无重放。
-- [ ] 验证事务故障和通知丢失：先完成再断连仍能GET到completed；存储不可写不向UI报告持久成功、不放行新Run。原材料、Persona和RAG语义不改。
-- [ ] 执行完整unittest、Ruff check、format --check、git diff --check；所有原93项仍通过，记录实际新增测试数，不预填通过数量。检查依赖锁与`.local`忽略规则。
-- [ ] 文档写新增文件、生命周期执行链、3–5个精读函数（Store事务、Turn提交、Manager终态、Provider流解析、SSE清理）、PowerShell启动/请求/取消/重启命令，以及实际测试结果。
-- [ ] 逐项核对设计第9节，并保留真实供应商流式与Phase 4真实RAG效果待验收的声明。停止Phase 5，不进入UI、不自动提交/push/合并。
+- [x] 用sys.executable在Windows启动本机子进程服务，动态分配端口并用health等待就绪；设置进程超时和finally清理，避免遗留服务器。只有显式注入的离线Provider，禁止真实远程API。
+- [x] 真实HTTP验证：两Session并行、同Session冲突、全局拒绝、事件逐步到达、主动cancel、消费端直接关socket、首事件前断连、慢消费者、取消后同会话继续。
+- [x] 强制结束测试子进程后重启同一临时DB：created/running变interrupted，pending配对被修复，已完成结果不丢、不重复；partial无历史记录，工具执行计数无重放。
+- [x] 验证事务故障和通知丢失：先完成再断连仍能GET到completed；存储不可写不向UI报告持久成功、不放行新Run。原材料、Persona和RAG语义不改。
+- [x] 执行完整unittest、Ruff check、format --check、git diff --check；所有原93项仍通过，记录实际新增测试数，不预填通过数量。检查依赖锁与`.local`忽略规则。
+- [x] 文档写新增文件、生命周期执行链、3–5个精读函数（Store事务、Turn提交、Manager终态、Provider流解析、SSE清理）、PowerShell启动/请求/取消/重启命令，以及实际测试结果。
+- [x] 逐项核对设计第9节，并保留真实供应商流式与Phase 4真实RAG效果待验收的声明。停止Phase 5，不进入UI、不自动提交/push/合并。
 
 最终验证命令：
 

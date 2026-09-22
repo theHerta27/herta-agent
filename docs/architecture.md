@@ -1,6 +1,6 @@
 # Herta Agent V1 架构方案
 
-状态：2026-09-20 已实现 Phase 4 工程链路：独立远程Embedding、本地精确索引、search_knowledge及检索/聊天评测。真实模型效果尚待配置后验收，见 docs/phase-4-walkthrough.md。Runtime仍只依赖Context Builder和通用Tool接口，不含人格或检索算法。API、持久化、事件和桌面为后续计划；下文第3节保留Phase 0目录快照。
+状态：2026-09-21 已完成 Phase 5 工程实现：SQLite SessionStore、单一 Runtime 提交/事件边界、RunManager、流式 Provider、FastAPI 与 POST SSE。Windows 真实 socket 与崩溃恢复使用离线 Provider 验证；真实供应商流式兼容性、Phase 4 真实 RAG 效果仍待验收。Runtime 不含人格或检索算法，不依赖 FastAPI。桌面 UI 未实现；下文目录树保留早期规划，实际服务入口位于 service/ 而非 api/。
 
 目标是一个独立桌面 Agent：Electron + React + TypeScript + Vite，连接本机 Python 3.12+ / FastAPI / Pydantic / asyncio Runtime。第一版只提供一个大黑塔风格 Persona。Hermes 仅作为参考。
 
@@ -334,3 +334,14 @@ API Key不写源码、Git、URL、聊天历史、事件或日志。当前CLI仅�
 V1 不做：MCP、Skill system、长期 Memory、USER.md、自改进、多 Agent、Cron、IM Gateway、Voice/TTS、Live2D、自动 Persona 进化、多角色及复杂 RAG。
 
 面试时可以用一句执行说明串起来：桌面把用户消息提交给本机后端；Runtime 用稳定人格和会话历史请求模型，遇到工具调用就验证、执行并回填结果，循环直到回答或触及边界，并用显式事件让 UI 呈现整个过程。
+
+
+## 11. Phase 5 实际落地
+
+具体设计和12项任务见 [Phase 5 设计](D:/Desktop/herta-agent/docs/phase-5-design.md)、[计划](D:/Desktop/herta-agent/docs/phase-5-plan.md)；启动与学习入口见 [教程](D:/Desktop/herta-agent/docs/phase-5-walkthrough.md)。
+
+实际新增 storage/ 与 service/；原 CLI 不变。Agent Loop 依赖 TurnIO/EventSink，MemoryTurn 维持 CLI 内存行为，PersistentTurn 保证数据库先提交再更新内存。SQLite 连接由单独线程拥有，Run 由 asyncio 任务拥有；这不是后台等待队列。默认跨 Session 最多4个活跃 Run，同 Session 互斥；达到上限立即拒绝。
+
+SSE 与持久事实明确分离：partial 不保存，完整工具消息和最终回答须先提交；最终回答与 completed 同事务。RunManager 持有接纳和最终事务，断连/取消不能让在途写入脱离所有权。启动先恢复 interrupted 及 pending 配对，不重放工具。通知丢失通过 GET 查询，不重放 POST/SSE。窗口与渲染逻辑留在 Phase 6。
+
+服务只监听127.0.0.1且单worker；聊天与Embedding客户端独立，Key仅从环境读取。未配置聊天时仍可查健康和历史；不自动使用demo。Persona保持必需条件，RAG保持模型主动调用Tool的边界。

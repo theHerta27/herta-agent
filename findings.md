@@ -70,3 +70,19 @@
 - Agent.run当前没有中间提交或事件出口，Provider只有complete(stream=False)。仅在路由外包SSE或结束时dump历史，不能兑现roadmap。
 - 数据库错误应停止Run，不得落入Executor的通用异常清洗后被当作普通工具错误继续运行；终态数据库提交与通知必须有先后规则。
 - roadmap已明确断连取消、无事件重放、崩溃interrupted与配对修复。未决的是partial持久化保证和不同Session并发，分析稿将其显式分开。
+
+
+## Phase 5 服务验收发现
+- SQLite保存事实，SSE保存不了事实；通知失败不能反过来修改已提交completed。生产缓冲有数量、字节和等待期限三种边界。
+- 断连所有权必须覆盖admit事务等待；单靠拿到run_id后的finally会留下孤儿Run。
+- Windows venv的python.exe可能只是启动器。集成夹具通过stdin命令让真实解释器os._exit，绕过finally，再等待启动器退出；不能把杀启动器等同于服务进程已退出。
+- sqlite3连接的with块提交/回滚事务但不关闭连接；Windows测试需显式关闭以释放数据库文件。
+- 实际HTTPX事件迭代器必须保留至消费/关闭，不应丢弃临时迭代器后还假定连接保持活跃。
+- 官方PyPI本环境TLS失败，通过公开清华镜像安装FastAPI/Uvicorn，锁定原依赖版本；无真实LLM/Embedding调用。
+
+## Phase 6 设计事实
+- 当前前端目录只有8张用户素材，尚无Electron/React工程；已有Phase 5工作区不能丢失或用旧HEAD覆盖。
+- Session列表默认limit=50、最大100，按session_id升序；walkthrough“默认100”须以app.py纠正。历史after_seq分页，current_run为最近Run，可能已终结。
+- llm.completed带完整message；tool.started只有name等公共关联字段，参数来自此前assistant.tool_calls；tool结果在payload.result；rag.retrieved含query/index_id/chunks。终态事件没有详细error，需GET Run。
+- Provider/Persona等错误目前常被归为run_aborted；UI不能伪造401/精确原因。标题、近期排序和Tool历史摘要可以由已有GET数据派生，不要求新后端业务接口。
+- Electron主进程窄桥接HTTP/SSE可避免新增CORS，同时让切换会话不关闭流；Renderer只呈现，不持有凭据，不执行Agent Loop。

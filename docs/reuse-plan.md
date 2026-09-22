@@ -120,3 +120,10 @@ Context Builder、冻结快照与 Persona 文件加载器为本项目独立实�
 ## 10. Phase 4 实际落地
 
 切分、远程Embedding适配器、精确检索、版本化索引、Tool装配和评测均独立编写，没有复制Hermes业务模块或Linux进程/信号代码。只新增NumPy，版本由backend/uv.lock锁定；许可证为BSD-3-Clause，二进制发行附带的组件声明应在最终打包时按安装包元数据保留，不由Hermes MIT代替。知识正文是用户现有快照的人工转述，来源与边界见knowledge/README.md；没有新增外部抓取语料。
+
+
+## Phase 5 落地记录（2026-09-21）
+
+SQLite 事务/专属线程、Runtime 的 TurnIO/EventSink、RunManager、Chat Completions 流解析、FastAPI/SSE 服务均为 Herta 独立实现，记作 rewrite。没有复制或导入 Hermes 的数据库、任务系统、Linux 信号或服务进程代码。FastAPI/Uvicorn 为新增声明依赖，由 uv 锁定；原业务依赖未升级，未增加供应商 SDK 或分布式队列。
+
+Windows 测试用 sys.executable 启动子进程，在中文空格路径和真实本机 socket 上验证；进程骤停夹具绕过 venv 启动器终止实际解释器，不向生产服务加入测试接口。正式入口和原 CLI 独立，后续 UI 尚未实现。真实 RAG 效果及真实流式服务仍未验收。

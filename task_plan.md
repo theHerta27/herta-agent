@@ -10,7 +10,7 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-phase-5-service已完成Task 1–9。本批Task 8、9流式工程实现完成，157项完整回归及Ruff通过，独立审查问题已复现并修复；停止，不进入Task 10。用户确认上批e8d0fa7已手动推送。没有真实API调用，Phase 4真实RAG效果仍待验收。
+phase-5-service已实现Task 1–12。最后一批API/SSE/Windows集成测试通过，完整178项离线回归通过；文档与独立审查已完成，审查发现的取消后缓冲delta发送问题已先复现再修复。停止Phase 5，不实现UI，不自动提交/push/merge。真实API未调用，真实RAG效果和供应商流式兼容性仍待验收。
 
 ## Phase 5设计讨论
 - [x] 阅读Phase 1–4实际代码、设计和roadmap，区分既定约定与未决项。
@@ -62,3 +62,9 @@ Phase 1 不实现工具执行、Persona、RAG、FastAPI、Electron 或 SSE。
 ## 错误记录
 - 首次解压命令指定了尚不存在的工作目录，进程未启动；改为在已存在的项目根目录执行。
 - rg 的 shell 路径通配符在当前 Windows 环境未展开；改为 rg -g 或明确文件名。
+
+## Phase 6 本轮（仅设计）
+- [x] 读取用户完整要求、Phase 5实际能力与文档。
+- [x] 查看Codex/Cyrene截图、Cyrene关键UI源码、ui-ux-pro-max及全部Herta素材。
+- [x] 确认最小Settings与环境Key约束。
+- [x] 完成docs/phase-6-ui-design.md与7阶段phase-6-plan.md，核对接口和范围后停止，不编码。

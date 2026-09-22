@@ -9,6 +9,7 @@ from uuid import uuid4
 from herta_agent.runtime.errors import AgentError
 from herta_agent.runtime.messages import Message
 from herta_agent.runtime.session import Session
+from herta_agent.service.events import EventQueue, adapt_runtime
 from herta_agent.service.settings import ServiceSettings
 from herta_agent.service.turn import PersistentTurn
 from herta_agent.storage.models import Admission, RunConfig, RunRecord, StoreError
@@ -32,7 +33,8 @@ class RunCapacityError(AgentError):
 class RunHandle:
     run_id: str
     session_id: str
-    events: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=128))
+    events: EventQueue = field(default_factory=EventQueue)
+    event_wait_seconds: float = 2.0
     done: asyncio.Event = field(default_factory=asyncio.Event)
     task: asyncio.Task | None = None
     admitting: asyncio.Task | None = None
@@ -44,9 +46,9 @@ class RunHandle:
     step: int = 0
     seq: int = 0
 
-    def publish(self, type, payload, *, terminal=False):
+    def _event(self, type, payload):
         self.seq += 1
-        event = {
+        return {
             "type": type,
             "session_id": self.session_id,
             "run_id": self.run_id,
@@ -55,23 +57,29 @@ class RunHandle:
             "schema_version": 1,
             "payload": payload,
         }
-        if terminal and self.events.full():
-            self.events.get_nowait()  # Cleanup never waits for a disconnected consumer.
-        self.events.put_nowait(event)
+
+    def publish(self, type, payload, *, terminal=False):
+        event = self._event(type, payload)
+        while True:
+            try:
+                self.events.put_nowait(event)
+                return
+            except asyncio.QueueFull:
+                if not terminal:
+                    raise
+                self.events.get_nowait()  # Cleanup never waits for a consumer.
 
     async def emit(self, event):
         if self.cancel_requested:
             raise asyncio.CancelledError
         self.step = event.step
-        self.publish(
-            event.type,
-            {
-                "step": event.step,
-                "message_id": event.message_id,
-                "tool_call_id": event.tool_call_id,
-                **event.payload,
-            },
-        )
+        try:
+            for type, payload in adapt_runtime(event):
+                async with asyncio.timeout(self.event_wait_seconds):
+                    await self.events.put(self._event(type, payload))
+        except (TimeoutError, ValueError):
+            self.cancel_requested = True
+            raise asyncio.CancelledError from None
 
 
 @dataclass(frozen=True)
@@ -114,15 +122,20 @@ class RunManager:
     def active_count(self):
         return len(self._active)
 
-    async def submit(self, session_id: str, user_text: str) -> RunHandle:
-        user = Message(role="user", content=user_text)
+    def check_admission(self, session_id):
         if self._stopping or not self.store.writable:
             raise StoreError("service_unavailable", "服务停止接纳或存储不可写。")
         if session_id in self._sessions:
             raise SessionConflictError()
         if self.active_count >= self.settings.max_active_runs:
             raise RunCapacityError()
-        handle = RunHandle(uuid4().hex, session_id)
+
+    async def submit(self, session_id: str, user_text: str) -> RunHandle:
+        user = Message(role="user", content=user_text)
+        self.check_admission(session_id)
+        handle = RunHandle(
+            uuid4().hex, session_id, event_wait_seconds=self.settings.event_wait_seconds
+        )
         self._active[handle.run_id] = handle
         self._sessions.add(session_id)  # No await before reservation.
         coroutine = self._admit_and_launch(handle, user)
