@@ -1,5 +1,16 @@
 # Herta Agent 工作记录
 
+## Phase 6 阶段1实施（2026-09-22）
+- 用户授权先固定 Phase 5 再只实现阶段1。核对 Task 10–12，178项 unittest、Ruff check、74文件 format check、diff check 通过。Phase 6文档/素材曾用专属 stash 保留，Phase 5提交并推送6679dfeda6535d4e33d8e24e7d042d0b5f6f7b84，远端SHA一致，确认干净后创建phase-6-ui并恢复素材；无merge。
+- Ruling: 沿用户指定分支原位实施，不额外建worktree；继续用本文件作ledger，不执行Linux/Bash工作流。原因是明确的分支顺序与Windows环境；代价是需明确保留原有未提交资料。
+- Pre-flight: 本轮只有阶段1，唯一消费接口为既有create_app/ServiceSettings/health/Manager.shutdown；后续会话、Run与设置桥不提前实现。
+- RED: 生命周期空契约的5项测试中4项失败（尚无启动、就绪、异常处理与退出等待）；真实Electron缺入口测试失败。随后实现安全窄Preload、最小窗口、Python host与自管进程。
+- Ruling: Node22.16现有环境选择Vite6.4.3兼容版本；不升级全机Node。Electron官方Windows归档通过既有本机代理下载并校验SHA256；不把代理写入配置。
+- Windows实测发现Electron GUI stdin立即EOF，开发命令退出；开发入口测试以未创建真实SQLite复现。Ruling: 仅dev runner→Electron使用Node IPC退出通知，Electron→Python保持计划的stdio协议。无业务API或整体架构调整。
+- Stage 1 complete: npm typecheck/lint/build通过；Vitest 9项通过，Playwright真实Electron 6项通过（包含3次启动/关闭、中文空格路径、目录外启动、单实例、缺配置/解释器、意外退出、开发入口）。EOF测试验证实际解释器退出、SQLite重开和其他Python进程不受影响。
+- 最后独立审查1项P2：停机失败Promise被永久缓存。测试先确认失败，再清除失败缓存允许重试；完整9项及6项桌面测试通过。无minor遗留。审查未判断阶段2以后、真实API和打包：均不属本轮，继续保留待验收状态。
+- 全套178项后端回归保持通过；Ruff check/format check含薄host共75文件；无backend业务代码变更、无真实API。保留8张原素材，未进入阶段2。Phase 6改动保持未提交、未push。
+
 ## Phase 5 Task 10–12实施
 - 沿用户手动提交后的33f10e2基线实施最后三项，不调整12个Task，不自动提交/push/merge；无真实API。
 - Task 10 complete：先写API测试确认缺模块失败，最小实现后6项及完整163项通过。缺聊天配置保留health/历史、运行503；独立入口只允许loopback单worker。

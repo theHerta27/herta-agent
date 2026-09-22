@@ -86,3 +86,10 @@
 - llm.completed带完整message；tool.started只有name等公共关联字段，参数来自此前assistant.tool_calls；tool结果在payload.result；rag.retrieved含query/index_id/chunks。终态事件没有详细error，需GET Run。
 - Provider/Persona等错误目前常被归为run_aborted；UI不能伪造401/精确原因。标题、近期排序和Tool历史摘要可以由已有GET数据派生，不要求新后端业务接口。
 - Electron主进程窄桥接HTTP/SSE可避免新增CORS，同时让切换会话不关闭流；Renderer只呈现，不持有凭据，不执行Agent Loop。
+
+## Phase 6 阶段1 Windows实测
+- Windows GUI Electron的stdin会立即结束，不能套用控制台进程的父进程EOF约定；开发脚本使用Node IPC，真正的Python控制台子进程继续使用stdin命令/EOF。
+- Windows venv解释器的真实PID与启动器PID不同；必须等stdio句柄全部关闭，不能只看启动器exit事件。连续启动/关闭与EOF测试均确认实际解释器退出。
+- Playwright主进程evaluate环境无全局require，测试使用process.getBuiltinModule('module').createRequire。Windows process.title不适合充当测试信号，单实例测试直接验证已最小化窗口恢复。
+- 受限工具环境中Electron renderer/GPU进程失败；正常桌面权限运行6项真实测试通过，未关闭contextIsolation/sandbox或webSecurity来绕过。
+- stage1.css仅服务最小启动状态页，未接入角色图或开始阶段2Design System。后端已有业务文件无改动。

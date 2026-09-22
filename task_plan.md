@@ -10,7 +10,7 @@
 - [x] 汇报并停在 Phase 0，等待用户确认。
 
 ## 当前状态
-phase-5-service已实现Task 1–12。最后一批API/SSE/Windows集成测试通过，完整178项离线回归通过；文档与独立审查已完成，审查发现的取消后缓冲delta发送问题已先复现再修复。停止Phase 5，不实现UI，不自动提交/push/merge。真实API未调用，真实RAG效果和供应商流式兼容性仍待验收。
+Phase 5最终基线6679dfeda6535d4e33d8e24e7d042d0b5f6f7b84已按授权提交并push，干净基线上创建phase-6-ui。现只完成Phase 6阶段1：真实Windows窗口、自启Python、状态与关闭清理；9项进程测试、6项Electron测试及178项后端回归通过。停止，不进入阶段2；Phase 6未提交、未push、无merge。真实API未调用，真实RAG效果与供应商流式兼容性仍待验收。
 
 ## Phase 5设计讨论
 - [x] 阅读Phase 1–4实际代码、设计和roadmap，区分既定约定与未决项。
