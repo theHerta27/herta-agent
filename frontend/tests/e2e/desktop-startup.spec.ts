@@ -104,3 +104,29 @@ test('unexpected Python exit invalidates ready state', async () => {
   process.kill(state.pid);
   await expect(page.getByRole('status')).toHaveText('后端不可用');
 });
+
+test('shutdown failure or stall cannot retain Electron and its instance lock', async () => {
+  test.setTimeout(90000);
+  for (const failure of ['reject', 'stall']) {
+    const page = await launch();
+    await expect(page.getByRole('status')).toHaveText('服务就绪');
+    const state = await owned();
+    const mainPid = desktop!.process().pid!;
+    await desktop!.evaluate(async ({ app }, failure) => {
+      const module = process.getBuiltinModule('module');
+      const { backend } = module.createRequire(app.getAppPath() + '/package.json')('./dist/electron/main.cjs');
+      if (failure === 'reject') {
+        await backend.stop();
+        backend.stop = () => Promise.reject(new Error('injected shutdown failure'));
+      } else {
+        backend.stop = () => new Promise(() => {});
+      }
+    }, failure);
+    await desktop!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+    await expect.poll(() => alive(mainPid), { timeout: 45000 }).toBe(false);
+    desktop = undefined;
+    await expect.poll(() => alive(state.pid) || alive(state.launcher)).toBe(false);
+  }
+  const page = await launch();
+  await expect(page.getByRole('status')).toHaveText('服务就绪');
+});

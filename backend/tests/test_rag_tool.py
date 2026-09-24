@@ -11,6 +11,7 @@ from herta_agent.rag.errors import RagError
 from herta_agent.runtime.agent import Agent
 from herta_agent.runtime.messages import Message, ToolCall
 from herta_agent.runtime.session import Session
+from herta_agent.service.events import adapt_runtime
 from herta_agent.tools.echo import EchoParameters, echo
 from herta_agent.tools.executor import ToolExecutor
 from herta_agent.tools.registry import ToolRegistry, ToolSpec
@@ -33,6 +34,42 @@ class Retriever:
 
 
 class RagToolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_two_search_calls_keep_separate_failures_in_history_and_events(self):
+        calls = tuple(
+            ToolCall(id=identifier, name="search_knowledge", arguments=json.dumps({"query": query}))
+            for identifier, query in [("a", "大黑塔 黑塔人偶 关系"), ("b", "黑塔人偶 用途 控制")]
+        )
+        provider = ScriptedProvider(
+            Message(role="assistant", tool_calls=calls),
+            Message(role="assistant", content="检索失败，不能据此提供证据。"),
+        )
+        events = []
+
+        class Sink:
+            async def emit(self, event):
+                events.extend(adapt_runtime(event))
+
+        session = Session()
+        await Agent(
+            provider,
+            registry=registry_for(unavailable=RagError("embedding_config", "invalid config")),
+        ).run(session, "关系？", observer=Sink())
+        results = [message for message in session.history if message.role == "tool"]
+        self.assertEqual([message.tool_call_id for message in results], ["a", "b"])
+        for message in results:
+            self.assertEqual(json.loads(message.content)["error"]["code"], "embedding_config")
+        for kind in ("tool.started", "tool.failed"):
+            self.assertEqual(
+                [
+                    (payload["step"], payload["tool_call_id"])
+                    for name, payload in events
+                    if name == kind
+                ],
+                [(1, "a"), (1, "b")],
+            )
+        self.assertFalse(any(name == "rag.retrieved" for name, _ in events))
+        self.assertEqual(session.history[-1].role, "assistant")
+
     async def test_schema_strict_and_query_trim(self):
         registry = registry_for(Retriever())
         schema = registry.definitions()[0]["function"]["parameters"]

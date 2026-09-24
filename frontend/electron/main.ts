@@ -5,6 +5,7 @@ import { BackendProcess } from './backend-process';
 import { BackendClient } from './backend-client';
 import { RunTransport } from './run-transport';
 import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -39,8 +40,24 @@ if (!app.requestSingleInstanceLock()) {
     event.preventDefault();
     if (closing) return;
     closing = true;
+    // stop() normally finishes within 20s + 5s tree kill + 5s pipe drain.
+    // A rejected/stalled shutdown must not retain this process's instance lock.
+    let forcing = false;
+    const forceExit = () => {
+      if (forcing) return;
+      forcing = true;
+      clearTimeout(watchdog);
+      execFile(join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/taskkill.exe'),
+        ['/PID', String(process.pid), '/T', '/F'], { windowsHide: true, timeout: 5000 },
+        () => app.exit(1));
+    };
+    const watchdog = setTimeout(forceExit, 35000);
     transport?.dispose();
-    void backend.stop().then(() => { quitting = true; app.quit(); }).catch(() => { closing = false; });
+    void backend.stop().then(() => {
+      clearTimeout(watchdog);
+      quitting = true;
+      app.quit();
+    }).catch(forceExit);
   });
   // Electron's Windows GUI subsystem has no reliable stdin; the dev runner uses IPC.
   if (process.send) {

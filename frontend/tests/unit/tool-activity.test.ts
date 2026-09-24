@@ -24,3 +24,29 @@ it('shows failure without started, and merges rag.retrieved into the same activi
   expect(Object.values(run.tools)).toHaveLength(2);
   expect(Object.values(run.tools)[1].chunks).toHaveLength(1);
 });
+
+it('preserves two independent same-step searches and pairs each failure exactly once', () => {
+  const calls = [
+    { id: 'call_a', name: 'search_knowledge', arguments: '{"query":"大黑塔 黑塔人偶 关系"}' },
+    { id: 'call_b', name: 'search_knowledge', arguments: '{"query":"黑塔人偶 用途 控制 天才俱乐部"}' },
+  ];
+  const failure = { ok: false, data: null, error: { code: 'embedding_config', message: 'Embedding configuration is missing or invalid.' } };
+  let seq = 0;
+  const event = (type: string, payload: Record<string, unknown>): ServiceEvent => ({
+    seq: ++seq, type, payload: { step: 1, ...payload }, run_id: 'r', session_id: 's', schema_version: 1, timestamp: '',
+  });
+  let live = reduceRun(newRun('q', 's', 'question', 0), event('llm.completed', { message: { tool_calls: calls } }));
+  for (const call of calls) {
+    live = reduceRun(live, event('tool.started', { tool_call_id: call.id, name: call.name }));
+    const failed = event('tool.failed', { tool_call_id: call.id, name: call.name, result: failure });
+    live = reduceRun(live, failed);
+    live = reduceRun(live, failed); // Repeated delivery is not another execution.
+  }
+  const records = [
+    { run_id: 'r', step: 1, message: { role: 'assistant', tool_calls: calls } },
+    ...calls.map(call => ({ run_id: 'r', step: 1, message: { role: 'tool', tool_call_id: call.id, content: JSON.stringify(failure) } })),
+  ] as unknown as MessageRecord[];
+  const saved = projectTools(records);
+  expect(saved.map(tool => [tool.id, tool.state, tool.args])).toEqual(calls.map(call => [call.id, 'failed', call.arguments]));
+  expect(Object.values(live.tools)).toEqual(saved);
+});
