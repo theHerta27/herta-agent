@@ -1,12 +1,13 @@
 import type { MessageRecord, ServiceEvent, ToolCall } from '../../shared/contracts';
 export interface Evidence { id: string; source: string; score: number; source_spans?: unknown }
-export interface ToolActivity { key: string; step: number; id: string; name: string; args?: string; state: string; chunks?: Evidence[]; query?: string; result?: unknown }
+export interface ToolActivity { key: string; step: number; id: string; name: string; args?: string; state: string; chunks?: Evidence[]; query?: string; result?: unknown; plan?: { title: string; rationale: string }[] }
 const keyFor = (run: string, step: number, id: string) => `${run}:${step}:${id}`;
 
 function result(tool: ToolActivity, value: unknown): ToolActivity {
-  const outcome = value as { ok?: boolean; data?: { query?: string; chunks?: Evidence[] } } | null;
+  const outcome = value as { ok?: boolean; data?: { query?: string; chunks?: Evidence[]; steps?: { title: string; rationale: string }[] } } | null;
   return { ...tool, state: outcome?.ok ? 'completed' : 'failed', result: value,
-    query: outcome?.data?.query ?? tool.query, chunks: outcome?.data?.chunks };
+    query: outcome?.data?.query ?? tool.query, chunks: outcome?.data?.chunks,
+    ...(tool.name === 'propose_plan' && outcome?.ok && Array.isArray(outcome.data?.steps) ? { plan: outcome.data.steps.filter(s => typeof s.title === 'string' && typeof s.rationale === 'string') } : {}) };
 }
 
 export function applyToolEvent(tools: Record<string, ToolActivity>, event: ServiceEvent) {

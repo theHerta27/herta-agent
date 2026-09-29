@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "category": "bug",
+      "path": "subject.py",
+      "start_line": 1,
+      "end_line": 2,
+      "explanation": "遗漏返回值，所有输入返回None。"
+    }
+  ],
+  "model_result": "not_run"
+}

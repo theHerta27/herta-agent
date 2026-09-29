@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+ def allowed(blocked):
+-    return blocked
++    return not blocked

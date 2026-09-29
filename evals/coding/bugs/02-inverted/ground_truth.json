@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "判断取反：被阻止时不允许访问。",
+  "test": "tests/test_subject.py",
+  "contract": "判断取反：被阻止时不允许访问。"
+}

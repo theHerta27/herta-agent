@@ -1,0 +1,7 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+-def value(x):
+-    return x * 2
++def value(number):
++    return number * 2

@@ -1,5 +1,8 @@
 import type { ToolActivity } from '../state/tool-activity';
 import reading from '../assets/herta/status/herta-rag-reading.png';
+import { PlanActivity } from './PlanActivity';
+import { TestActivity, type TestOutcome } from './TestActivity';
+import { ReviewActivity, type ReviewFinding } from './ReviewActivity';
 
 export function RunActivity({ tools, explanation }: { tools: ToolActivity[]; explanation?: string }) {
   if (!tools.length && !explanation) return null;
@@ -23,7 +26,10 @@ export function RunActivity({ tools, explanation }: { tools: ToolActivity[]; exp
         </div>)}
         {!!tool.chunks?.length && <p>相似度表示检索相关程度，不代表事实置信度。</p>}
       </>}
-      {tool.result != null && (tool.name !== 'search_knowledge' || tool.state === 'failed') && <pre>{JSON.stringify(tool.result, null, 2)?.slice(0, 4000)}</pre>}
+      {tool.plan && <PlanActivity steps={tool.plan} />}
+      {tool.name === 'run_tests' && tool.state === 'completed' && <TestActivity result={(tool.result as { data: TestOutcome }).data} />}
+      {tool.name === 'submit_review' && tool.state === 'completed' && <ReviewActivity findings={(tool.result as { data: { findings: ReviewFinding[] } }).data.findings} />}
+      {tool.result != null && !tool.plan && !(['run_tests', 'submit_review'].includes(tool.name) && tool.state === 'completed') && (tool.name !== 'search_knowledge' || tool.state === 'failed') && <pre>{JSON.stringify(tool.result, null, 2)}</pre>}
     </div>)}
   </details>;
 }

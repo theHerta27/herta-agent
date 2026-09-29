@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "边界条件：18 岁应包含在成年范围内。",
+  "test": "tests/test_subject.py",
+  "contract": "边界条件：18 岁应包含在成年范围内。"
+}

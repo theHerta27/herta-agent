@@ -1,12 +1,15 @@
 import { createServer } from 'vite';
 import { spawn } from 'node:child_process';
 import electron from 'electron';
+import { delimiter, resolve } from 'node:path';
 import { buildMain, frontend } from './build.mjs';
 
 await buildMain();
 const server = await createServer({ root: frontend });
 await server.listen();
 const env = { ...process.env, HERTA_DESKTOP_DEV_URL: server.resolvedUrls.local[0] };
+env.PYTHONPATH = [resolve(frontend, '../backend'), process.env.PYTHONPATH].filter(Boolean).join(delimiter);
+env.HERTA_CODING_REPO_ROOT ??= resolve(frontend, '..');
 delete env.ELECTRON_RUN_AS_NODE;
 // Electron is the user-facing GUI; SW_HIDE can leave its first window invisible on Windows.
 const child = spawn(electron, [frontend], { cwd: frontend, env, windowsHide: false, stdio: ['ignore', 'inherit', 'inherit', 'ipc'] });

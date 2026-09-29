@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 test('closing the native window ends the dev process tree and permits reopening', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'Herta reopen '));
+  await mkdir(join(folder, 'repo'));
   const frontend = resolve(import.meta.dirname, '../..');
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     !key.startsWith('HERTA_') && key !== 'ELECTRON_RUN_AS_NODE'));
@@ -15,7 +16,7 @@ test('closing the native window ends the dev process tree and permits reopening'
   try {
     for (let cycle = 0; cycle < 2; cycle++) {
       const child = spawn(process.execPath, [join(frontend, 'scripts/dev.mjs')], {
-        cwd: folder, env: { ...env, HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: folder },
+        cwd: folder, env: { ...env, HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: folder, HERTA_CODING_REPO_ROOT: join(folder, 'repo') },
         windowsHide: true, stdio: 'pipe',
       });
       child.stdout.resume(); child.stderr.resume();
@@ -46,11 +47,12 @@ test('closing the native window ends the dev process tree and permits reopening'
 
 test('single development command stays running until its parent closes', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'Herta dev 中文 '));
+  await mkdir(join(folder, 'repo'));
   const frontend = resolve(import.meta.dirname, '../..');
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     !key.startsWith('HERTA_') && key !== 'ELECTRON_RUN_AS_NODE'));
   const child = spawn(process.execPath, [join(frontend, 'scripts/dev.mjs')], {
-    cwd: folder, env: { ...env, HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: folder },
+    cwd: folder, env: { ...env, HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: folder, HERTA_CODING_REPO_ROOT: join(folder, 'repo') },
     windowsHide: true, stdio: 'pipe',
   });
   child.stdout.resume();

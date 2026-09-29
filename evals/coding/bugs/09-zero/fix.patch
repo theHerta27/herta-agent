@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+ def fallback(value):
+-    return value or 10
++    return 10 if value is None else value

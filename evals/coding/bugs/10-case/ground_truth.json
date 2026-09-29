@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "大小写不敏感匹配遗漏归一化。",
+  "test": "tests/test_subject.py",
+  "contract": "大小写不敏感匹配遗漏归一化。"
+}

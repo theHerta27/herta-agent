@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+ def average(items):
+-    return sum(items) / len(items)
++    return sum(items) / len(items) if items else 0

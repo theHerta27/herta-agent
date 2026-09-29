@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+ def matches(name):
+-    return name == "python"
++    return name.casefold() == "python"

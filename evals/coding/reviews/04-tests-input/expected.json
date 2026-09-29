@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "category": "tests",
+      "path": "subject.py",
+      "start_line": 1,
+      "end_line": 4,
+      "explanation": "新增类型拒绝分支，需要有效整数与非整数输入测试。"
+    }
+  ],
+  "model_result": "not_run"
+}

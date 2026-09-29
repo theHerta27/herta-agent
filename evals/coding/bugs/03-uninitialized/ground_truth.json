@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 4,
+  "cause": "空集合时局部变量未初始化。",
+  "test": "tests/test_subject.py",
+  "contract": "空集合时局部变量未初始化。"
+}

@@ -1,0 +1,8 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,4 +1,5 @@
+ def last(items):
++    value = None
+     for item in items:
+         value = item
+     return value

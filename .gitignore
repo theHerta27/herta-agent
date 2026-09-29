@@ -22,5 +22,6 @@ test-results/
 playwright-report/
 dist/
 release/
+.coding-agent-workspace/
 *.egg-info/
 .idea/

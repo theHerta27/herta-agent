@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,2 @@
+ def first(items):
+-    return items[1]
++    return items[0]

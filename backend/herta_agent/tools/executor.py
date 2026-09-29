@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 
 from herta_agent.runtime.errors import ToolExecutionError
 from herta_agent.runtime.messages import ToolCall
+from herta_agent.tools.execution_context import tool_call_id
 from herta_agent.tools.registry import ToolRegistry
 
 
@@ -52,6 +53,7 @@ class ToolExecutor:
             )
         if on_started is not None:
             await on_started()  # Infrastructure errors must not become tool failures.
+        token = tool_call_id.set(call.id)
         try:
             async with asyncio.timeout(spec.timeout if spec.timeout is not None else self.timeout):
                 data = await spec.handler(parameters)
@@ -65,3 +67,5 @@ class ToolExecutor:
         except Exception:
             # CancelledError inherits BaseException and deliberately propagates to Runtime.
             return ToolResult.failure("execution_error", "工具执行失败。")
+        finally:
+            tool_call_id.reset(token)

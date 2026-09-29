@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "异常处理遗漏：无效数字应返回 None。",
+  "test": "tests/test_subject.py",
+  "contract": "异常处理遗漏：无效数字应返回 None。"
+}

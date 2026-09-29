@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "空输入除零，约定返回 0。",
+  "test": "tests/test_subject.py",
+  "contract": "空输入除零，约定返回 0。"
+}

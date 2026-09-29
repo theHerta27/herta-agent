@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "category": "bug",
+      "path": "subject.py",
+      "start_line": 1,
+      "end_line": 2,
+      "explanation": "输入0应返回0，改动返回1。"
+    }
+  ],
+  "model_result": "not_run"
+}

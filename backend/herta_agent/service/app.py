@@ -1,12 +1,14 @@
 """Local HTTP composition. Runtime and storage remain independent of FastAPI."""
 
 from contextlib import asynccontextmanager
+from dataclasses import replace
 
 import httpx
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from herta_agent.coding import CodeContextBuilder, CodingSettings
 from herta_agent.config import ProviderSettings
 from herta_agent.llm.demo import DemoProvider
 from herta_agent.llm.openai_compatible import OpenAICompatibleProvider
@@ -14,13 +16,17 @@ from herta_agent.persona import PersonaContextBuilder
 from herta_agent.rag.errors import RagError
 from herta_agent.rag.service import load_retriever
 from herta_agent.runtime.agent import Agent
-from herta_agent.runtime.errors import AgentError
+from herta_agent.runtime.errors import AgentError, ToolExecutionError
+from herta_agent.service.review_mode import review_registry
 from herta_agent.service.runs import RunCapacityError, RunManager, SessionConflictError
 from herta_agent.service.schemas import EmptyRequest, RunInput
 from herta_agent.service.settings import ServiceSettings
 from herta_agent.service.sse import RunResponse
 from herta_agent.storage.models import StoreError
 from herta_agent.storage.sqlite import SQLiteSessionStore
+from herta_agent.tools.coding import coding_registry
+from herta_agent.tools.coding.sandbox import check_docker
+from herta_agent.tools.coding.workspace import Workspace
 from herta_agent.tools.echo import echo_registry
 from herta_agent.tools.search_knowledge import search_knowledge_spec
 
@@ -35,12 +41,31 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         store = SQLiteSessionStore(settings.db_path)
         app.state.store, app.state.manager = store, None
         app.state.rag_available = False
+        app.state.test_runner_available = False
+        app.state.test_runner_error = None
         clients = []
         try:
             await store.open()
             await store.recover_interrupted()
             selected = provider
-            registry = echo_registry()
+            coding = CodingSettings.from_env()
+            if coding:
+                workspace = Workspace.open(coding.root)
+                coding = replace(coding, root=workspace.root)
+                registry = (
+                    review_registry(workspace)
+                    if coding.mode == "review"
+                    else coding_registry(workspace, writable=True)
+                )
+                if coding.mode == "coding":
+                    try:
+                        await check_docker()
+                    except ToolExecutionError as error:
+                        app.state.test_runner_error = error.code
+                    else:
+                        app.state.test_runner_available = True
+            else:
+                registry = echo_registry()
             unavailable = RagError("index_missing", "知识检索未配置。")
             if selected is None and settings.provider == "demo":
                 selected = DemoProvider()
@@ -54,26 +79,31 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                         timeout=httpx.Timeout(settings.run.request_timeout, connect=10)
                     )
                     clients.append(chat_client)
-                    embedding_client = httpx.AsyncClient()
-                    clients.append(embedding_client)
                     selected = OpenAICompatibleProvider(config, chat_client)
-                    try:
-                        retriever = load_retriever(
-                            embedding_client, settings.knowledge_path, settings.index_path
-                        )
-                    except RagError as error:
-                        unavailable = error
-                    else:
-                        registry.register(search_knowledge_spec(retriever))
-                        app.state.rag_available = True
-            if not app.state.rag_available:
+                    if coding is None:
+                        embedding_client = httpx.AsyncClient()
+                        clients.append(embedding_client)
+                        try:
+                            retriever = load_retriever(
+                                embedding_client, settings.knowledge_path, settings.index_path
+                            )
+                        except RagError as error:
+                            unavailable = error
+                        else:
+                            registry.register(search_knowledge_spec(retriever))
+                            app.state.rag_available = True
+            if coding is None and not app.state.rag_available:
                 registry.register(search_knowledge_spec(unavailable=unavailable))
             if selected is not None:
                 agent = Agent(
                     selected,
                     settings.run,
                     registry=registry,
-                    context_builder=PersonaContextBuilder(settings.soul_path),
+                    context_builder=(
+                        CodeContextBuilder(coding)
+                        if coding
+                        else PersonaContextBuilder(settings.soul_path)
+                    ),
                     streaming=callable(getattr(selected, "stream", None)),
                 )
                 app.state.manager = RunManager(store, agent, settings)
@@ -113,6 +143,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             "storage_writable": app.state.store.writable,
             "chat_available": manager is not None,
             "rag_available": app.state.rag_available,
+            "test_runner_available": app.state.test_runner_available,
+            "test_runner_error": app.state.test_runner_error,
             "active_runs": manager.active_count if manager else 0,
         }
 

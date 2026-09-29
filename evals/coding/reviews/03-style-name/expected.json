@@ -1,0 +1,12 @@
+{
+  "findings": [
+    {
+      "category": "style",
+      "path": "subject.py",
+      "start_line": 1,
+      "end_line": 3,
+      "explanation": "局部变量不应使用约定为模块常量的全大写名。"
+    }
+  ],
+  "model_result": "not_run"
+}

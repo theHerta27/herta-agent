@@ -1,0 +1,7 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,4 @@
+ def value(x):
++    if not isinstance(x, int):
++        raise TypeError("integer required")
+     return x * 2

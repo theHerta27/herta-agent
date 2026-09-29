@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "遗漏 return 导致返回 None。",
+  "test": "tests/test_subject.py",
+  "contract": "遗漏 return 导致返回 None。"
+}

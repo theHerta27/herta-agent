@@ -1,4 +1,6 @@
-# herta-agent
+# herta-agent — coding-agent 分支
+
+本分支新增 Windows Coding Agent：源码副本、只读代码工具、结构化计划、补丁与容器化 pytest、调试样本、只读评审。启动和验收见 [Coding Agent 说明](docs/coding-agent-walkthrough.md)。以下角色功能说明保留作为原框架记录；原 `phase-6-ui` 分支未改动。
 
 一个边实现边学习的 Windows 桌面 Agent 项目。已实现 Phase 5 本机后端服务，以及 **Phase 6 阶段1–5：桌面启动、会话、流式聊天与工具活动**。Electron 自动管理现有 Python/FastAPI 后端，可新建/切换会话、流式显示回答、查看工具证据并取消运行。真实供应商流式兼容性与真实 RAG 效果仍待配置后验收。
 
@@ -63,7 +65,7 @@ Embedding 使用独立的 `HERTA_EMBEDDING_BASE_URL`、`HERTA_EMBEDDING_MODEL`�
 ## 检查代码
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s backend/tests -v
+.\.venv\Scripts\python.exe -m pytest backend/tests -q -rs
 .\.venv\Scripts\ruff.exe check backend
 .\.venv\Scripts\ruff.exe format --check backend
 ```
@@ -71,6 +73,25 @@ Embedding 使用独立的 `HERTA_EMBEDDING_BASE_URL`、`HERTA_EMBEDDING_MODEL`�
 已通过 178 项离线自动测试，保留原 Phase 1–4 的 93 项。新增覆盖持久提交、取消竞争、流式协议、API/SSE、Windows 真实 socket、慢消费者和进程骤停恢复；本批真实 HTTP 使用注入的离线 Provider。未调用真实模型或 Embedding API，未验证实际语义召回、模型路由和据证回答。
 
 ## 安装或重新建立环境
+
+Coding Agent 的 `run_tests` 新增 **Docker Desktop（Linux containers）** 前置依赖。
+请按 [Docker 官方 Windows 安装说明](https://docs.docker.com/desktop/setup/install/windows-install/)
+安装、启动 Docker Desktop，并完成其要求的 WSL2/虚拟化配置；这提高了本机安装门槛。
+代码测试不会静默回退为宿主 Python 执行。当前机器尚未安装 Docker，真实隔离验收待完成。
+
+准备好 Docker 后，在本工作树运行（不是旧 phase-6-ui 目录）：
+
+```powershell
+cd D:\Desktop\herta-agent-coding
+$env:HERTA_CODING_REPO_ROOT = "$PWD"
+./scripts/build-coding-sandbox-image.ps1
+$env:HERTA_DOCKER_TESTS = '1'
+.\.venv\Scripts\python.exe -m pytest backend/tests -q -rs
+```
+
+完整测试分项与迁移状态见 [迁移计划与记录](docs/run-tests-sandbox-plan.md)。没有 Docker 时，
+依赖容器的集成测试明确跳过；跳过不算通过，也不代表迁移验收完成。历史 195 项数字属于
+迁移前记录。pytest 阶段已通过原 195 项及新增 6 项；Docker 路径尚待真实验证。
 
 使用已有 uv，在项目根目录运行：
 

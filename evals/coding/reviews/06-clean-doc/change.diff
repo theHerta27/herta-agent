@@ -1,0 +1,6 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,3 @@
+ def value(x):
++    """Return twice the input."""
+     return x * 2

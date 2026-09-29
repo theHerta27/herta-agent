@@ -1,0 +1,9 @@
+--- a/subject.py
++++ b/subject.py
+@@ -1,2 +1,5 @@
+ def parse(text):
+-    return int(text)
++    try:
++        return int(text)
++    except ValueError:
++        return None

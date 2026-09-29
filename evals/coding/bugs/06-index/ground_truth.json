@@ -1,0 +1,8 @@
+{
+  "path": "subject.py",
+  "start_line": 2,
+  "end_line": 2,
+  "cause": "首元素索引应为 0。",
+  "test": "tests/test_subject.py",
+  "contract": "首元素索引应为 0。"
+}
