@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from herta_agent.config import RunSettings
+from herta_agent.runtime.context_engine import ContextSettings
 from herta_agent.runtime.errors import AgentError
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -48,6 +49,16 @@ class ServiceSettings(BaseModel):
             ):
                 if env in os.environ:
                     fields[field] = os.environ[env]
+            summary = os.environ.get("HERTA_CONTEXT_SUMMARY", "true").lower()
+            if summary not in {"true", "false"}:
+                raise ValueError("Invalid summary option")
+            fields["run"] = RunSettings(
+                context=ContextSettings(
+                    window_tokens=int(os.environ.get("HERTA_CONTEXT_WINDOW", "32768")),
+                    output_reserve=int(os.environ.get("HERTA_CONTEXT_OUTPUT_RESERVE", "2048")),
+                    summary_enabled=summary == "true",
+                )
+            )
             return cls(**fields)
         except ValueError:
             raise AgentError(

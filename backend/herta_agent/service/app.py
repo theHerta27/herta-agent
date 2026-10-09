@@ -1,6 +1,7 @@
 """Local HTTP composition. Runtime and storage remain independent of FastAPI."""
 
-from contextlib import asynccontextmanager
+import os
+from contextlib import AsyncExitStack, asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, Query, Request
@@ -35,6 +36,11 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         store = SQLiteSessionStore(settings.db_path)
         app.state.store, app.state.manager = store, None
         app.state.rag_available = False
+        app.state.embedding_provider = None
+        app.state.embedding_model = None
+        app.state.mcp_available = False
+        app.state.mcp_error = None
+        mcp_stack = AsyncExitStack()
         clients = []
         try:
             await store.open()
@@ -66,8 +72,30 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     else:
                         registry.register(search_knowledge_spec(retriever))
                         app.state.rag_available = True
+                        app.state.embedding_provider = (
+                            "local"
+                            if type(retriever.embeddings).__name__ == "LocalEmbeddings"
+                            else "remote"
+                        )
+                        app.state.embedding_model = retriever.embeddings.model
             if not app.state.rag_available:
                 registry.register(search_knowledge_spec(unavailable=unavailable))
+            if selected is not None and os.environ.get("HERTA_MCP_CONFIG"):
+                from herta_agent.tools.mcp import connect_mcp_tools, load_mcp_config
+
+                try:
+                    config = load_mcp_config(os.environ["HERTA_MCP_CONFIG"])
+                    specs = await mcp_stack.enter_async_context(
+                        connect_mcp_tools(
+                            config,
+                            reserved_names=[d["function"]["name"] for d in registry.definitions()],
+                        )
+                    )
+                    for spec in specs:
+                        registry.register(spec)
+                    app.state.mcp_available = bool(specs)
+                except Exception:
+                    app.state.mcp_error = "mcp_unavailable"
             if selected is not None:
                 agent = Agent(
                     selected,
@@ -84,6 +112,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                 await app.state.manager.shutdown()
             else:
                 await store.close()
+            await mcp_stack.aclose()
             for client in reversed(clients):
                 await client.aclose()
 
@@ -114,6 +143,10 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             "chat_available": manager is not None,
             "rag_available": app.state.rag_available,
             "active_runs": manager.active_count if manager else 0,
+            "embedding_provider": app.state.embedding_provider,
+            "embedding_model": app.state.embedding_model,
+            "mcp_available": app.state.mcp_available,
+            "mcp_error": app.state.mcp_error,
         }
 
     @app.post("/sessions", status_code=201)
@@ -144,6 +177,10 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         if app.state.manager is not None:
             return await app.state.manager.get(run_id)
         return {"run": await app.state.store.get_run(run_id), "cancel_requested": False}
+
+    @app.get("/runs/{run_id}/diagnostics")
+    async def get_diagnostics(run_id: str):
+        return await app.state.store.get_diagnostics(run_id)
 
     @app.post("/runs/{run_id}/cancel")
     async def cancel(run_id: str, body: EmptyRequest | None = None):

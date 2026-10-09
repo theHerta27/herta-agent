@@ -4,7 +4,7 @@ import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { describe, expect, it, vi } from 'vitest';
 import { BackendProcess } from '../../electron/backend-process';
 
-function fixture() {
+function fixture(options: { startupMs?: number } = { startupMs: 200 }) {
   const child = Object.assign(new EventEmitter(), {
     pid: 120, exitCode: null as number | null, stdin: new PassThrough(),
     stdout: new PassThrough(), stderr: new PassThrough(),
@@ -16,7 +16,7 @@ function fixture() {
   const backend = new BackendProcess({
     python: 'D:\\中文 空格\\python.exe', host: 'D:\\中文 空格\\backend_host.py',
     root: 'D:\\中文 空格', db: 'D:\\中文 空格\\sessions.sqlite3',
-    spawn, health, startupMs: 200, shutdownMs: 200,
+    spawn, health, startupMs: options.startupMs, shutdownMs: 200,
   });
   const ready = () => child.stdout.write(JSON.stringify({ type: 'ready', protocol: 1, port: 12345, pid: 121 }) + '\n');
   const close = () => { child.exitCode = 0; child.emit('close', 0); };
@@ -121,4 +121,46 @@ describe('owned backend lifecycle', () => {
     await expect(f.backend.stop()).resolves.toBeUndefined();
     expect(f.backend.status.state).toBe('stopped');
   });
+});
+
+it('restarts the owned backend after stop with a fresh process and updated public environment', async () => {
+  const first = fixture();
+  const second = fixture();
+  const children = [first.child, second.child];
+  const environments: unknown[] = [];
+  const backend = new BackendProcess({ python: 'python', host: 'host', root: 'root', db: 'same.sqlite3', startupMs: 200, shutdownMs: 200,
+    spawn: (_file, args, options) => { expect(args).toEqual(['-u', 'host', '--db', 'same.sqlite3']); environments.push((options as { env: unknown }).env); return children.shift()! as unknown as ChildProcessWithoutNullStreams; },
+    health: async () => ({ storage_writable: true, chat_available: true, rag_available: false, active_runs: 0 }),
+  });
+  const starting = backend.start(); first.ready(); await starting;
+  first.child.stdin.on('data', () => { queueMicrotask(first.close); });
+  await backend.stop();
+  backend.configureEnvironment({ HERTA_MODEL: 'new-model' });
+  const restarting = backend.start(); second.ready(); await restarting;
+  expect(backend.status.state).toBe('ready');
+  expect(environments[1]).toEqual({ HERTA_MODEL: 'new-model' });
+  second.child.stdin.on('data', () => { queueMicrotask(second.close); });
+  await backend.stop();
+  expect(backend.status.state).toBe('stopped');
+});
+
+it('allows local embedding cold startup beyond the old fifteen second deadline', async () => {
+  vi.useFakeTimers();
+  const f = fixture({});
+  try {
+    const starting = f.backend.start();
+    await vi.advanceTimersByTimeAsync(16000);
+    expect(f.backend.status.state).toBe('starting');
+    f.ready(); await starting;
+    expect(f.backend.status.state).toBe('needs_configuration');
+    f.close();
+  } finally { vi.useRealTimers(); }
+});
+
+it('exposes public embedding readiness instead of requiring a remote embedding key', async () => {
+  const f = fixture();
+  f.health.mockResolvedValue({ storage_writable: true, chat_available: true, rag_available: true, active_runs: 0, ...{ embedding_provider: 'local', embedding_model: 'BAAI/bge-large-zh', mcp_available: true } });
+  const starting = f.backend.start(); f.ready(); await starting;
+  expect(f.backend.status).toMatchObject({ state: 'ready', ragAvailable: true, embeddingProvider: 'local', embeddingModel: 'BAAI/bge-large-zh', mcpAvailable: true });
+  f.close();
 });

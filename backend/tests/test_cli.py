@@ -50,6 +50,7 @@ class CLITests(unittest.TestCase):
     def invoke(self, *args: str, input_text: str | None = None) -> subprocess.CompletedProcess:
         env = {key: value for key, value in os.environ.items() if not key.startswith("HERTA_")}
         env.pop("PYTHONIOENCODING", None)
+        env.pop("DEEPSEEK_API_KEY", None)
         return subprocess.run(
             [sys.executable, "-m", "herta_agent", *args],
             input=input_text,
@@ -76,7 +77,7 @@ class CLITests(unittest.TestCase):
     def test_real_provider_requires_explicit_configuration(self) -> None:
         result = self.invoke("--provider", "openai", "--message", "hello")
         self.assertEqual(result.returncode, 1)
-        self.assertIn("HERTA_BASE_URL", result.stderr)
+        self.assertIn("HERTA_API_KEY", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
 
     def test_invalid_budget_fails_before_calling_demo(self) -> None:

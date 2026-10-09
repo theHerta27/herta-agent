@@ -4,6 +4,7 @@ import math
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -19,12 +20,15 @@ class ToolSpec:
     parameters: type[ToolParameters]
     handler: Callable[[ToolParameters], Awaitable[object]]
     timeout: float | None = None
+    permission: Literal["read_only", "side_effect"] = "read_only"
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", self.name):
             raise ValueError("Invalid tool name")
         if not self.description.strip() or not issubclass(self.parameters, ToolParameters):
             raise ValueError("A tool requires a description and ToolParameters model")
+        if self.permission not in ("read_only", "side_effect"):
+            raise ValueError("Invalid tool permission")
         if self.timeout is not None and (
             isinstance(self.timeout, bool)
             or not isinstance(self.timeout, (int, float))

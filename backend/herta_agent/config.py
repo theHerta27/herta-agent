@@ -5,12 +5,14 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
 
+from herta_agent.runtime.context_engine import ContextSettings
 from herta_agent.runtime.errors import AgentError
 
 
 class RunSettings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
 
+    context: ContextSettings = Field(default_factory=ContextSettings)
     max_steps: int = Field(default=8, strict=True, ge=1, le=100)
     request_timeout: float = Field(default=120.0, strict=True, gt=0, le=600)
     tool_timeout: float = Field(default=10.0, strict=True, gt=0, le=600)
@@ -27,13 +29,13 @@ class ProviderSettings(BaseModel):
     def from_env(cls) -> "ProviderSettings":
         try:
             return cls(
-                base_url=os.environ["HERTA_BASE_URL"],
-                model=os.environ["HERTA_MODEL"],
-                api_key=os.environ["HERTA_API_KEY"],
+                base_url=os.environ.get("HERTA_BASE_URL", "https://api.deepseek.com"),
+                model=os.environ.get("HERTA_MODEL", "deepseek-flash"),
+                api_key=os.environ.get("HERTA_API_KEY", os.environ.get("DEEPSEEK_API_KEY", "")),
             )
         except (KeyError, ValueError):
             raise AgentError(
-                "请设置有效的 HERTA_BASE_URL、HERTA_MODEL 和 HERTA_API_KEY 环境变量。"
+                "请设置有效的模型配置及 HERTA_API_KEY（DeepSeek 也可用 DEEPSEEK_API_KEY）环境变量。"
             ) from None
 
     @field_validator("base_url")

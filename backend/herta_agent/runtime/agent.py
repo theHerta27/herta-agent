@@ -12,13 +12,16 @@
 import asyncio
 from contextlib import aclosing, nullcontext
 from functools import partial
+from time import perf_counter
 from uuid import uuid4
 
 from herta_agent.config import RunSettings
 from herta_agent.llm.base import LLMProvider
 from herta_agent.llm.streaming import ReplyCompleted, TextDelta
 from herta_agent.runtime.context import ContextBuilder, StaticContextBuilder
+from herta_agent.runtime.context_engine import ContextEngine
 from herta_agent.runtime.errors import (
+    ContextError,
     ModelTimeoutError,
     ProviderError,
     ProviderProtocolError,
@@ -50,6 +53,7 @@ class Agent:
         self.streaming = streaming
         self.provider = provider
         self.settings = settings or RunSettings()
+        self.context_engine = ContextEngine(self.settings.context)
         self.registry = registry if registry is not None else ToolRegistry()
         self.executor = ToolExecutor(self.registry, timeout=self.settings.tool_timeout)
         self.context_builder = (
@@ -110,7 +114,21 @@ class Agent:
             for step in range(1, self.settings.max_steps + 1):
                 await asyncio.sleep(0)  # Cancellation checkpoint even for immediate providers.
                 message_id = uuid4().hex
-                messages = context.build_messages(session.history)
+                package = self.context_engine.prepare(
+                    session.history, context, tools=self.registry.definitions()
+                )
+                record_context = getattr(turn, "record_context", None)
+                if record_context is not None:
+                    await record_context(package, step)
+                await sink.emit(
+                    RuntimeEvent(
+                        type="context.prepared",
+                        step=step,
+                        message_id=message_id,
+                        payload=package.diagnostic(step),
+                    )
+                )
+                messages = package.messages
                 await sink.emit(RuntimeEvent(type="llm.started", step=step, message_id=message_id))
                 try:
                     async with asyncio.timeout(self.settings.request_timeout):
@@ -146,7 +164,9 @@ class Agent:
                                 payload={"name": call.name},
                             ),
                         )
+                        tool_started = perf_counter()
                         result = await self.executor.execute(call, on_started=on_started)
+                        elapsed_ms = round((perf_counter() - tool_started) * 1000, 3)
                         await turn.append(
                             Message(role="tool", tool_call_id=call.id, content=result.to_json()),
                             message_id=tool_message_id,
@@ -160,6 +180,7 @@ class Agent:
                                 tool_call_id=call.id,
                                 payload={
                                     "name": call.name,
+                                    "duration_ms": elapsed_ms,
                                     "result": result.model_dump(mode="json"),
                                 },
                             )
@@ -191,7 +212,9 @@ class Agent:
             raise
         except Exception as error:
             code, message = "run_aborted", "当前轮异常结束，工具未完成。"
-            if isinstance(error, StepLimitExceeded):
+            if isinstance(error, ContextError):
+                code, message = "context_budget_exceeded", str(error)
+            elif isinstance(error, StepLimitExceeded):
                 code, message = "max_steps_exceeded", "模型请求预算耗尽，未执行此工具。"
             elif isinstance(error, ToolCallLimitExceeded):
                 code, message = "tool_call_limit", "每次模型响应最多允许 4 个工具调用，本批未执行。"

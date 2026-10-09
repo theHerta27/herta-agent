@@ -5,6 +5,7 @@ import { ConversationSidebar } from './components/ConversationSidebar';
 import { WelcomeView } from './components/WelcomeView';
 import { Composer } from './components/Composer';
 import { MessageList } from './components/MessageList';
+import { SettingsDialog } from './components/SettingsDialog';
 
 const store = new ChatStore(window.herta);
 
@@ -22,6 +23,7 @@ export function App() {
   const previous = useRef<string | null>(null);
   const following = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [light, setLight] = useState(() => localStorage.getItem('herta-theme') === 'light');
   useEffect(() => { document.documentElement.dataset.theme = light ? 'light' : 'dark'; localStorage.setItem('herta-theme', light ? 'light' : 'dark'); }, [light]);
@@ -49,11 +51,12 @@ export function App() {
   }, []);
 
   return <div className="app-shell">
+    {settingsOpen && <SettingsDialog backend={status} busy={Object.values(state.views).some(value => store.isBusy(value))} onClose={() => setSettingsOpen(false)} />}
     <ConversationSidebar sessions={state.sessions.map(s => ({ ...s, active: store.isBusy(store.view(s.session_id)) }))} selected={state.selected} onSelect={id => store.select(id)} onNew={() => store.select(null)}
       collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} light={light} onTheme={() => setLight(!light)} />
     <main className="workspace">
-      <header className="chat-header"><strong>{state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话'}</strong><span className="backend-status" role="status" aria-live="polite" data-state={status.state}>{labels[status.state]}</span></header>
-      {status.state === 'needs_configuration' && <p className="notice">聊天模型未配置；历史仍可阅读。请设置启动环境后重新打开应用。</p>}
+      <header className="chat-header"><strong>{state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话'}</strong><div className="header-actions"><button onClick={() => setSettingsOpen(true)}>设置</button><span className="backend-status" role="status" aria-live="polite" data-state={status.state}>{labels[status.state]}</span></div></header>
+      {status.state === 'needs_configuration' && <p className="notice">聊天模型未配置；历史仍可阅读。请打开设置填写模型连接，并通过启动环境配置密钥。</p>}
       {status.state === 'unavailable' && <p className="notice error">{status.reason === 'start_failed' ? 'Python 后端启动失败，请检查本地环境后重新打开应用。' : '后端连接不可用，请重新打开应用。'}</p>}
       {state.error && <p className="notice error">{state.error}<button onClick={() => void store.refresh()}>重试列表</button></p>}
       {view.error && <p className="notice error">{view.error}<button onClick={() => state.selected && void (view.request?.phase === 'unknown' ? store.reconcile(state.selected) : store.load(state.selected))}>{view.request?.phase === 'unknown' ? '核对状态' : '重试读取'}</button></p>}
@@ -62,7 +65,7 @@ export function App() {
         setShowLatest(!following.current); store.saveScroll(state.selected ?? 'draft', el.scrollTop);
       }}>
         {view.loading && <p className="content notice">正在读取会话…</p>}
-        {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} />}
+        {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} onRetryDiagnostics={() => state.selected && void store.load(state.selected)} />}
       </div>
       {showLatest && <button className="latest" onClick={() => { following.current = true; scroll.current!.scrollTop = scroll.current!.scrollHeight; }}>回到最新 ↓</button>}
       <Composer value={view.draft} onChange={text => store.setDraft(text)} onSend={() => void store.send()} onStop={() => void store.stop()} busy={busy} cancelling={view.request?.phase === 'cancelling' || view.request?.phase === 'reconciling'} disabled={status.state !== 'ready' || view.loading || !view.loaded} />

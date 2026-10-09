@@ -72,7 +72,13 @@ class AdmissionTests(unittest.IsolatedAsyncioTestCase):
                 events.append(handle.events.get_nowait())
             self.assertEqual(
                 [e["type"] for e in events],
-                ["run.started", "llm.started", "llm.completed", "run.completed"],
+                [
+                    "run.started",
+                    "context.prepared",
+                    "llm.started",
+                    "llm.completed",
+                    "run.completed",
+                ],
             )
         self.assertEqual(self.manager.active_count, 0)
         again = await self.manager.submit(first, "again")

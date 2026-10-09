@@ -13,10 +13,13 @@ dependencies = [
     "numpy>=2,<3",
     "fastapi>=0.141,<0.142",
     "uvicorn>=0.41,<0.42",
+    "mcp>=1.26,<2",
+    "jsonschema>=4.23,<5",
 ]
 
 [project.optional-dependencies]
 dev = ["ruff>=0.11,<1"]
+local = ["torch>=2.6,<3", "transformers>=4.45,<5"]
 
 [[tool.uv.index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
@@ -34,3 +37,11 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

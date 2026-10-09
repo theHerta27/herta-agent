@@ -12,7 +12,7 @@ from pathlib import Path
 import httpx
 from pydantic import ValidationError
 
-from herta_agent.rag.embeddings import EmbeddingSettings, RemoteEmbeddings
+from herta_agent.rag.embeddings import create_embeddings
 from herta_agent.rag.errors import RagError
 from herta_agent.rag.ingest import digest, load_corpus
 from herta_agent.rag.retriever import Retriever, SearchSettings
@@ -49,8 +49,7 @@ def parser() -> argparse.ArgumentParser:
 
 async def command(args: argparse.Namespace, client: httpx.AsyncClient) -> dict:
     settings = SearchSettings(k=args.k, min_score=args.min_score)
-    embedding_settings = EmbeddingSettings.from_env()
-    embeddings = RemoteEmbeddings(embedding_settings, client)
+    embeddings = create_embeddings(client)
     corpus = load_corpus(args.knowledge)
     if args.action == "build":
         vectors = await embeddings.embed_documents([c.embedding_text for c in corpus.chunks])
@@ -99,7 +98,7 @@ async def command(args: argparse.Namespace, client: httpx.AsyncClient) -> dict:
                 {
                     "index_manifest": index.manifest.model_dump(),
                     "search_settings": settings.model_dump(),
-                    "embedding_config": embedding_settings.model_dump(mode="json"),
+                    "embedding_config": embeddings.settings.model_dump(mode="json"),
                     "threshold_calibration": "not_yet_validated",
                     "questions_sha256": digest(args.questions.read_bytes()),
                     "created_at": datetime.now(UTC).isoformat(),

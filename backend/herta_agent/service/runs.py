@@ -35,6 +35,7 @@ class RunHandle:
     session_id: str
     events: EventQueue = field(default_factory=EventQueue)
     event_wait_seconds: float = 2.0
+    store: object | None = field(default=None, repr=False)
     done: asyncio.Event = field(default_factory=asyncio.Event)
     task: asyncio.Task | None = None
     admitting: asyncio.Task | None = None
@@ -73,6 +74,21 @@ class RunHandle:
         if self.cancel_requested:
             raise asyncio.CancelledError
         self.step = event.step
+        if self.store is not None and event.type in {"tool.completed", "tool.failed"}:
+            result = event.payload["result"]
+            await self.store.record_tool_diagnostic(
+                self.run_id,
+                event.step,
+                event.tool_call_id,
+                {
+                    "step": event.step,
+                    "tool_call_id": event.tool_call_id,
+                    "name": event.payload["name"],
+                    "ok": result["ok"],
+                    "duration_ms": event.payload.get("duration_ms", 0),
+                    "error_code": (result.get("error") or {}).get("code"),
+                },
+            )
         try:
             for type, payload in adapt_runtime(event):
                 async with asyncio.timeout(self.event_wait_seconds):
@@ -134,7 +150,10 @@ class RunManager:
         user = Message(role="user", content=user_text)
         self.check_admission(session_id)
         handle = RunHandle(
-            uuid4().hex, session_id, event_wait_seconds=self.settings.event_wait_seconds
+            uuid4().hex,
+            session_id,
+            event_wait_seconds=self.settings.event_wait_seconds,
+            store=self.store,
         )
         self._active[handle.run_id] = handle
         self._sessions.add(session_id)  # No await before reservation.

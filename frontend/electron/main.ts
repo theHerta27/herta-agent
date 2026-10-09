@@ -2,8 +2,9 @@ import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BackendProcess } from './backend-process';
-import { BackendClient } from './backend-client';
+import { BackendClient, readHealth } from './backend-client';
 import { RunTransport } from './run-transport';
+import { DesktopSettings } from './desktop-settings';
 import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 
@@ -26,6 +27,20 @@ export const client = new BackendClient(() => {
   if (!backend.endpoint || closing) throw new Error('backend_unavailable');
   return backend.endpoint;
 });
+
+const settings = new DesktopSettings(join(data, 'settings.json'), process.env, {
+  get status() { return backend.status; },
+  stop: () => backend.stop(),
+  configureEnvironment: env => { if (!closing) backend.configureEnvironment(env); },
+  start: async () => { if (!closing) await backend.start(); },
+},
+  () => transport?.activeCount ?? 0,
+  async () => {
+    if (closing || ['starting', 'stopping'].includes(backend.status.state)) throw new Error('backend_busy');
+    if (!backend.endpoint) return 0;
+    return (await readHealth(backend.endpoint)).active_runs;
+  });
+backend.configureEnvironment(settings.environment());
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -103,7 +118,7 @@ if (!app.requestSingleInstanceLock()) {
     }));
     ipcMain.on('herta:subscribe-runs', event => { if (event.senderFrame === window?.webContents.mainFrame) subscribed = true; });
     ipcMain.on('herta:run-ack', (event, batchId) => { if (event.senderFrame === window?.webContents.mainFrame) acknowledgements.get(batchId)?.(); });
-    ipcMain.handle('herta:start-run', (event, request) => { checkSender(event); if (!subscribed) throw new Error('renderer_unavailable'); transport!.start(request); });
+    ipcMain.handle('herta:start-run', (event, request) => { checkSender(event); if (settings.applying || closing) throw new Error('settings_busy'); if (!subscribed) throw new Error('renderer_unavailable'); transport!.start(request); });
     ipcMain.handle('herta:cancel-request', (event, id) => { checkSender(event); return transport!.cancel(id); });
     const dropStreams = () => { subscribed = false; transport?.dispose(); };
     window.webContents.on('render-process-gone', dropStreams);
@@ -111,6 +126,9 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:list-sessions', (event, after, limit) => { checkSender(event); return client.listSessions(after, limit); });
     ipcMain.handle('herta:create-session', event => { checkSender(event); return client.createSession(); });
     ipcMain.handle('herta:get-session', (event, id, after, limit) => { checkSender(event); return client.getSession(id, after, limit); });
+    ipcMain.handle('herta:get-settings', event => { checkSender(event); return settings.get(); });
+    ipcMain.handle('herta:apply-settings', (event, value) => { checkSender(event); return settings.apply(value); });
+    ipcMain.handle('herta:get-run-diagnostics', (event, id) => { checkSender(event); return client.getRunDiagnostics(id); });
     ipcMain.handle('herta:get-run', (event, id) => { checkSender(event); return client.getRun(id); });
     backend.subscribe(status => {
       if (window && !window.isDestroyed()) window.webContents.send('herta:backend-status-changed', status);

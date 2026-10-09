@@ -1,9 +1,10 @@
-import type { BackendStatus, DesktopBridge, MessageRecord, RunPacket, RunRecord, SessionRecord } from '../../shared/contracts';
+import type { BackendStatus, DesktopBridge, MessageRecord, RunDiagnostics, RunPacket, RunRecord, SessionRecord } from '../../shared/contracts';
 import { mapFour, readHistory, readSessions } from './history-view';
 import { newRun, reduceRun, type LiveRun } from './run-reducer';
 
 export interface Conversation {
   messages: MessageRecord[]; runs: Record<string, RunRecord>; draft: string;
+  diagnostics: Record<string, RunDiagnostics>; diagnosticsErrors: Record<string, string>;
   loading: boolean; loaded: boolean; error?: string; scrollTop?: number;
   request?: LiveRun;
 }
@@ -11,7 +12,7 @@ export interface ChatState {
   backend: BackendStatus; selected: string | null; sessions: (SessionRecord & { title: string })[];
   views: Record<string, Conversation>; error?: string;
 }
-const empty = (): Conversation => ({ messages: [], runs: {}, draft: '', loading: false, loaded: false });
+const empty = (): Conversation => ({ messages: [], runs: {}, diagnostics: {}, diagnosticsErrors: {}, draft: '', loading: false, loaded: false });
 
 export class ChatStore {
   state: ChatState = { backend: { state: 'starting' }, selected: null, sessions: [], views: { draft: { ...empty(), loaded: true } } };
@@ -137,13 +138,21 @@ export class ChatStore {
     try {
       const history = await readHistory(this.bridge.getSession, id);
       const runs: Record<string, RunRecord> = {};
+      const diagnostics = { ...view.diagnostics };
+      const diagnosticsErrors = { ...view.diagnosticsErrors };
       await mapFour([...new Set(history.messages.map(m => m.run_id))], async runId => {
         const cached = view.runs[runId];
         runs[runId] = cached && !['created', 'running'].includes(cached.status) ? cached : (await this.bridge.getRun(runId)).run;
+        if (!diagnostics[runId] || diagnosticsErrors[runId] || !cached || ['created', 'running'].includes(cached.status)) {
+          try {
+            diagnostics[runId] = await this.bridge.getRunDiagnostics(runId);
+            delete diagnosticsErrors[runId];
+          } catch { diagnosticsErrors[runId] = '诊断读取失败；已保存的对话仍可阅读。'; }
+        }
       });
       if (history.currentRun) runs[history.currentRun.run_id] = history.currentRun;
       if (this.versions.get(id) !== version) return false;
-      view.messages = history.messages; view.runs = runs; view.loaded = true;
+      view.messages = history.messages; view.runs = runs; view.diagnostics = diagnostics; view.diagnosticsErrors = diagnosticsErrors; view.loaded = true;
       if (history.currentRun && ['created', 'running'].includes(history.currentRun.status) && (!view.request || view.request.phase === 'done')) {
         view.request = { ...newRun(crypto.randomUUID(), id, '', 0), runId: history.currentRun.run_id, phase: 'reconciling' };
         void this.reconcile(id);

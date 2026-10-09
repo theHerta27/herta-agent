@@ -1,6 +1,7 @@
 """SQLite facts, recovery and a single connection-owning worker thread."""
 
 import asyncio
+import json
 import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
@@ -21,7 +22,7 @@ from herta_agent.storage.models import (
 )
 from herta_agent.tools.executor import ToolResult
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA = (
     """CREATE TABLE sessions (
         session_id TEXT PRIMARY KEY NOT NULL,
@@ -47,6 +48,17 @@ SCHEMA = (
         UNIQUE(session_id, seq),
         FOREIGN KEY(run_id, session_id) REFERENCES runs(run_id, session_id))""",
     "CREATE INDEX run_messages ON messages(run_id, seq)",
+    """CREATE TABLE context_diagnostics (
+        run_id TEXT NOT NULL REFERENCES runs(run_id),
+        step INTEGER NOT NULL CHECK(step BETWEEN 1 AND 100),
+        kind TEXT NOT NULL CHECK(kind IN ('context','tool')),
+        record_key TEXT NOT NULL, payload_json TEXT NOT NULL, created_at TEXT NOT NULL,
+        PRIMARY KEY(run_id, step, kind, record_key))""",
+    """CREATE TABLE context_summaries (
+        run_id TEXT NOT NULL REFERENCES runs(run_id), summary_id TEXT NOT NULL,
+        source_start INTEGER NOT NULL, source_end INTEGER NOT NULL,
+        source_hash TEXT NOT NULL, algorithm TEXT NOT NULL, created_at TEXT NOT NULL,
+        text TEXT NOT NULL, PRIMARY KEY(run_id, summary_id))""",
 )
 
 
@@ -203,7 +215,19 @@ class SQLiteSessionStore:
                     connection.execute(statement)
                 connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
                 connection.commit()
-            elif version != SCHEMA_VERSION or tables != {"sessions", "runs", "messages"}:
+            elif version == 1 and tables == {"sessions", "runs", "messages"}:
+                connection.execute("BEGIN IMMEDIATE")
+                for statement in SCHEMA[5:]:
+                    connection.execute(statement)
+                connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+                connection.commit()
+            elif version != SCHEMA_VERSION or tables != {
+                "sessions",
+                "runs",
+                "messages",
+                "context_diagnostics",
+                "context_summaries",
+            }:
                 raise StoreError("store_schema", "数据库版本或结构不兼容；未重建数据库。")
             # Check expected columns without repairing an existing database.
             connection.execute("SELECT session_id, created_at, updated_at FROM sessions LIMIT 0")
@@ -566,3 +590,66 @@ class SQLiteSessionStore:
                 repaired.append(self._abort(connection, run, "interrupted", run.steps))
         self._recovery_required = False
         return tuple(repaired)
+
+    @_on_worker
+    def record_context(self, run_id, step, package):
+        from herta_agent.runtime.context_engine import ContextPackage
+
+        if not isinstance(package, ContextPackage):
+            raise _invalid()
+        step = _integer(step, 1, 100)
+        diagnostic = package.diagnostic(step)
+        encoded = json.dumps(diagnostic, ensure_ascii=False, allow_nan=False)
+        with self._transaction(write=True) as connection:
+            run = self._run(connection, run_id)
+            if run.status != "running":
+                raise _invalid()
+            connection.execute(
+                "INSERT INTO context_diagnostics VALUES (?,?,?,?,?,?)",
+                (run_id, step, "context", "", encoded, _now()),
+            )
+            for summary in package.summaries:
+                connection.execute(
+                    "INSERT OR IGNORE INTO context_summaries VALUES (?,?,?,?,?,?,?,?)",
+                    (
+                        run_id,
+                        summary.summary_id,
+                        summary.source_start,
+                        summary.source_end,
+                        summary.source_hash,
+                        summary.algorithm,
+                        summary.created_at,
+                        summary.text,
+                    ),
+                )
+
+    @_on_worker
+    def record_tool_diagnostic(self, run_id, step, call_id, payload):
+        step = _integer(step, 1, 100)
+        call_id = _identifier(call_id)
+        allowed = {"name", "ok", "error_code", "duration_ms", "tool_call_id", "step"}
+        if set(payload) - allowed:
+            raise _invalid()
+        encoded = json.dumps(payload, ensure_ascii=False, allow_nan=False)
+        with self._transaction(write=True) as connection:
+            run = self._run(connection, run_id)
+            if run.status != "running":
+                raise _invalid()
+            connection.execute(
+                "INSERT INTO context_diagnostics VALUES (?,?,?,?,?,?)",
+                (run_id, step, "tool", call_id, encoded, _now()),
+            )
+
+    @_on_worker
+    def get_diagnostics(self, run_id):
+        with self._transaction() as connection:
+            self._run(connection, run_id)
+            rows = connection.execute(
+                "SELECT kind, payload_json FROM context_diagnostics "
+                "WHERE run_id=? ORDER BY step, created_at, record_key",
+                (run_id,),
+            ).fetchall()
+            return {
+                "contexts": [json.loads(r["payload_json"]) for r in rows if r["kind"] == "context"],
+                "tools": [json.loads(r["payload_json"]) for r in rows if r["kind"] == "tool"],
+            }

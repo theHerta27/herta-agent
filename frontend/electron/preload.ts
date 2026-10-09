@@ -2,6 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  getSettings: () => ipcRenderer.invoke('herta:get-settings'),
+  applySettings: settings => ipcRenderer.invoke('herta:apply-settings', settings),
+  getRunDiagnostics: id => ipcRenderer.invoke('herta:get-run-diagnostics', id),
   getBackendStatus: () => ipcRenderer.invoke('herta:backend-status'),
   listSessions: (after, limit) => ipcRenderer.invoke('herta:list-sessions', after, limit),
   createSession: () => ipcRenderer.invoke('herta:create-session'),

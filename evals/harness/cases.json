@@ -1,0 +1,15 @@
+{
+  "version": "herta-harness-local-v1",
+  "context_probe": {
+    "initial_user": "项目叫星塔。",
+    "initial_assistant": "好的，我记下了。",
+    "distraction_rounds": 8,
+    "distraction_sentence": "今天讨论桌面布局、字体和笔记整理。",
+    "sentence_repeats": 60,
+    "final_user": "之前约定的项目叫什么？",
+    "expected_marker": "星塔",
+    "window_tokens": 8192,
+    "output_reserve": 512,
+    "summary_tokens": 768
+  }
+}

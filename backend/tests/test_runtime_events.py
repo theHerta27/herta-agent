@@ -34,6 +34,9 @@ class EventTests(unittest.IsolatedAsyncioTestCase):
                 events.append((event, session.history))
 
         await Agent(Provider(), registry=echo_registry()).run(session, "go", observer=Sink())
+        context_events = [e for e, _ in events if e.type == "context.prepared"]
+        self.assertEqual(len(context_events), 2)
+        events = [(e, h) for e, h in events if e.type != "context.prepared"]
         self.assertEqual(
             [e.type for e, _ in events],
             [
@@ -83,4 +86,4 @@ class EventTests(unittest.IsolatedAsyncioTestCase):
             await Agent(Provider()).run(
                 session, "go", turn_io=RecordingTurn(session, "complete"), observer=Sink()
             )
-        self.assertEqual(events, ["llm.started"])
+        self.assertEqual(events, ["context.prepared", "llm.started"])

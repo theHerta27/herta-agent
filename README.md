@@ -1,100 +1,103 @@
-# herta-agent
+# Herta Agent
 
-一个边实现边学习的 Windows 桌面 Agent 项目。已实现 Phase 5 本机后端服务，以及 **Phase 6 阶段1–5：桌面启动、会话、流式聊天与工具活动**。Electron 自动管理现有 Python/FastAPI 后端，可新建/切换会话、流式显示回答、查看工具证据并取消运行。真实供应商流式兼容性与真实 RAG 效果仍待配置后验收。
+Windows 本地桌面助手，保留大黑塔人格、持续会话与知识检索。Electron 管理本机 Python 服务；Agent Loop、工具执行、上下文预算与 SQLite 历史均由 Herta 自己实现。
 
-## 打开 Windows 桌面窗口
+## 现在就用
+
+本机依赖和桌面构建已准备好。在项目目录双击：
+
+- **`启动离线演示.cmd`**：完全离线，验证聊天界面、会话、停止与历史恢复；回答是明确标注的演示回显。
+- **`启动Herta.cmd`**：使用已配置的聊天服务。默认 `https://api.deepseek.com`、`deepseek-flash`；优先采用显式 `HERTA_API_KEY`，否则读取 `DEEPSEEK_API_KEY`。启动器会补读 Windows 用户级环境变量，无 Key 时在本机窗口中遮蔽输入，仅用于本次启动。
+
+切换演示/真实模式时先关闭现有窗口。当前交付按用户要求只进行本地验收。使用真实聊天入口并发送消息会调用配置的服务；本次最终回归使用离线 Provider，没有继续真实问答或真实效果评测。
+
+启动后可新建/切换会话、发送消息、查看流式回答，点击停止取消当前运行。展开工具活动可查看检索片段与原始来源；展开上下文活动可查看预算、保留消息、摘要与证据引用。关闭窗口会清理自管后端，重新打开后恢复已完成的历史。
+
+右上角设置可修改聊天地址/模型、Embedding 模式、上下文窗口、输出预留与旧历史摘要。保存会重启自管服务；有运行时拒绝修改，失败会恢复此前设置。设置页面不接收或显示 API Key。
+
+## 本机知识检索
+
+项目内没有发现完整的千问模型。找到并接入的是 **BAAI/bge-large-zh**，位于：
+
+```text
+C:\Users\Administrator\.cache\huggingface\hub\models--BAAI--bge-large-zh\snapshots\b5d9f5c027e87b6f0b6fa4b614f8f9cdc45ce0e8
+```
+
+`auto` 默认发现本地模型；当前索引已用这个模型建立，20 个片段、1024 维。权重仅在本机加载，不自动下载；首次检索需要加载模型，之后复用。历史远端索引保留为独立版本。若权重移走，可用 `HERTA_LOCAL_EMBEDDING_MODEL` 指定完整模型目录。
+
+显式配置非空 `HERTA_EMBEDDING_BASE_URL` 与 `HERTA_EMBEDDING_MODEL` 时，`auto` 选择远端服务。设置选择 `local` 可强制本地；`remote` 还需要独立的 `HERTA_EMBEDDING_API_KEY`。远端建库会发送知识片段，查询会发送问题。离线启动入口禁止远端建库。
+
+启动器检查并复用配置匹配的索引；缺失时建立新版本。地址/模型改变后索引可能不匹配，需关闭应用再从启动器重开；索引不可用时界面明确提示，普通聊天仍能运行。人格文件加载失败或必需上下文超过预算会停止该轮。
+
+## 数据与配置
+
+| 内容 | 位置 |
+| --- | --- |
+| 桌面会话数据库 | `.local/desktop/sessions.sqlite3` |
+| 非敏感设置 | `.local/desktop/settings.json` |
+| 版本化知识索引 | `.local/rag/` |
+| 启动检查报告 | `.local/desktop/startup-report.json` |
+| 人格 / 角色知识 | `persona/soul.md` / `knowledge/` |
+
+Key 仅存在于主进程/后端环境，不进入 renderer、公共设置、索引或诊断。摘要作为有来源范围、哈希和算法版本的派生记录单独存储，不覆盖原始消息。Token 使用可替换的词法估算器，不能当作精确计费或保证实际模型窗口不溢出的依据。
+
+## 可选只读 MCP
+
+官方 MCP SDK 的 stdio 适配器将白名单工具加入同一个 Registry/Executor。首版仅支持一个显式配置的本机 Server，要求绝对可执行路径、工具白名单及只读声明；副作用工具直接拒绝。示例和配置步骤见 [MCP 示例](examples/mcp/README.md)。可选扩展启动失败或通信损坏不会关闭普通聊天服务。
+
+## 本地验收
+
+2026-10-09 最终回归：**223 项后端测试、35 项前端单元测试、11 项 Electron E2E**，以及 Ruff、TypeScript、ESLint、桌面构建通过。E2E 使用真实 Electron/Python/HTTP/SQLite 和离线模型夹具，不冒充真实回答质量。
+
+本地 BGE 在既有 28 题检索集上覆盖了全部 21 个指定证据单元，4 个跨段问题都覆盖了所需片段。摘要对照验证了预算和文字保留行为；模型理解、工具路由、答案正确率、实际 Token 和费用仍未验收。详见 [评测报告](docs/HARNESS_EVAL_REPORT.md) 和 [实施状态](docs/IMPLEMENTATION_STATUS.md)。
 
 ```powershell
 Set-Location -LiteralPath 'D:\Desktop\herta-agent'
-npm --prefix frontend run dev
-```
-
-只需一个终端。窗口显示“正在启动”，随后显示“服务就绪”或“配置未就绪”；后者表示本机服务已连接，但缺少聊天配置。点击窗口右上角关闭会一并清理自管 Python；再运行同一命令即可重新打开。聊天配置就绪后可直接发送；历史在重开后保留。桌面数据库独立位于 `.local/desktop/sessions.sqlite3`。
-
-真实模型配置与手工验证见 [桌面聊天说明](D:/Desktop/herta-agent/docs/phase-6-chat.md)，依赖安装见 [阶段1启动说明](D:/Desktop/herta-agent/docs/phase-6-stage-1.md)。
-
-## 运行持久化服务（PowerShell）
-
-```powershell
-Set-Location -LiteralPath 'D:\Desktop\herta-agent'
-.\.venv\Scripts\python.exe -m herta_agent.service --provider demo
-```
-
-服务监听 `127.0.0.1:8765`，单 worker，SQLite 默认位于 `.local/sessions.sqlite3`。显式 demo 完全离线；默认 openai 未配置时运行请求明确拒绝。完整的创建会话、SSE、取消和重启命令见 [Phase 5 教程](D:/Desktop/herta-agent/docs/phase-5-walkthrough.md)。原 CLI 仍可独立使用，CLI 会话保存在内存中。
-
-## 直接运行当前成果（PowerShell）
-
-独立 Python 3.12.13 环境已经建立在本项目的 `.venv`。无需激活环境：
-
-```powershell
-Set-Location -LiteralPath 'D:\Desktop\herta-agent'
-.\.venv\Scripts\python.exe -m herta_agent --message '你好，解释一下 Agent Loop'
-.\.venv\Scripts\python.exe -m herta_agent --demo-tools --message '你好，黑塔'
-.\.venv\Scripts\python.exe -m herta_agent
-```
-
-默认是明确标注的离线回显演示，不调用 LLM。`--demo-tools` 会通过真实执行器完成两步 echo 闭环。交互模式中 Ctrl+C 取消当前轮并保留会话，输入 `/exit` 退出；进程退出后历史消失。
-
-CLI 必须成功加载 `persona/soul.md`，每轮重新读取、该轮所有 Step 使用同一份完整内容。加载失败明确报错，不降级；交互模式修复文件后可继续同一会话。默认路径不依赖启动目录；用 `--soul 'D:\路径\soul.md'` 可显式指定。输出的 `context_sha256` 标识实际注入正文。离线演示验证注入链路，角色语气需要真实模型验证。
-
-## 使用真实模型
-
-填写你实际使用的兼容服务地址与模型名，再运行。以下两个值是需要替换的占位符：
-
-```powershell
-$env:HERTA_BASE_URL = 'https://你的服务地址/v1'
-$env:HERTA_MODEL = '你的模型名'
-.\.venv\Scripts\python.exe -m herta_agent --provider openai
-```
-
-Key 仅从当前终端的 `HERTA_API_KEY` 环境变量读取，不再由应用提示输入。CLI 使用非流式 Chat Completions，服务使用流式入口；Base URL 不要包含 `/chat/completions`。
-
-Embedding 使用独立的 `HERTA_EMBEDDING_BASE_URL`、`HERTA_EMBEDDING_MODEL`、`HERTA_EMBEDDING_API_KEY`，不默认复用聊天服务。Key 不写文件、索引或日志。本地安全输入方法、完整配置与评测说明见 [Phase 4 教程](D:/Desktop/herta-agent/docs/phase-4-walkthrough.md)。配置后：
-
-```powershell
-.\.venv\Scripts\python.exe -m herta_agent.rag build
-.\.venv\Scripts\python.exe -m herta_agent.rag inspect '黑塔如何评价螺丝咕姆？'
-.\.venv\Scripts\python.exe -m herta_agent.rag eval --mode retrieval --split dev
-.\.venv\Scripts\python.exe -m herta_agent --provider openai
-```
-
-建库发送知识片段给 Embedding 服务；查询发送 query。检索证据经工具消息提供给聊天模型，不进入 system。默认阈值尚未校准，score 不代表事实置信度。RAG 不可用会明确提示，普通聊天仍可继续；人格文件失败仍停止当前轮。
-
-## 检查代码
-
-```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s backend/tests -v
-.\.venv\Scripts\ruff.exe check backend
-.\.venv\Scripts\ruff.exe format --check backend
+.\.venv\Scripts\ruff.exe check backend evals/harness
+.\.venv\Scripts\ruff.exe format --check backend evals/harness
+.\.venv\Scripts\python.exe evals/harness/run_offline.py
+npm --prefix frontend test
+npm --prefix frontend run typecheck
+npm --prefix frontend run lint
+npm --prefix frontend run test:e2e
 ```
 
-已通过 178 项离线自动测试，保留原 Phase 1–4 的 93 项。新增覆盖持久提交、取消竞争、流式协议、API/SSE、Windows 真实 socket、慢消费者和进程骤停恢复；本批真实 HTTP 使用注入的离线 Provider。未调用真实模型或 Embedding API，未验证实际语义召回、模型路由和据证回答。
-
-## 安装或重新建立环境
-
-使用已有 uv，在项目根目录运行：
+本地检索复现（强制使用本地，禁止误选远端）：
 
 ```powershell
+$env:HERTA_EMBEDDING_PROVIDER = 'local'
+.\.venv\Scripts\python.exe -m herta_agent.rag eval --mode retrieval --split all --output .local/rag/reports/local-bge-validation.json
+```
+
+## 重建开发环境
+
+当前机器可直接启动。需要重新安装时，使用 uv 和 Node.js：
+
+```powershell
+Set-Location -LiteralPath 'D:\Desktop\herta-agent'
 $env:UV_PYTHON_INSTALL_DIR = Join-Path (Get-Location) '.local\python'
 $env:UV_CACHE_DIR = Join-Path (Get-Location) '.local\uv-cache'
 $env:UV_PROJECT_ENVIRONMENT = Join-Path (Get-Location) '.venv'
-uv sync --project backend --extra dev --python 3.12 --locked
+uv sync --project backend --extra dev --extra local --python 3.12 --locked
+npm --prefix frontend ci
+npm --prefix frontend run build
 ```
 
-`backend/pyproject.toml` 声明依赖，`backend/uv.lock` 固定本次解析版本。不要把其他项目的 `.venv` 复制过来，也不要使用机器上指向 Hermes 的默认 Python 安装依赖。
+Python 3.12.13，Node 22.16.0，锁文件为 `backend/uv.lock` 和 `frontend/package-lock.json`。本地模型权重不包含在 Git 或安装依赖中；需保留上面的缓存目录。
 
-## 学习入口
+原 CLI 与服务入口仍可使用：
 
-- [Phase 5 服务复现与验收边界](D:/Desktop/herta-agent/docs/phase-5-walkthrough.md)
-- [Phase 5 设计](D:/Desktop/herta-agent/docs/phase-5-design.md) / [实施计划](D:/Desktop/herta-agent/docs/phase-5-plan.md)
+```powershell
+.\.venv\Scripts\python.exe -m herta_agent --demo-tools --message '你好，黑塔'
+.\.venv\Scripts\python.exe -m herta_agent.service --provider demo
+```
 
-- [Phase 4 RAG 复现教程与验收边界](D:/Desktop/herta-agent/docs/phase-4-walkthrough.md)
-- [Phase 4 设计](D:/Desktop/herta-agent/docs/phase-4-design.md) / [实施计划](D:/Desktop/herta-agent/docs/phase-4-plan.md)
-- [Phase 3 Persona 与 Context 复现教程](D:/Desktop/herta-agent/docs/phase-3-walkthrough.md)
-- [Phase 2 工具闭环复现教程](D:/Desktop/herta-agent/docs/phase-2-walkthrough.md)
-- [Phase 1 逐文件复现教程](D:/Desktop/herta-agent/docs/phase-1-walkthrough.md)
-- [完整架构方案](D:/Desktop/herta-agent/docs/architecture.md)
-- [Hermes 源码分析](D:/Desktop/herta-agent/docs/hermes-analysis.md)
-- [复用计划与许可证记录](D:/Desktop/herta-agent/docs/reuse-plan.md)
+CLI 默认离线；持久服务默认监听 `127.0.0.1:8765`，数据库与桌面入口分开。独立服务配置见 [Phase 5 教程](docs/phase-5-walkthrough.md)。
 
-当前核心：`用户消息 → 本轮人格快照 → system + 历史 → Provider → 工具执行与知识检索回填 → 同一快照 + 新历史 → 最终文本`。当前桌面完成 Phase 6 阶段1–5；Settings 与阶段7完整验收尚未实施。
+## 设计与学习
+
+- [Harness 设计](docs/HERTA_HARNESS_DESIGN.md)、[源码映射](docs/HERMES_SOURCE_MAP.md)、[首版执行计划](docs/V1_IMPLEMENTATION_PLAN.md)。
+- [桌面设计](docs/phase-6-ui-design.md)、[RAG 教程](docs/phase-4-walkthrough.md)、[Hermes 分析](docs/hermes-analysis.md)。
+
+首版服务单机单用户。Memory、Skills、多 Server、任意 Shell/文件写入、独立安装发行包未实现；按原方案属于后续明确需求触发的范围。当前首版可运行，完整真实模型效果验收按用户要求暂缓。

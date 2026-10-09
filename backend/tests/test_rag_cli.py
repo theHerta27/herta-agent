@@ -63,6 +63,7 @@ class RagCLITests(unittest.IsolatedAsyncioTestCase):
 
     async def test_missing_configuration_cli_sanitized(self):
         env = {k: v for k, v in os.environ.items() if not k.startswith("HERTA_")}
+        env["HERTA_EMBEDDING_PROVIDER"] = "remote"
         result = await asyncio.to_thread(
             subprocess.run,
             [sys.executable, "-m", "herta_agent.rag", "build"],

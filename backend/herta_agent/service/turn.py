@@ -22,6 +22,11 @@ class PersistentTurn(MemoryTurn):
         await self.store.set_context(self.handle.run_id, context_hash)
         await super().set_context(context_hash)
 
+    async def record_context(self, package, step):
+        if self.handle.cancel_requested:
+            raise asyncio.CancelledError
+        await self.store.record_context(self.handle.run_id, step, package)
+
     async def append(self, message, *, message_id, step):
         if self.handle.cancel_requested:
             raise asyncio.CancelledError

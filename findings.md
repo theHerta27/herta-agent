@@ -102,3 +102,17 @@
 - typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
 - e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
 - 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。
+
+## 2026-10-09 Harness V1
+- 本地 HEAD 与设计基线完全一致；只有用户的两个 docs 文件未跟踪，保留不改。
+- 后端 179 和前端 22 项基线测试通过，不能复用历史 178 数字。
+- 当前环境没有 HERTA_* 配置；已向用户询问公开的真实服务地址/模型，密钥仅本机输入。
+- 三个独立职责并行：root Context/API/评测/启动，desktop 仅 frontend，tools_mcp 仅 tools 和 SDK/示例。
+
+## Harness 首版结论（2026-10-09）
+- 最新验收范围仅本地。原设计P1真实模型评测及P4真实回归出口暂缓，不能由Mock或本地证据召回替代。
+- 用户级DEEPSEEK_API_KEY可用且可由启动器补读；密钥未打印或写入公共配置。聊天默认https://api.deepseek.com/deepseek-flash；HERTA_*显式配置优先。
+- 没有找到项目内完整千问权重；本机HF缓存BAAI/bge-large-zh可直接复用，本地指纹与已有远端BGE-m3不同，必须另建版本索引。
+- MCP SDK上下文必须在专属异步任务内同任务进入/退出，否则解码异常会取消FastAPI lifespan；已隔离并验证。
+- 词法Token估算与实际计费严格区分；extractive-v1摘要不会创造事实但有信息损失。设置候选仅在服务可用/明确缺配置时保存，重启失败恢复旧值。
+- 交付证据集中在docs/IMPLEMENTATION_STATUS.md、docs/HARNESS_EVAL_REPORT.md；.local日志不进入Git，可复现。

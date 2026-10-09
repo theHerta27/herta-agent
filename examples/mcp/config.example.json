@@ -1,0 +1,11 @@
+{
+  "servers": [
+    {
+      "name": "herta_demo",
+      "command": "C:/path/to/herta-agent/.venv/Scripts/python.exe",
+      "args": ["C:/path/to/herta-agent/examples/mcp/sample_server.py"],
+      "allowed_tools": ["herta_demo_status", "herta_demo_fact"],
+      "timeout": 10.0
+    }
+  ]
+}

@@ -77,3 +77,15 @@ Phase 1 不实现工具执行、Persona、RAG、FastAPI、Electron 或 SSE。
 - typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
 - e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
 - 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。
+
+## Herta Harness V1 — 2026-10-09
+用户授权按 docs/Herta_Agent_Harness_v1.md 连续实现可直接使用的首版。实施清单：docs/V1_IMPLEMENTATION_PLAN.md。
+- [x] P0 基线：179 后端、22 前端通过；基线提交 81a1d740。
+- [x] Context Engine / 诊断持久化。
+- [x] 工具可靠性 / 最小只读 MCP。
+- [x] 桌面 Settings / Context 面板。
+- [x] 一键启动 / 固定本地评测；真实服务验收按最新用户指令暂缓。
+- [x] 完整本地回归 / 独立审查 / 首版交付。
+错误：Windows 沙箱 setup refresh 失败；只读和开发命令使用自动审批的非沙箱执行。apply_patch 同样失败，改用项目内 UTF-8 文件写入。
+
+最新约束：用户明确“目前阶段不允许真实验收，本地测试就行”；真实系统评测停止，未完成报告。首版本机交付完成，不宣称真实 V1 效果验收完成。

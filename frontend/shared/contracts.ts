@@ -1,9 +1,13 @@
 export type BackendStatus = {
   state: 'starting' | 'ready' | 'needs_configuration' | 'unavailable' | 'stopping' | 'stopped';
   reason?: 'start_failed' | 'process_exited' | 'stop_failed';
+  ragAvailable?: boolean; embeddingProvider?: string; embeddingModel?: string; mcpAvailable?: boolean; mcpError?: string;
 };
 
 export interface DesktopBridge {
+  getSettings(): Promise<PublicSettings>;
+  applySettings(settings: PublicSettings): Promise<SettingsApplyResult>;
+  getRunDiagnostics(id: string): Promise<RunDiagnostics>;
   getBackendStatus(): Promise<BackendStatus>;
   onBackendStatus(handler: (status: BackendStatus) => void): () => void;
   listSessions(afterId?: string, limit?: number): Promise<SessionRecord[]>;
@@ -27,3 +31,17 @@ export interface RunRequest { clientRequestId: string; sessionId: string; text: 
 export interface RunPacket { clientRequestId: string; events?: ServiceEvent[]; closed?: boolean; rejected?: number }
 
 declare global { interface Window { herta: DesktopBridge } }
+
+export interface PublicSettings {
+  chatBaseUrl: string; chatModel: string; embeddingBaseUrl: string; embeddingModel: string;
+  contextWindow: number; outputReserve: number; summaryEnabled: boolean;
+  embeddingProvider: 'auto' | 'local' | 'remote';
+}
+export interface SummaryReference { summary_id: string; source_start: number; source_end: number; source_hash: string; algorithm: string }
+export interface ContextDiagnostic {
+  step: number; policy_version: string; persona_hash: string; estimated_input_tokens: number; input_budget: number;
+  tool_schema_tokens: number; retained_message_indices: number[]; omitted_message_count: number;
+  summary_refs: SummaryReference[]; evidence_refs: string[]; reason: string;
+}
+export interface RunDiagnostics { contexts: ContextDiagnostic[]; tools: Record<string, unknown>[] }
+export interface SettingsApplyResult { settings: PublicSettings; backend: BackendStatus }

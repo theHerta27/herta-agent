@@ -33,6 +33,11 @@ export class BackendProcess {
 
   constructor(private options: Options) {}
 
+  configureEnvironment(env: NodeJS.ProcessEnv) {
+    if (this.child || this.status.state !== 'stopped') throw new Error('backend_busy');
+    this.options.env = { ...env };
+  }
+
   subscribe(handler: (status: BackendStatus) => void) {
     this.listeners.add(handler);
     return () => { this.listeners.delete(handler); };
@@ -45,6 +50,7 @@ export class BackendProcess {
 
   async start() {
     if (this.child || this.status.state !== 'stopped') return;
+    this.isClosed = false;
     this.publish({ state: 'starting' });
     try {
       const spawn = this.options.spawn ?? spawnChild;
@@ -86,7 +92,7 @@ export class BackendProcess {
         child.on('error', () => reject(new Error('start_failed')));
         child.once('close', () => reject(new Error('process_exited')));
       });
-      const value = await deadline(ready, this.options.startupMs ?? 15000);
+      const value = await deadline(ready, this.options.startupMs ?? 60000);
       this.pid = value.pid;
       if (this.stopping || this.isClosed) return;
       const endpoint = `http://127.0.0.1:${value.port}`;
@@ -94,7 +100,13 @@ export class BackendProcess {
       if (this.stopping || this.isClosed) return;
       if (!health.storage_writable) throw new Error('storage_unavailable');
       this.endpoint = endpoint;
-      this.publish({ state: health.chat_available ? 'ready' : 'needs_configuration' });
+      this.publish({
+        state: health.chat_available ? 'ready' : 'needs_configuration', ragAvailable: health.rag_available,
+        embeddingProvider: typeof health.embedding_provider === 'string' ? health.embedding_provider.slice(0, 512) : undefined,
+        embeddingModel: typeof health.embedding_model === 'string' ? health.embedding_model.slice(0, 512) : undefined,
+        mcpAvailable: health.mcp_available === true,
+        mcpError: typeof health.mcp_error === 'string' ? health.mcp_error.slice(0, 512) : undefined,
+      });
     } catch {
       if (this.stopping) return;
       this.publish({ state: 'unavailable', reason: 'start_failed' });
@@ -105,12 +117,10 @@ export class BackendProcess {
 
   stop(): Promise<void> {
     if (this.stopping) return this.stopping;
+    if (!this.child && this.status.state === 'stopped') return Promise.resolve();
     this.endpoint = undefined;
     this.publish({ state: 'stopping' });
-    this.stopping = this.closeOwned().catch(error => {
-      this.stopping = undefined;
-      throw error;
-    });
+    this.stopping = this.closeOwned().finally(() => { this.stopping = undefined; });
     return this.stopping;
   }
 
@@ -134,6 +144,9 @@ export class BackendProcess {
         }
       }
     }
+    this.child = undefined;
+    this.pid = undefined;
+    this.launcherPid = undefined;
     this.publish({ state: 'stopped' });
   }
 }

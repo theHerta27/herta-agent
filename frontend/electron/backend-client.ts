@@ -1,10 +1,11 @@
-import type { RunRecord, SessionPage, SessionRecord } from '../shared/contracts';
+import type { RunDiagnostics, RunRecord, SessionPage, SessionRecord } from '../shared/contracts';
 
 export interface Health {
   storage_writable: boolean;
   chat_available: boolean;
   rag_available: boolean;
   active_runs: number;
+  embedding_provider?: string; embedding_model?: string; mcp_available?: boolean; mcp_error?: string;
 }
 
 export function identifier(value: unknown): string {
@@ -34,6 +35,7 @@ export class BackendClient {
     if (!Number.isInteger(afterSeq) || afterSeq < 0) throw new Error('invalid_request');
     return this.json<SessionPage>(`/sessions/${identifier(id)}?after_seq=${afterSeq}&limit=${pageSize(limit)}`);
   };
+  getRunDiagnostics = (id: string) => this.json<RunDiagnostics>(`/runs/${identifier(id)}/diagnostics`);
   getRun = (id: string) => this.json<{ run: RunRecord; cancel_requested: boolean }>(`/runs/${identifier(id)}`);
 }
 

@@ -23,3 +23,12 @@ it('drops cancelled partial and ignores late deltas; service.error never implies
   expect(run.phase).toBe('reconciling');
   expect(run.error).toBeTruthy();
 });
+
+it('keeps context diagnostics from SSE across terminal reconciliation and ignores duplicate events', () => {
+  const context = { step: 1, policy_version: 'v1', persona_hash: 'hash', estimated_input_tokens: 700, input_budget: 1000, tool_schema_tokens: 100, retained_message_indices: [0, 3], omitted_message_count: 2, summary_refs: [], evidence_refs: ['chunk-1'], reason: 'recent_window' };
+  let run = newRun('q', 's', 'question', 0);
+  run = reduceRun(run, event(1, 'context.prepared', context));
+  run = reduceRun(run, event(1, 'context.prepared', context));
+  run = reduceRun(run, event(2, 'run.completed'));
+  expect(run.contexts).toEqual([context]);
+});

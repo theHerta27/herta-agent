@@ -15,6 +15,7 @@ class ServiceEvent(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     schema_version: Literal[1] = 1
     type: Literal[
+        "context.prepared",
         "run.started",
         "run.completed",
         "run.failed",

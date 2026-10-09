@@ -124,6 +124,7 @@ class ServiceIntegrationTests(unittest.TestCase):
             started = next(events)
             self.assertEqual(started["type"], "run.started")
             rid = started["run_id"]
+            self.assertEqual(next(events)["type"], "context.prepared")
             self.assertEqual(next(events)["type"], "llm.started")
             self.assertEqual(next(events)["type"], "llm.delta")
             self.assertEqual(len(self.snapshot(a)["messages"]), 1)

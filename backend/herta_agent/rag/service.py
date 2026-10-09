@@ -4,7 +4,7 @@ from pathlib import Path
 
 import httpx
 
-from herta_agent.rag.embeddings import EmbeddingSettings, RemoteEmbeddings
+from herta_agent.rag.embeddings import create_embeddings
 from herta_agent.rag.ingest import load_corpus
 from herta_agent.rag.retriever import Retriever, SearchSettings
 from herta_agent.rag.store import load_index
@@ -21,7 +21,7 @@ def load_retriever(
     index_root: Path = DEFAULT_INDEX,
     settings: SearchSettings | None = None,
 ) -> Retriever:
-    embeddings = RemoteEmbeddings(EmbeddingSettings.from_env(), client)
+    embeddings = create_embeddings(client)
     corpus = load_corpus(knowledge)
     index = load_index(index_root, corpus, embeddings.fingerprint)
     return Retriever(index, embeddings, settings)

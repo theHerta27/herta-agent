@@ -51,10 +51,17 @@ class ServiceSSETests(unittest.IsolatedAsyncioTestCase):
                 ]
                 self.assertEqual(
                     [e["type"] for e in events],
-                    ["run.started", "llm.started", "llm.delta", "llm.completed", "run.completed"],
+                    [
+                        "run.started",
+                        "context.prepared",
+                        "llm.started",
+                        "llm.delta",
+                        "llm.completed",
+                        "run.completed",
+                    ],
                 )
-                self.assertEqual([e["seq"] for e in events], [1, 2, 3, 4, 5])
-                self.assertEqual(events[2]["payload"]["text"], "你好\n第二行")
+                self.assertEqual([e["seq"] for e in events], [1, 2, 3, 4, 5, 6])
+                self.assertEqual(events[3]["payload"]["text"], "你好\n第二行")
                 self.assertIn(f"id: {events[0]['run_id']}:1", response.text)
                 again = await client.post(
                     f"/sessions/{sid}/runs",

@@ -1,19 +1,20 @@
-import type { ServiceEvent } from '../../shared/contracts';
+import type { ContextDiagnostic, ServiceEvent } from '../../shared/contracts';
 import { applyToolEvent, type ToolActivity } from './tool-activity';
 export interface LiveRun {
   id: string; sessionId: string; text: string; baseline: number; runId?: string; seq: number;
   phase: 'submitting' | 'running' | 'cancelling' | 'reconciling' | 'unknown' | 'done';
   partial: Record<string, string>; error?: string; gap?: boolean;
-  tools: Record<string, ToolActivity>;
+  tools: Record<string, ToolActivity>; contexts: ContextDiagnostic[];
 }
 export function newRun(id: string, sessionId: string, text: string, baseline: number): LiveRun {
-  return { id, sessionId, text, baseline, phase: 'submitting', partial: {}, tools: {}, seq: 0 };
+  return { id, sessionId, text, baseline, phase: 'submitting', partial: {}, tools: {}, contexts: [], seq: 0 };
 }
 export function reduceRun(previous: LiveRun, event: ServiceEvent): LiveRun {
   if (event.seq <= previous.seq || event.session_id !== previous.sessionId || (previous.runId && previous.runId !== event.run_id)) return previous;
   const run = { ...previous, runId: event.run_id, seq: event.seq, partial: { ...previous.partial }, gap: previous.gap || event.seq > previous.seq + 1 };
   const payload = event.payload;
   run.tools = applyToolEvent(run.tools, event);
+  if (event.type === 'context.prepared' && Number.isInteger(payload.step)) run.contexts = [...run.contexts.filter(context => context.step !== payload.step), payload as unknown as ContextDiagnostic];
   const id = String(payload.message_id ?? '');
   if (event.type === 'run.started' && run.phase === 'submitting') run.phase = 'running';
   if (event.type === 'llm.delta' && !['cancelling', 'reconciling', 'unknown', 'done'].includes(run.phase) && typeof payload.text === 'string') run.partial[id] = (run.partial[id] ?? '') + payload.text;

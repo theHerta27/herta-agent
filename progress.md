@@ -197,3 +197,17 @@
 - typecheck、lint、21项unit、7项真实Electron e2e（含build）通过；178项后端unittest、Ruff check/format、diff check通过。没有真实API调用。
 - e2e以测试专用入口注入离线Provider/检索夹具，走真实HTTP、Runtime与SQLite；不把夹具检索当成真实RAG效果验证。
 - 本批提交与push仅面向phase-6-ui，不合并；操作结果以Git实际记录为准。
+
+## 2026-10-09 Harness V1
+已阅读完整设计和现有主要接口，完成 P0 基线，创建 V1_IMPLEMENTATION_PLAN。按用户授权连续实施。Windows 沙箱损坏，非沙箱命令通过自动审批后可运行。未输出密钥。
+
+## Harness 首版本地交付（2026-10-09）
+- 按用户最新指令终止真实系统评测并确认自管评测进程退出；此后只运行本地回归。一次旧许可下的有限CLI连通调用不代表真实效果验收。
+- 实现预算ContextEngine/整轮配对/有来源抽取摘要、SQLite v2诊断及SSE、只读工具权限和官方SDK MCP、Settings受控重启/失败回滚及Context界面。
+- 本机找到BAAI/bge-large-zh完整权重（HF缓存，不是千问也不在项目内），接入CPU离线推理并建立20片段1024维索引；保留旧索引。28题直接本地检索指定证据21/21、跨段4/4，路由与答案质量未测。
+- 固定离线C0/C1/C2对照：估算输入20538/5599/6290，预算7424；旧约定文字C1丢失、C2保留；原历史均不改写。只表示工程契约，不是模型质量。
+- 独立审查发现5项问题，均修复并回归：Demo远端建库、MCP生命周期取消、Settings边界/误报、摘要硬上限、诊断重试。补MCP通信损坏后持久服务/下轮聊天正常的集成用例。
+- 最终223后端、35前端unit、11Electron e2e，Ruff/typecheck/lint/build与git diff --check通过。实际Start-Herta -Demo窗口打开、health就绪、关闭后自管Python退出，无聊天请求。
+- 已提供两个一键启动入口，README与设计/源码映射/评测/实施状态文档。保留用户两份原始未追踪设计文档；未push/merge；可选P5暂不实现。
+
+2026-10-09 后续授权：用户明确要求把当前版本上传 GitHub。提交首版实现/测试/文档/启动器并普通推送 origin/phase-6-ui；不合并、不创建PR、不上传本机密钥/数据库/权重，保留原有未追踪用户方案文档。
