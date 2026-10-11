@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 
 from herta_agent.runtime.errors import ToolExecutionError
 from herta_agent.runtime.messages import ToolCall
-from herta_agent.tools.registry import ToolRegistry
+from herta_agent.tools.registry import ToolRegistry, ToolSpec
 
 
 class ToolError(BaseModel):
@@ -34,7 +34,12 @@ class ToolResult(BaseModel):
 
 class ToolExecutor:
     def __init__(
-        self, registry: ToolRegistry, timeout: float = 10.0, *, max_result_bytes: int = 64_000
+        self,
+        registry: ToolRegistry,
+        timeout: float = 10.0,
+        *,
+        max_result_bytes: int = 64_000,
+        tool_policy: Callable[[ToolSpec], bool] | None = None,
     ) -> None:
         if isinstance(timeout, bool) or not math.isfinite(timeout) or not 0 < timeout <= 600:
             raise ValueError("Tool timeout must be finite and within (0, 600]")
@@ -46,6 +51,7 @@ class ToolExecutor:
             raise ValueError("Tool result size limit must be a positive integer")
         self.registry, self.timeout = registry, timeout
         self.max_result_bytes = max_result_bytes
+        self.tool_policy = tool_policy
 
     async def execute(
         self, call: ToolCall, *, on_started: Callable[[], Awaitable[None]] | None = None
@@ -53,7 +59,9 @@ class ToolExecutor:
         spec = self.registry.get(call.name)
         if spec is None:
             return ToolResult.failure("unknown_tool", "没有注册此工具，请使用提供的工具名称。")
-        if spec.permission != "read_only":
+        if spec.permission != "read_only" and not (
+            self.tool_policy is not None and self.tool_policy(spec)
+        ):
             return ToolResult.failure("permission_denied", "此工具有副作用，当前运行未授权执行。")
         try:
             parameters = spec.parameters.model_validate_json(call.arguments)

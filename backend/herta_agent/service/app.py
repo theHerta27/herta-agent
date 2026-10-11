@@ -1,5 +1,6 @@
 """Local HTTP composition. Runtime and storage remain independent of FastAPI."""
 
+import asyncio
 import os
 from contextlib import AsyncExitStack, asynccontextmanager
 
@@ -8,6 +9,11 @@ from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from herta_agent.companion.context import CompanionContext
+from herta_agent.companion.router import companion_router, scheduler, stop_scheduler
+from herta_agent.companion.speech_router import speech_router
+from herta_agent.companion.store import CompanionStore
+from herta_agent.companion.tools import companion_tools
 from herta_agent.config import ProviderSettings
 from herta_agent.llm.demo import DemoProvider
 from herta_agent.llm.openai_compatible import OpenAICompatibleProvider
@@ -40,6 +46,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         app.state.embedding_model = None
         app.state.mcp_available = False
         app.state.mcp_error = None
+        app.state.companion = CompanionStore(settings.db_path.with_name("companionship.sqlite3"))
+        ticker = asyncio.create_task(scheduler(app.state.companion))
         mcp_stack = AsyncExitStack()
         clients = []
         try:
@@ -47,6 +55,9 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             await store.recover_interrupted()
             selected = provider
             registry = echo_registry()
+            daily_specs, daily_policy = companion_tools(app.state.companion)
+            for spec in daily_specs:
+                registry.register(spec)
             unavailable = RagError("index_missing", "知识检索未配置。")
             if selected is None and settings.provider == "demo":
                 selected = DemoProvider()
@@ -101,12 +112,16 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     selected,
                     settings.run,
                     registry=registry,
-                    context_builder=PersonaContextBuilder(settings.soul_path),
+                    context_builder=CompanionContext(
+                        PersonaContextBuilder(settings.soul_path), app.state.companion
+                    ),
                     streaming=callable(getattr(selected, "stream", None)),
+                    tool_policy=daily_policy,
                 )
                 app.state.manager = RunManager(store, agent, settings)
             yield
         finally:
+            await stop_scheduler(ticker)
             # A shutdown timeout must not close clients underneath a still-owned Run.
             if app.state.manager is not None:
                 await app.state.manager.shutdown()
@@ -117,6 +132,12 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                 await client.aclose()
 
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
+    app.include_router(companion_router())
+    app.include_router(speech_router())
+
+    @app.exception_handler(ValueError)
+    async def companion_error(request, error):
+        return error_response(422, "invalid_request", "日常操作参数无效，请检查时间、歌曲或记录。")
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, error):
@@ -164,12 +185,11 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
     async def get_session(
         session_id: str, after_seq: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)
     ):
-        session = await app.state.store.get_session(session_id)
-        history = await app.state.store.load_history(session_id)
+        session, history, run = await app.state.store.get_session_snapshot(session_id)
         return {
             "session": session,
             "messages": [r for r in history if r.seq > after_seq][:limit],
-            "current_run": await app.state.store.get_run(history[-1].run_id) if history else None,
+            "current_run": run,
         }
 
     @app.get("/runs/{run_id}")

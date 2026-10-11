@@ -29,3 +29,17 @@ Herta 不导入/运行 Hermes Runtime。本轮新增逻辑依照接口与机制�
 | `tools/mcp_tool.py` | `96ba2757575b98b17d9fab2ff92446346d28df16ab9c75250c22d96259e3edfb` |
 
 原参考快照及其LICENSE保留原位、按既有.gitignore排除，不加入Herta构建。既有直接复用内容与许可证仍见 `docs/reuse-plan.md`；本轮没有增加Hermes直接源码复用。上述阅读是静态机制核对，未对整个上游仓库做全面审计。
+
+## 2026-10-11 日常陪伴机制
+
+使用用户指定的 `references/hermes-agent-main` 固定源码，未运行或修改上游。继续保持核心 Loop 小而集中；新能力置于独立 companion 服务和 Electron 边缘适配层。
+
+| Hermes 阅读位置 | Herta 对应 | 采用方式 |
+| --- | --- | --- |
+| `cron/scheduler_tick.py:7`、`cron/occurrences.py:70` | `companion/store.py`、`router.py` | 学习调度与持久到期记录分离；Herta 用 SQLite 单事务推进计划与写入唯一 occurrence。仅做固定提醒，不照搬远程自动化 Runner/租约系统 |
+| `tools/write_approval.py:74`、`:167` | `companion/store.py`、`tools.py` 与日常记忆面板 | 记忆先 pending，用户确认后使用；Herta 独立实现 SQLite 状态，不移植 pending JSON 或上游 Skills 子系统 |
+| `tools/transcription_local.py:138` | `companion/speech_worker.py` | 使用本地 Faster Whisper；显式本地目录、离线环境、经过校验的 PCM，缺失不自动下载 |
+| `tools/tts_tool_local.py:118` | `companion/speech_worker.py` | 使用 Piper 本地中文声音；独立进程负责载入与生成 WAV，取消会终止自管子进程 |
+| 既有工具 Registry/Executor 和 Persona 冻结机制 | `tools/executor.py`、`companion/context.py` | 日常内置身份白名单、每次执行检查撤销；每 Run 冻结称呼、已确认记忆和北京时间，完整人格继续保留 |
+
+Cyrene 的参考范围是迷你音乐播放器、可编辑语音草稿、日常面板、免打扰和托盘交互。没有复制其 Harness/多执行循环，没有引入 Live2D 或代码协作模式。

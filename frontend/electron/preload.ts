@@ -2,6 +2,16 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  companion: {
+    snapshot: () => ipcRenderer.invoke('herta:daily-snapshot'),
+    action: action => ipcRenderer.invoke('herta:daily-action', action),
+    importMusic: () => ipcRenderer.invoke('herta:import-music'),
+    reportPlayback: (revision, actual, error) => ipcRenderer.invoke('herta:playback-report', revision, actual, error),
+    voiceStatus: () => ipcRenderer.invoke('herta:voice-status'),
+    synthesize: text => ipcRenderer.invoke('herta:synthesize', text),
+    transcribe: wav => ipcRenderer.invoke('herta:transcribe', wav),
+    cancelVoice: () => ipcRenderer.invoke('herta:cancel-voice'),
+  },
   getSettings: () => ipcRenderer.invoke('herta:get-settings'),
   applySettings: settings => ipcRenderer.invoke('herta:apply-settings', settings),
   getRunDiagnostics: id => ipcRenderer.invoke('herta:get-run-diagnostics', id),

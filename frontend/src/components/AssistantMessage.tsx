@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Markdown from 'react-markdown';
 import avatar from '../assets/herta/avatar/herta-avatar.png';
+import { ReadButton } from '../audio/context';
 
 export function AssistantMessage({ text }: { text: string }) {
   const [failed, setFailed] = useState(false);
@@ -9,5 +10,5 @@ export function AssistantMessage({ text }: { text: string }) {
   </div><div className="markdown"><Markdown skipHtml components={{
     img: () => null,
     a: ({ children }) => <span>{children}</span>,
-  }}>{text}</Markdown></div></div>;
+  }}>{text}</Markdown></div><ReadButton text={text} /></div>;
 }

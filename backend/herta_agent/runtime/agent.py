@@ -45,6 +45,7 @@ class Agent:
         registry: ToolRegistry | None = None,
         context_builder: ContextBuilder | None = None,
         streaming: bool = False,
+        tool_policy=None,
     ) -> None:
         if type(streaming) is not bool or (
             streaming and not callable(getattr(provider, "stream", None))
@@ -55,7 +56,9 @@ class Agent:
         self.settings = settings or RunSettings()
         self.context_engine = ContextEngine(self.settings.context)
         self.registry = registry if registry is not None else ToolRegistry()
-        self.executor = ToolExecutor(self.registry, timeout=self.settings.tool_timeout)
+        self.executor = ToolExecutor(
+            self.registry, timeout=self.settings.tool_timeout, tool_policy=tool_policy
+        )
         self.context_builder = (
             context_builder if context_builder is not None else StaticContextBuilder()
         )

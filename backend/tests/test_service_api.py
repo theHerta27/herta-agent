@@ -24,6 +24,33 @@ class ServiceAPITests(unittest.IsolatedAsyncioTestCase):
             db_path=Path(self.temp.name) / "会话.sqlite3", max_active_runs=1
         )
 
+    async def test_session_snapshot_does_not_mix_old_history_with_new_terminal_state(self):
+        provider = GateProvider()
+        app = create_app(self.settings, provider=provider)
+        async with app.router.lifespan_context(app):
+            sid = (await app.state.store.create_session()).session_id
+            handle = await app.state.manager.submit(sid, "go")
+            await asyncio.wait_for(provider.entered.get(), 2)
+            original = app.state.store.load_history
+
+            async def finish_after_read(*args, **kwargs):
+                history = await original(*args, **kwargs)
+                provider.release.set()
+                await asyncio.wait_for(handle.done.wait(), 2)
+                return history
+
+            try:
+                with patch.object(app.state.store, "load_history", finish_after_read):
+                    async with httpx.AsyncClient(
+                        transport=httpx.ASGITransport(app), base_url="http://local"
+                    ) as client:
+                        snapshot = (await client.get(f"/sessions/{sid}")).json()
+                self.assertIn(snapshot["current_run"]["status"], ("running", "completed"))
+                expected = 2 if snapshot["current_run"]["status"] == "completed" else 1
+                self.assertEqual(len(snapshot["messages"]), expected)
+            finally:
+                provider.release.set()
+
     async def test_unconfigured_health_sessions_and_safe_validation(self):
         with patch.dict(os.environ, {}, clear=True):
             app = create_app(self.settings)

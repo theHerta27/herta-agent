@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, session } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, session, Tray, Menu, nativeImage, globalShortcut, Notification, protocol, net } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BackendProcess } from './backend-process';
@@ -7,6 +7,10 @@ import { RunTransport } from './run-transport';
 import { DesktopSettings } from './desktop-settings';
 import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
+import { CompanionClient } from './companion';
+import { identifier } from './backend-client';
+
+protocol.registerSchemesAsPrivileged([{ scheme: 'herta-media', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } }]);
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -23,10 +27,13 @@ let window: BrowserWindow | undefined;
 let quitting = false;
 let closing = false;
 let transport: RunTransport | undefined;
+let tray: Tray | undefined;
+let dailyTimer: ReturnType<typeof setInterval> | undefined;
 export const client = new BackendClient(() => {
   if (!backend.endpoint || closing) throw new Error('backend_unavailable');
   return backend.endpoint;
 });
+const daily = new CompanionClient(client);
 
 const settings = new DesktopSettings(join(data, 'settings.json'), process.env, {
   get status() { return backend.status; },
@@ -55,6 +62,10 @@ if (!app.requestSingleInstanceLock()) {
     event.preventDefault();
     if (closing) return;
     closing = true;
+    if (dailyTimer) clearInterval(dailyTimer);
+    daily.cancelVoice();
+    globalShortcut.unregister('CommandOrControl+Shift+H');
+    tray?.destroy();
     // stop() normally finishes within 20s + 5s tree kill + 5s pipe drain.
     // A rejected/stalled shutdown must not retain this process's instance lock.
     let forcing = false;
@@ -80,22 +91,31 @@ if (!app.requestSingleInstanceLock()) {
     process.on('disconnect', () => app.quit());
   }
   void app.whenReady().then(async () => {
-    session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-    session.defaultSession.setPermissionCheckHandler(() => false);
+    session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(
+      contents === window?.webContents && permission === 'media' && 'mediaTypes' in details && details.mediaTypes?.every(type => type === 'audio') === true));
+    session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => contents === window?.webContents && permission === 'media' && details.mediaType === 'audio');
+    protocol.handle('herta-media', request => {
+      try {
+        const url = new URL(request.url);
+        if (url.hostname !== 'music' || url.search || url.hash) return new Response(null, { status: 404 });
+        const id = identifier(url.pathname.slice(1));
+        return net.fetch(client.endpoint() + '/companion/music/media/' + id, { headers: request.headers, redirect: 'error' });
+      } catch { return new Response(null, { status: 404 }); }
+    });
     window = new BrowserWindow({
       title: 'Herta', width: 1200, height: 800, minWidth: 800, minHeight: 600,
       backgroundColor: '#17181c',
       webPreferences: {
         preload: join(__dirname, 'preload.cjs'), contextIsolation: true,
         nodeIntegration: false, sandbox: true,
+        backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required',
       },
     });
     window.setMenu(null);
     window.on('close', event => {
       if (!quitting) {
         event.preventDefault();
-        if (transport?.activeCount && dialog.showMessageBoxSync(window!, { type: 'question', message: '取消运行并退出？', buttons: ['取消运行并退出', '返回'], defaultId: 1, cancelId: 1 }) !== 0) return;
-        app.quit();
+        window?.hide();
       }
     });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -107,6 +127,51 @@ if (!app.requestSingleInstanceLock()) {
     const checkSender = (event: Electron.IpcMainInvokeEvent) => {
       if (event.senderFrame !== window?.webContents.mainFrame) throw new Error('invalid_sender');
     };
+    ipcMain.handle('herta:daily-snapshot', event => { checkSender(event); return daily.snapshot(); });
+    ipcMain.handle('herta:daily-action', (event, action) => { checkSender(event); return daily.action(action); });
+    ipcMain.handle('herta:import-music', async event => {
+      checkSender(event);
+      const selection = await dialog.showOpenDialog(window!, { title: '导入本地音乐', properties: ['openFile', 'multiSelections'], filters: [{ name: '音乐', extensions: ['wav', 'mp3', 'ogg', 'flac', 'm4a', 'aac', 'opus'] }] });
+      if (selection.canceled || !selection.filePaths.length) return [];
+      return daily.importTracks(selection.filePaths.slice(0, 200));
+    });
+    ipcMain.handle('herta:playback-report', (event, revision, actual, error) => { checkSender(event); return daily.report(revision, actual, error); });
+    ipcMain.handle('herta:voice-status', event => { checkSender(event); return daily.voiceStatus(); });
+    ipcMain.handle('herta:synthesize', (event, text) => { checkSender(event); return daily.synthesize(text); });
+    ipcMain.handle('herta:transcribe', (event, wav) => { checkSender(event); return daily.transcribe(wav); });
+    ipcMain.handle('herta:cancel-voice', event => { checkSender(event); daily.cancelVoice(); });
+    const show = () => { window?.show(); if (window?.isMinimized()) window.restore(); window?.focus(); };
+    const pixels = Buffer.alloc(16 * 16 * 4);
+    for (let y = 1; y < 15; y++) for (let x = 1; x < 15; x++) {
+      if ((x - 7.5) ** 2 + (y - 7.5) ** 2 > 49) continue;
+      const h = ((x === 5 || x === 10) && y >= 4 && y <= 11) || (y === 7 && x >= 5 && x <= 10);
+      pixels.set(h ? [242, 237, 255, 255] : [146, 100, 200, 255], (y * 16 + x) * 4);
+    }
+    tray = new Tray(nativeImage.createFromBitmap(pixels, { width: 16, height: 16 }));
+    tray.setToolTip('Herta · Ctrl+Shift+H');
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: '打开 Herta', click: show }, { type: 'separator' }, { label: '退出 Herta', click: () => app.quit() }]));
+    tray.on('double-click', show);
+    globalShortcut.register('CommandOrControl+Shift+H', show);
+    const attempted = new Map<string, number>();
+    let polling = false;
+    dailyTimer = setInterval(() => {
+      if (polling || closing || !backend.endpoint) return;
+      polling = true;
+      void daily.snapshot().then(snapshot => {
+        const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: 'Asia/Shanghai' }).format(new Date()));
+        const { quiet_start: start, quiet_end: end } = snapshot.preferences;
+        const quiet = start === end ? false : start < end ? hour >= start && hour < end : hour >= start || hour < end;
+        if (quiet || !Notification.isSupported()) return;
+        for (const delivery of snapshot.deliveries) {
+          if (delivery.notified || Date.now() - (attempted.get(delivery.id) ?? 0) < 60000) continue;
+          attempted.set(delivery.id, Date.now());
+          const notification = new Notification({ title: 'Herta 提醒', body: delivery.title });
+          notification.on('click', show);
+          notification.on('show', () => { void client.json(`/companion/deliveries/${identifier(delivery.id)}/notified`, 'POST', {}).catch(() => {}); });
+          notification.show();
+        }
+      }).catch(() => {}).finally(() => { polling = false; });
+    }, 1000);
     let subscribed = false;
     const acknowledgements = new Map<string, () => void>();
     transport = new RunTransport(client, packet => new Promise((resolve, reject) => {

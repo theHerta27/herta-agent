@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-test('closing the native window ends the dev process tree and permits reopening', async () => {
+test('closing hides the dev window; ending its parent cleans the owned tree and permits reopening', async () => {
   const folder = await mkdtemp(join(tmpdir(), 'Herta reopen '));
   const frontend = resolve(import.meta.dirname, '../..');
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
@@ -29,7 +29,9 @@ test('closing the native window ends the dev process tree and permits reopening'
         await expect.poll(() => existsSync(join(folder, 'sessions.sqlite3'))).toBe(true);
         const owned = JSON.parse(await ps(`$all = Get-CimInstance Win32_Process; $ids = @(${main}); do { $next = @($all | Where-Object { $_.ParentProcessId -in $ids -and $_.ProcessId -notin $ids } | Select-Object -ExpandProperty ProcessId); $ids += $next } while ($next.Count); ConvertTo-Json -Compress -InputObject @($ids)`)) as number[];
         await ps(`Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public class HertaClose { [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l); }'; [HertaClose]::PostMessage((Get-Process -Id ${main}).MainWindowHandle, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)`);
-        await expect.poll(() => child.exitCode, { timeout: 10000 }).toBe(0);
+        await expect.poll(() => ps(`(Get-Process -Id ${main}).MainWindowHandle`)).toBe('0');
+        expect(child.exitCode).toBeNull();
+        child.kill(); // Parent shutdown disconnects Electron IPC and requests explicit app.quit().
         await closed;
         for (const pid of owned) {
           await expect.poll(() => { try { process.kill(pid, 0); return true; } catch { return false; } }).toBe(false);

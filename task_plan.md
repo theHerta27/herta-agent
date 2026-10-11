@@ -89,3 +89,22 @@ Phase 1 不实现工具执行、Persona、RAG、FastAPI、Electron 或 SSE。
 错误：Windows 沙箱 setup refresh 失败；只读和开发命令使用自动审批的非沙箱执行。apply_patch 同样失败，改用项目内 UTF-8 文件写入。
 
 最新约束：用户明确“目前阶段不允许真实验收，本地测试就行”；真实系统评测停止，未完成报告。首版本机交付完成，不宣称真实 V1 效果验收完成。
+
+## 2026-10-11 Cyrene 功能借鉴与产品推荐（仅设计分析）
+- 目标：继续学习Hermes源码并自研Herta Harness；从Cyrene本地源码提取实用功能，提出产品范围和分期建议，不开始实现。
+- 已确认首要用途：日常桌面陪伴（聊天、音乐、语音、提醒、轻量自动化）。Live2D和代码协作不做；其他能力可纳入分阶段路线。真实验收仍未获得重新许可。
+- [x] 阅读用户粘贴说明、当前Herta状态、Cyrene README/目录与依赖。
+- [x] 核对关键源码：Harness/权限/Skills/Memory，以及音乐/语音/提醒/文件/学习的实际实现与边界。
+- [x] 比较产品路线，给出推荐功能、用户流程、机制优先级与分期出口。
+- [x] 交叉核对证据并交付推荐方案。
+- 调研错误：一个推测的tool-registry路径不存在，使用rg定位实际built-in-tools和harness/adapter/tool-runtime，未执行或修改参考代码。
+
+## 2026-10-11 日常陪伴版实施
+- 用户授权开始实现；Hermes为主要工程参考，Cyrene用于产品思路。设计：docs/companion-v1-design.md；执行计划：docs/superpowers/plans/2026-10-11-companion-v1.md；持续记录：.local/companion-work/progress.md。
+- 本轮交付推荐第一批陪伴能力，后续文件/网页/学习/自动Skills路线保留。验收仅本地，不push/merge，不改参考源码或原有用户文档。
+- [x] 基线223后端/35前端、新版设计和接口。
+- [x] SQLite日常服务/可信工具/提醒及偏好。
+- [x] 桌面桥接/媒体/托盘/通知。
+- [x] 本地语音/取消/音频协调。
+- [x] 日常面板/录音输入/回复朗读/专注流程。
+- [ ] 全量本地回归/独立审查/一键交付。

@@ -370,6 +370,15 @@ class SQLiteSessionStore:
             return self._session(connection, session_id)
 
     @_on_worker
+    def get_session_snapshot(self, session_id: str):
+        """Read history and its terminal state from the same SQLite snapshot."""
+        with self._transaction() as connection:
+            session = self._session(connection, session_id)
+            history = self._records(connection, session_id)
+            run = self._run(connection, history[-1].run_id) if history else None
+            return session, history, run
+
+    @_on_worker
     def list_sessions(self, after_id=None, limit=50) -> tuple[SessionRecord, ...]:
         with self._transaction() as connection:
             _integer(limit, 1, 100)

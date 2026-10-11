@@ -116,3 +116,24 @@
 - MCP SDK上下文必须在专属异步任务内同任务进入/退出，否则解码异常会取消FastAPI lifespan；已隔离并验证。
 - 词法Token估算与实际计费严格区分；extractive-v1摘要不会创造事实但有信息损失。设置候选仅在服务可用/明确缺配置时保存，重启失败恢复旧值。
 - 交付证据集中在docs/IMPLEMENTATION_STATUS.md、docs/HARNESS_EVAL_REPORT.md；.local日志不进入Git，可复现。
+
+## 2026-10-11 Cyrene 产品调研
+- 用户粘贴材料是既有建议，主要依据README，不能当成已经验证的功能证据。用户本次实际选择以日常陪伴为首要用途，优先级需从文件/知识库转向音乐、语音、提醒及轻量操作。
+- 本地Cyrene package.json版本1.2.2，Electron/TypeScript，带独立音乐、Learn、Skills、Memory、Scheduler等模块；当前未启动/测试其程序，没有调用模型。
+- Gitee页面无法由浏览工具读取；已核对官方GitHub仓库，旧Playa-0v0 URL重定向至Playa-Cyrene/Cyrene-Agent。线上README/目录与本地快照存在差异，方案以本地源码证据为主，不能称本地是最新Commit。
+- 桌面审阅初步发现：Learn的后台进度提取会发送当轮内容到配置模型；文档索引file-ingest明确拒绝PDF/DOCX/XLSX/PPTX，文档生成与索引读取要分别核实。不要照搬“不上传”或多格式通吃的口径。
+
+### 2026-10-11 源码与README差异复核
+- 实读 src/main/orchestrator/cyrene-agent.ts:430–481：Chat在options.tools非空时也走runHarnessWithAdapter，仅无工具时走ChatLoop；README的“Chat无工具”已落后于这份本地源码。Herta日常聊天可包含音乐/提醒等必要工具，并继续使用自身唯一Agent.run。
+- Scheduler初审：有工具白名单和授权规格指纹，但all-enabled及runner allow_all不能直接作为Herta默认权限策略；关闭后的提醒需要独立生命周期设计。Skills的已证实能力是发现/选择/加载/读取引用，尚未证实自动经验转Skill闭环。
+
+### 2026-10-11 完整审阅结论与推荐方向
+- 三项只读审阅完成并交叉核对关键源码。推荐保留Herta Python单Agent.run与Electron，先做日常陪伴闭环，再扩展文件/网页/资料学习和可复用经验。
+- Herta executor.py:56仍拒绝所有非read_only工具；音乐播放、创建提醒、偏好写入须扩展有范围的副作用策略，不能伪标只读。main.ts:94关窗退出、:53退出清理后端；托盘、关闭隐藏/显式退出、持久调度是提醒前置工程。main.ts:83拒绝所有浏览器权限，麦克风须窄范围许可。
+- 语音应转为普通文本输入同一Harness。Cyrene call-manager.ts:453直接模型请求；照搬会使语音与文字工具能力不一致。Herta需要统一音频协调：录音/朗读时降低音乐，停止时取消合成和播放；首版不承诺连续通话随时打断。
+- Cyrene music-tools.ts:97–120播放返回dispatched仅表示命令已发；Herta播放器状态应以实际回读为准。本地音乐入口已有源码机制，但参考副本没有播放器二进制/模型权重，未证明本机可运行。
+- 纯提醒按时间直接通知，不每次调用模型；复杂定时任务才进入Harness。Herta宜SQLite记录任务、领取、真实结果与错过策略，避免照搬Cyrene scheduler-runner allow_all或固定success历史。完全退出时不执行，重启须呈现漏提醒。
+- Skills与Memory分开：用户明确偏好记忆可早做；任务经验→草稿→验证→版本→复用反馈作为后期学习闭环。Cyrene skill-tools.ts:63/117证实加载正文/附件，没有发现自动创作并验证的闭环。Hermes官方Skills文档证实skill_manage及从任务/资料生成Skill机制，仍需自行实现和验证。
+- 文件/个人知识库后续从指定目录和Markdown/文本开始，PDF/Office解析及截图图片消息能力分别实现；不把当前角色RAG/抽取摘要视为通用资料导入/长期Memory。
+- 文件导入file-ingest.ts:58明确拒绝PDF/Office；Learn进度提取learn-progress-extractor.ts:85–125把当轮消息发给配置模型。当前范围下不触发这些后台请求，不照搬本地存储等于离线推理的表述。
+- 推荐正式路线：基础动作权限/托盘/持久调度→聊天+本地音乐+朗读+按键录音+提醒的陪伴版→轻量桌面/网页/文件助手→个人知识学习与经验证Skills。Live2D与代码协作保持排除，插件市场和多渠道统一后置。

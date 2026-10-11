@@ -12,6 +12,7 @@ from herta_agent.llm.streaming import ReplyCompleted, TextDelta
 from herta_agent.runtime.messages import Message, ModelReply
 from herta_agent.service.app import create_app
 from herta_agent.service.events import EventQueue, encode_event
+from herta_agent.service.runs import RunHandle
 from herta_agent.service.settings import ServiceSettings
 from herta_agent.service.sse import RunResponse
 
@@ -26,6 +27,37 @@ class ServiceSSETests(unittest.IsolatedAsyncioTestCase):
             heartbeat_seconds=0.02,
             event_wait_seconds=0.03,
         )
+
+    async def test_heartbeat_deadline_drains_terminal_events_already_queued(self):
+        handle = RunHandle("run", "session")
+
+        class Manager:
+            async def submit(self, *args):
+                return handle
+
+        original = handle.events.get
+        first = True
+
+        async def racing_get():
+            nonlocal first
+            if first:
+                first = False
+                handle.publish("llm.completed", {"text": "完整回答"})
+                handle.publish("run.completed", {"persisted": True}, terminal=True)
+                handle.done.set()
+                await asyncio.sleep(1)  # Deadline wins although producer has queued its tail.
+            return await original()
+
+        sent = []
+
+        async def send(message):
+            sent.append(message)
+
+        with patch.object(handle.events, "get", racing_get):
+            await RunResponse(Manager(), "session", "go", self.settings)._serve(send)
+        body = b"".join(message.get("body", b"") for message in sent)
+        self.assertIn(b"event: llm.completed", body)
+        self.assertIn(b"event: run.completed", body)
 
     async def test_post_frames_unicode_order_and_no_replay(self):
         class Provider:

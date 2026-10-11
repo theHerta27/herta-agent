@@ -55,10 +55,10 @@ test('three real window cycles from outside cwd; owned Python exits and SQLite r
     expect(await page.evaluate(() => ({
       node: typeof (window as unknown as { require?: unknown }).require,
       bridge: Object.keys(window.herta),
-    }))).toEqual({ node: 'undefined', bridge: ['getSettings', 'applySettings', 'getRunDiagnostics', 'getBackendStatus', 'listSessions', 'createSession', 'getSession', 'getRun', 'startRun', 'cancelRequest', 'onRunEvents', 'onBackendStatus'] });
+    }))).toEqual({ node: 'undefined', bridge: ['companion', 'getSettings', 'applySettings', 'getRunDiagnostics', 'getBackendStatus', 'listSessions', 'createSession', 'getSession', 'getRun', 'startRun', 'cancelRequest', 'onRunEvents', 'onBackendStatus'] });
     if (i === 0) await page.screenshot({ path: join(root, '.local/phase6-stage1-window.png') });
     const exited = desktop!.waitForEvent('close');
-    await desktop!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+    await desktop!.evaluate(({ app }) => app.quit());
     await exited;
     desktop = undefined;
     await expect.poll(() => alive(state.pid) || alive(state.launcher)).toBe(false);
@@ -122,7 +122,7 @@ test('shutdown failure or stall cannot retain Electron and its instance lock', a
         backend.stop = () => new Promise(() => {});
       }
     }, failure);
-    await desktop!.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+    await desktop!.evaluate(({ app }) => app.quit());
     await expect.poll(() => alive(mainPid), { timeout: 45000 }).toBe(false);
     desktop = undefined;
     await expect.poll(() => alive(state.pid) || alive(state.launcher)).toBe(false);

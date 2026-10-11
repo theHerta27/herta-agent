@@ -56,7 +56,7 @@ class RunResponse(Response):
                     async with asyncio.timeout(self.settings.heartbeat_seconds):
                         event = await self.handle.events.get()
                 except TimeoutError:
-                    if self.handle.done.is_set():
+                    if self.handle.done.is_set() and self.handle.events.empty():
                         break
                     await self._send(
                         send,
