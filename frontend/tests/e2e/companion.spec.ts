@@ -99,8 +99,11 @@ test('local microphone fixture fills an editable draft; speaking and session can
     await expect(page.getByRole('button', { name: '朗读', exact: true }).last()).toBeEnabled();
     await page.evaluate(() => {
       const original = window.Audio;
+      const probe = window as typeof window & { speechDevices: HTMLAudioElement[] };
+      probe.speechDevices = [];
       window.Audio = new Proxy(original, { construct(target, args) {
         const audio = Reflect.construct(target, args) as HTMLAudioElement;
+        probe.speechDevices.push(audio);
         audio.addEventListener('playing', () => { document.documentElement.dataset.voicePlayed = 'yes'; });
         return audio;
       } });
@@ -116,18 +119,61 @@ test('local microphone fixture fills an editable draft; speaking and session can
     });
     await expect.poll(async () => (await page.evaluate(() => window.herta.companion.snapshot())).preferences.auto_read).toBe(true);
     await page.waitForTimeout(800); // Allow the normal renderer preference poll before sending.
-    await page.getByRole('textbox', { name: '消息' }).fill('自动朗读本地测试');
+    await page.getByRole('textbox', { name: '消息' }).fill('黑塔，休息了。'.repeat(90));
     await page.getByRole('button', { name: '发送', exact: true }).click();
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.voicePlayed), { timeout: 20000 }).toBe('yes');
-    await page.getByRole('button', { name: '停止声音' }).click();
+    await page.getByRole('button', { name: '新对话', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => (window as typeof window & { speechDevices: HTMLAudioElement[] }).speechDevices.every(audio => audio.paused))).toBe(true);
+    await page.getByRole('textbox', { name: '消息' }).fill('阻止过期识别');
+    await page.getByRole('button', { name: '发送', exact: true }).click();
+    await expect(page.getByRole('button', { name: '录音', exact: true })).toBeEnabled();
+    await page.evaluate(() => {
+      const close = AudioContext.prototype.close;
+      AudioContext.prototype.close = function () {
+        AudioContext.prototype.close = close;
+        const closing = close.call(this);
+        return new Promise<void>(resolve => { (window as typeof window & { releaseClose: () => Promise<void> }).releaseClose = async () => { await closing; resolve(); }; });
+      };
+    });
+    await desktop.evaluate(() => {
+      const probe = globalThis as typeof globalThis & { asrRequests: number }; probe.asrRequests = 0;
+      const request = globalThis.fetch;
+      globalThis.fetch = (...args: Parameters<typeof fetch>) => { if (String(args[0]).endsWith('/companion/speech/asr')) probe.asrRequests++; return request(...args); };
+    });
     await page.getByRole('button', { name: '录音', exact: true }).click();
     await expect(page.getByRole('button', { name: '结束录音' })).toBeVisible();
     await page.waitForTimeout(3000);
     await page.getByRole('button', { name: '结束录音' }).click();
+    await expect.poll(() => page.evaluate(() => typeof (window as typeof window & { releaseClose?: () => Promise<void> }).releaseClose)).toBe('function');
     await page.getByRole('button', { name: '新对话', exact: true }).click();
+    await page.evaluate(() => (window as typeof window & { releaseClose: () => Promise<void> }).releaseClose());
     await expect(page.getByRole('button', { name: '录音', exact: true })).toBeVisible();
     await page.waitForTimeout(2500);
     await expect(page.getByRole('textbox', { name: '消息' })).toHaveValue('');
+    expect(await desktop.evaluate(() => (globalThis as typeof globalThis & { asrRequests: number }).asrRequests)).toBe(0);
     await page.screenshot({ path: join(root, '.local/companion-voice-desktop.png') });
+  } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
+});
+
+test('local reading failures provide visible retry feedback', async () => {
+  const root = resolve(import.meta.dirname, '../../..');
+  const folder = await mkdtemp(join(tmpdir(), 'Herta 语音错误 '));
+  let desktop: ElectronApplication | undefined;
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('HERTA_') && !['ELECTRON_RUN_AS_NODE', 'WEB_CONCURRENCY'].includes(key))), HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: folder } as Record<string, string>;
+  try {
+    desktop = await electron.launch({ args: [join(root, 'frontend')], env, cwd: folder });
+    const page = await desktop.firstWindow();
+    await expect(page.getByRole('status')).toHaveText('服务就绪', { timeout: 20000 });
+    test.skip(!(await page.evaluate(() => window.herta.companion.voiceStatus())).tts, 'local voice model is optional');
+    await page.getByRole('textbox', { name: '消息' }).fill('本地失败反馈');
+    await page.getByRole('button', { name: '发送', exact: true }).click();
+    await expect(page.getByRole('button', { name: '朗读', exact: true }).last()).toBeEnabled();
+    await desktop.evaluate(() => {
+      const request = globalThis.fetch;
+      globalThis.fetch = (...args: Parameters<typeof fetch>) => String(args[0]).endsWith('/companion/speech/tts') ? Promise.resolve(new Response('{}', { status: 503 })) : request(...args);
+    });
+    await page.getByRole('button', { name: '朗读', exact: true }).last().click();
+    await expect(page.getByRole('alert')).toContainText('本地朗读失败');
+    await expect(page.getByRole('button', { name: '朗读', exact: true }).last()).toBeEnabled();
   } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
 });

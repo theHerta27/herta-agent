@@ -62,3 +62,29 @@ it('audio subscriptions remain active when the companion service is restarted', 
   await audio.beginRecording();
   expect(updates).toBeGreaterThan(0); unsubscribe();
 });
+
+it.each(['read', 'record'] as const)('a stop during initial IPC cancellation prevents late %s from starting', async action => {
+  const cancellations: (() => void)[] = []; const spoken: string[] = [];
+  const bridge = { cancelVoice: () => new Promise<void>(resolve => cancellations.push(resolve)), synthesize: async (text: string) => { spoken.push(text); return new Uint8Array([1]); } } as unknown as CompanionBridge;
+  const audio = new AudioCoordinator(bridge, new AudioDevice(), () => { const device = new AudioDevice(); device.ended = true; return device; });
+  const old = action === 'read' ? audio.read('旧回答') : audio.beginRecording();
+  const stopping = audio.stopVoice(); cancellations[1](); await stopping;
+  cancellations[0]();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const state = audio.state; const calls = spoken.length;
+  for (const resolve of cancellations) resolve();
+  await old;
+  expect(calls).toBe(0); expect(state).toBe('idle');
+});
+
+it('stopping a playing long reply pauses it and prevents the next chunk', async () => {
+  const spoken: string[] = []; const devices: AudioDevice[] = [];
+  const bridge = { cancelVoice: async () => {}, synthesize: async (text: string) => { spoken.push(text); return new Uint8Array([1]); } } as unknown as CompanionBridge;
+  const audio = new AudioCoordinator(bridge, new AudioDevice(), () => { const device = new AudioDevice(); devices.push(device); return device; });
+  const reading = audio.read('黑塔'.repeat(300));
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(audio.state).toBe('speaking');
+  await audio.stopVoice(); await reading;
+  devices[0].onended?.(); await new Promise(resolve => setTimeout(resolve, 0));
+  expect(devices[0].paused).toBe(true); expect(spoken).toHaveLength(1); expect(audio.state).toBe('idle');
+});

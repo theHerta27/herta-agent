@@ -9,7 +9,7 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { CompanionRuntime } from './state/companion-runtime';
 import { CompanionPanel, MiniPlayer } from './components/CompanionPanel';
 import { VoiceInput } from './components/VoiceInput';
-import { DailyContext } from './audio/context';
+import { AudioControls, DailyContext } from './audio/context';
 import './styles/companion.css';
 
 const store = new ChatStore(window.herta);
@@ -90,7 +90,7 @@ export function App() {
         {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} onRetryDiagnostics={() => state.selected && void store.load(state.selected)} />}
       </div>
       {showLatest && <button className="latest" onClick={() => { following.current = true; scroll.current!.scrollTop = scroll.current!.scrollHeight; }}>回到最新 ↓</button>}
-      <div className="voice-row"><VoiceInput runtime={daily} disabled={busy || status.state !== 'ready'} sessionKey={state.selected ?? 'draft'} onText={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n' + text : text); }} /><button onClick={() => void daily.audio.stopVoice()}>停止声音</button></div>
+      <div className="voice-row"><VoiceInput runtime={daily} disabled={busy || status.state !== 'ready'} sessionKey={state.selected ?? 'draft'} onText={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n' + text : text); }} /><AudioControls /></div>
       <Composer value={view.draft} onChange={text => store.setDraft(text)} onSend={() => { void daily.audio.stopVoice(); void store.send(); }} onStop={() => { void daily.audio.stopVoice(); void store.stop(); }} busy={busy} cancelling={view.request?.phase === 'cancelling' || view.request?.phase === 'reconciling'} disabled={status.state !== 'ready' || view.loading || !view.loaded} />
     </main>
     {dailyOpen && <CompanionPanel runtime={daily} onClose={() => setDailyOpen(false)} />}

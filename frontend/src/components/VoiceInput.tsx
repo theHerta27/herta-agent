@@ -12,7 +12,7 @@ export function VoiceInput({ runtime, disabled, sessionKey, onText }: { runtime:
   useLayoutEffect(() => {
     setState('idle'); setError('');
     const current = recorder.current;
-    return () => { ++generation.current; void current.cancel(); runtime.audio.endRecording(); void runtime.bridge.cancelVoice(); };
+    return () => { ++generation.current; void current.cancel(); void runtime.audio.stopVoice(); };
   }, [runtime, sessionKey, disabled]);
   const cancel = async () => { ++generation.current; await recorder.current.cancel(); await runtime.audio.stopVoice(); setState('idle'); };
   const finish = async () => {
@@ -20,7 +20,9 @@ export function VoiceInput({ runtime, disabled, sessionKey, onText }: { runtime:
     const session = sessionKey;
     setState('recognizing');
     try {
-      const wav = await recorder.current.stop(); runtime.audio.endRecording();
+      const wav = await recorder.current.stop();
+      if (generation.current !== token || currentSession.current !== session) return;
+      runtime.audio.endRecording();
       const result = await runtime.bridge.transcribe(wav);
       if (generation.current === token && currentSession.current === session) { if (result.text.trim()) onText(result.text); else setError('没有识别到清楚的语音，请重试。'); }
     } catch { if (generation.current === token) setError('识别未完成，请检查本地模型或重新录音。'); }
@@ -29,7 +31,7 @@ export function VoiceInput({ runtime, disabled, sessionKey, onText }: { runtime:
   const start = async () => {
     const token = ++generation.current; setState('requesting'); setError('');
     try {
-      await runtime.audio.beginRecording();
+      if (!(await runtime.audio.beginRecording())) { if (token === generation.current) setState('idle'); return; }
       if (token !== generation.current) { runtime.audio.endRecording(); return; }
       const started = await recorder.current.start(() => void finish());
       if (started && token === generation.current) setState('recording');

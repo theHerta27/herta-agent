@@ -33,21 +33,21 @@
 
 **Interfaces:** CompanionStore(path).snapshot(), create_reminder(title,due_at,repeat), tick(now), update_preferences(values), propose_memory(text), music_command(action,track_id,volume). trusted_tool_policy(spec)->bool. Agent(..., tool_policy=None).
 
-- [ ] Test real SQLite restart, due occurrence dedup/two connections, daily/week skip, invalid time, unread ack, approved preference vs pending memory, media ID validation/stale revision, denied generic side effects and revoked companion action.
-- [ ] Run `.venv/Scripts/python.exe -m unittest discover -s backend/tests -p test_companion.py` and observe missing behavior.
-- [ ] Implement focused services/router; lifespan tick task, cancellation cleanup; register built-ins and per-Run context.
-- [ ] Verify targeted tests and existing backend suite; record evidence.
+- [x] Test real SQLite restart, due occurrence dedup/two connections, daily skip, invalid time, unread ack, approved preference vs pending memory, media ID validation/stale revision, denied generic side effects and revoked companion action.
+- [x] Run `.venv/Scripts/python.exe -m unittest discover -s backend/tests -p test_companion.py` and observe missing behavior.
+- [x] Implement focused services/router; lifespan tick task, cancellation cleanup; register built-ins and per-Run context.
+- [x] Verify targeted tests and existing backend suite; record evidence.
 
 ### Task 2: Desktop transport, media, tray and notifications
 
 **Files:** frontend/electron/{companion,main,preload}.ts; shared/contracts.ts; index.html; tests/unit/companion.test.ts; tests/e2e/companion.spec.ts
 
-**Interfaces:** DesktopBridge companionSnapshot(), companionAction(action), importMusic(), mediaUrl(id), voiceStatus(), synthesize(text), transcribe(wav), cancelVoice(). Companion snapshot contains preferences, memories, reminders, deliveries, tracks and playback.
+**Interfaces:** DesktopBridge.companion exposes snapshot(), action(action), importMusic(), reportPlayback(), voiceStatus(), synthesize(text), transcribe(wav), cancelVoice(). The media URL uses opaque IDs through herta-media. Companion snapshot contains preferences, memories, reminders, deliveries, tracks and playback.
 
-- [ ] Test input validation and actual HTTP action results; Electron import fixture WAV, playback state, reminder notification receipt, hidden window restoration, explicit quit cleanup.
-- [ ] Watch tests fail before adding bridge/protocol/lifecycle.
-- [ ] Add fixed-route validated bridge; approved file import; restricted media protocol; polling delivery loop + Notification; tray and shortcut, backgroundThrottling disabled for audio.
-- [ ] Verify units/typecheck/build and targeted Electron tests, update existing close assertions for hide vs quit.
+- [x] Test input validation and actual HTTP action results; Electron import fixture WAV, playback state, reminder due-card receipt, hidden window restoration, explicit quit cleanup. OS toast visibility remains system-dependent as specified.
+- [x] Watch tests fail before adding bridge/protocol/lifecycle.
+- [x] Add fixed-route validated bridge; approved file import; restricted media protocol; polling delivery loop + Notification; tray and shortcut, backgroundThrottling disabled for audio.
+- [x] Verify units/typecheck/build and targeted Electron tests, update existing close assertions for hide vs quit.
 
 ### Task 3: Local speech preparation and cancellation
 
@@ -55,10 +55,10 @@
 
 **Interfaces:** SpeechService.status(), synthesize(text), transcribe(wav); bounded local subprocesses. AudioCoordinator controls actual Audio and cancels generations. Recorder produces 16k mono PCM WAV <=60 seconds.
 
-- [ ] Test malformed/oversize WAV, silence, absent model, killed request child; stale TTS response never plays; stop restores music level; resampling output header/frame limits.
-- [ ] Run failing tests, implement offline local providers without runtime downloads and abortable bridge requests.
-- [ ] Prepare dependencies/public Chinese voice + multilingual ASR under .local/voice; run local synth/silence smoke only.
-- [ ] Verify tests/lockfile/model manifest and cleanup behavior.
+- [x] Test malformed/oversize WAV, silence, absent model, killed request child; stale TTS response never plays; stop restores music level; resampling output header/frame limits.
+- [x] Run failing tests, implement offline local providers without runtime downloads and abortable bridge requests.
+- [x] Prepare dependencies/public Chinese voice + multilingual ASR under .local/voice; run local synth/ASR smoke.
+- [x] Verify tests/lockfile/model manifest and cleanup behavior.
 
 ### Task 4: Daily panel, spoken replies and editable recording
 
@@ -66,15 +66,15 @@
 
 **Interfaces:** Uses Task 2 bridge and Task 3 coordinator; voice result updates existing draft, never creates another model loop.
 
-- [ ] Add failing real Electron tests for creating/cancelling/snoozing reminder, preferences save/reopen, music import/play/pause, recording draft, memory approval, focus routine and message read/stop.
-- [ ] Implement compact music/reminder/preference panel using existing tokens, same chat entry and readable errors.
-- [ ] Verify keyboard, empty/error states, persistence, local audio and screenshots.
+- [x] Add real Electron tests for creating/cancelling/snoozing reminder, preferences save/reopen, music import/play/pause, recording draft, memory approval, focus routine and message read/stop.
+- [x] Implement compact music/reminder/preference panel using existing tokens, same chat entry and readable errors.
+- [x] Verify keyboard, empty/error states, persistence, local audio and screenshots.
 
 ### Task 5: Integrated local verification and delivery
 
 **Files:** README.md; docs/{IMPLEMENTATION_STATUS,HERMES_SOURCE_MAP,COMPANION_ACCEPTANCE}.md; planning notes.
 
-- [ ] Run backend suite/Ruff, frontend suite/typecheck/lint/build and full Electron E2E; no remote model requests.
-- [ ] One fresh independent whole-change review under executing-plans, fix material findings with reproducing tests.
-- [ ] Record actual evidence and limits; ensure one-click launch works, usable built output, close-to-tray/exit instructions.
-- [ ] Preserve local artifacts and original docs; commit only authorized implementation if appropriate, no push/merge.
+- [x] Run backend suite/Ruff, frontend suite/typecheck/lint/build and full Electron E2E; no remote model requests.
+- [x] One fresh independent whole-change review under executing-plans, fix material findings with reproducing tests.
+- [x] Record actual evidence and limits; ensure one-click launch works, usable built output, close-to-tray/exit instructions.
+- [x] Preserve local artifacts and original docs; commit only authorized implementation if appropriate, no push/merge.

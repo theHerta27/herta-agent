@@ -125,6 +125,27 @@ class CompanionStoreTests(unittest.TestCase):
 
 
 class CompanionPermissionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_revoking_during_started_notification_prevents_the_handler(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = CompanionStore(Path(folder) / "state.db")
+            specs, policy = companion_tools(store)
+            registry = ToolRegistry()
+            for spec in specs:
+                registry.register(spec)
+
+            async def on_started():
+                store.update_preferences({"allow_tools": False})
+
+            result = await ToolExecutor(registry, tool_policy=policy).execute(
+                ToolCall(
+                    id="r", name="create_reminder", arguments='{"title":"喝水","delay_minutes":5}'
+                ),
+                on_started=on_started,
+            )
+            self.assertFalse(result.ok)
+            self.assertEqual(result.error.code, "permission_denied")
+            self.assertEqual(store.snapshot()["reminders"], [])
+
     async def test_only_registered_companion_actions_are_granted_and_revocable(self):
         with tempfile.TemporaryDirectory() as folder:
             store = CompanionStore(Path(folder) / "state.db")

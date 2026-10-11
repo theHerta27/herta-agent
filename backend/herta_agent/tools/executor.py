@@ -53,15 +53,18 @@ class ToolExecutor:
         self.max_result_bytes = max_result_bytes
         self.tool_policy = tool_policy
 
+    def _permitted(self, spec):
+        return spec.permission == "read_only" or (
+            self.tool_policy is not None and self.tool_policy(spec)
+        )
+
     async def execute(
         self, call: ToolCall, *, on_started: Callable[[], Awaitable[None]] | None = None
     ) -> ToolResult:
         spec = self.registry.get(call.name)
         if spec is None:
             return ToolResult.failure("unknown_tool", "没有注册此工具，请使用提供的工具名称。")
-        if spec.permission != "read_only" and not (
-            self.tool_policy is not None and self.tool_policy(spec)
-        ):
+        if not self._permitted(spec):
             return ToolResult.failure("permission_denied", "此工具有副作用，当前运行未授权执行。")
         try:
             parameters = spec.parameters.model_validate_json(call.arguments)
@@ -71,6 +74,8 @@ class ToolExecutor:
             )
         if on_started is not None:
             await on_started()  # Infrastructure errors must not become tool failures.
+        if not self._permitted(spec):
+            return ToolResult.failure("permission_denied", "此工具有副作用，当前运行未授权执行。")
         try:
             async with asyncio.timeout(spec.timeout if spec.timeout is not None else self.timeout):
                 data = await spec.handler(parameters)

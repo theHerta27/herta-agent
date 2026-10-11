@@ -49,11 +49,17 @@ export class AudioCoordinator {
     this.ducked = false; this.volume(); this.update('idle');
     await this.bridge.cancelVoice().catch(() => {});
   }
-  async beginRecording() { await this.stopVoice(); this.ducked = true; this.volume(); this.update('recording'); }
+  async beginRecording() {
+    const stopping = this.stopVoice(); const generation = this.generation;
+    await stopping;
+    if (generation !== this.generation) return false;
+    this.ducked = true; this.volume(); this.update('recording'); return true;
+  }
   endRecording() { this.ducked = false; this.volume(); this.update('idle'); }
   async read(text: string) {
-    await this.stopVoice();
-    const generation = ++this.generation;
+    const stopping = this.stopVoice(); const generation = this.generation;
+    await stopping;
+    if (generation !== this.generation) return;
     this.ducked = true; this.volume(); this.update('loading');
     try {
       const content = text.replace(/[#*_`]/g, '').trim();
