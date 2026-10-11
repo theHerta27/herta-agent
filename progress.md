@@ -235,3 +235,11 @@
 - 修复权限在开始事件等待期间撤销仍执行、取消IPC等待后的旧朗读/录音晚启动、切换会话未停声、关闭录音期间旧识别晚发起、朗读失败静默。修正测试中推测的语音URL，使用实际/companion/speech路由后观察旧请求1→0。
 - 最终243/243后端、46/46前端单元、14/14完整Electron通过（无跳过），Ruff/TypeScript/ESLint/build与diff check通过。实际一键离线启动已打开，复用本地BGE索引，截图检查通过。
 - 本地日志/截图/模型保留于忽略的.local；执行账本的六项取舍和代价已归入docs/COMPANION_ACCEPTANCE.md，随后只清理本计划的.local/companion-work临时文件。原用户两份未追踪docs保留，参考源码未修改，没有真实聊天/Embedding请求，没有push/merge。
+
+## 2026-10-12 个人桌面助手目标推进
+- 读取用户新附件完整目标，确认现有abd7835源码与上一版交付，不将旧附件f1f6be0视为当前状态。
+- 应用brainstorming架构路径和planning-with-files；将下一可交付子项目确定为文件工作台v1，研究指定目录授权、预览审批、执行收据、取消与撤销。
+- 静态核对Hermes write_approval/file_safety与Herta的Agent/Executor/服务/窄Electron桥。没有运行上游或新模型请求，没有安装依赖或修改产品代码。
+- 初次查询误猜backend-server.ts/settings.ts，文件不存在；使用rg定位实际backend-process.ts与desktop-settings.ts，再核对环境传递和重启门禁。没有修改产品代码。
+- 新增docs/PERSONAL_ASSISTANT_ROADMAP.md与docs/superpowers/specs/2026-10-12-file-workbench-design.md：六个独立里程碑，下一版限定复制/移动/改名/文本读取；具体审批绑定digest/root_revision/快照，原生确认、Bearer控制令牌、幂等与条件撤销。
+- 自查修正：工具不返回完整百项计划；设置重启同时检查文件任务；工作台打开取消音频；使用实际desktop-settings文件名；明确系统目录/凭据名称列表、路径与大小上限、崩溃窗口不能盲目重试。下一步需完成书面设计审阅，再生成实施计划。本轮尚未修改产品代码或重跑旧测试。
