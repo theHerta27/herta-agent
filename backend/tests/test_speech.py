@@ -23,6 +23,62 @@ def wav(seconds=1, rate=16000):
 
 
 class SpeechTests(unittest.IsolatedAsyncioTestCase):
+    async def test_provider_switch_blocks_new_request_admission_until_new_provider_is_saved(self):
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+
+        from herta_agent.companion.personal_router import PersonalAction, personal_router
+        from herta_agent.companion.store import CompanionStore
+        from herta_agent.service.settings import ServiceSettings
+
+        with tempfile.TemporaryDirectory() as folder:
+            daily = CompanionStore(Path(folder) / "companion.sqlite3")
+            daily.personal.voice("piper", "neutral")
+            service = SpeechService(personal=daily.personal)
+            closing, release_close, release_old = asyncio.Event(), asyncio.Event(), asyncio.Event()
+            old_started = False
+
+            async def close():
+                closing.set()
+                await release_close.wait()
+
+            async def old_worker(*_args):
+                nonlocal old_started
+                old_started = True
+                await release_old.wait()
+                return b"old provider"
+
+            service.status = lambda: {"tts": True}
+            service.run_worker = old_worker
+            service.herta.shutdown = close
+            service.herta.prewarm = lambda: None
+            service.herta.synthesize = AsyncMock(return_value=b"new provider")
+            route = next(
+                r for r in personal_router(ServiceSettings()).routes if "POST" in r.methods
+            )
+            request = SimpleNamespace(
+                app=SimpleNamespace(state=SimpleNamespace(speech=service, companion=daily))
+            )
+            switch = asyncio.create_task(
+                route.endpoint(PersonalAction(kind="voice", provider="the_herta"), request)
+            )
+            voice = None
+            try:
+                await closing.wait()
+                voice = asyncio.create_task(service.synthesize("新的朗读"))
+                await asyncio.sleep(0.03)
+                started_before_switch = old_started
+                release_close.set()
+                release_old.set()
+                await switch
+                self.assertEqual(await voice, b"new provider")
+                self.assertFalse(started_before_switch, "切换过程中不能让新请求启动旧音色")
+            finally:
+                release_close.set()
+                release_old.set()
+                await asyncio.gather(switch, *([voice] if voice else []), return_exceptions=True)
+                await service.shutdown()
+
     async def test_invalid_audio_and_duration_are_rejected_before_provider(self):
         for invalid in (b"not audio", wav(61), wav(rate=8000), bytes(2_000_001)):
             with self.assertRaises(ValueError):

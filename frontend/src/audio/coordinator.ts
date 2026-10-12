@@ -1,4 +1,5 @@
 import type { CompanionBridge } from '../../shared/contracts';
+import { speechChunks } from './speech-chunks';
 
 export interface AudioPort {
   src: string; ended: boolean;
@@ -51,15 +52,21 @@ export class AudioCoordinator {
     this.update('loading');
     try {
       const content = text.replace(/[#*_`]/g, '').trim();
-      for (let offset = 0; offset < content.length; offset += 500) {
+      const chunks = speechChunks(content).filter(chunk => chunk.trim());
+      const prepare = (index: number) => this.bridge.synthesize(chunks[index]).then(bytes => ({ bytes, error: false }), () => ({ bytes: new Uint8Array(), error: true }));
+      let pending = chunks.length ? prepare(0) : undefined;
+      for (let index = 0; index < chunks.length; index++) {
         this.update('loading');
-        const bytes = await this.bridge.synthesize(content.slice(offset, offset + 500));
+        const result = await pending!;
         if (generation !== this.generation) return;
+        if (result.error) throw new Error('synthesis_failed');
+        const bytes = result.bytes;
         this.url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: 'audio/wav' }));
         const audio = this.createAudio(); this.speech = audio; audio.src = this.url;
         await audio.play();
         if (generation !== this.generation) return;
         this.update('speaking');
+        pending = index + 1 < chunks.length ? prepare(index + 1) : undefined;
         if (!audio.ended) await new Promise<void>((resolve, reject) => {
           this.finishSpeech = resolve; audio.onended = () => resolve();
           audio.addEventListener?.('error', () => reject(new Error('audio_failed')));

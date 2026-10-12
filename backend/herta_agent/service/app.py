@@ -149,6 +149,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     ),
                 )
                 app.state.manager = RunManager(store, agent, settings)
+            if settings.provider != "demo" and provider is None:
+                app.state.speech.prewarm()
             yield
         finally:
             await stop_scheduler(ticker)

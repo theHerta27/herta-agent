@@ -32,16 +32,28 @@ def attach_job(process, *, memory_limit=1024 * 1024 * 1024):
     job = api.CreateJobObjectW(None, None)
     limits = Limits()
     # JOBOBJECT_EXTENDED_LIMIT_INFORMATION, x64 BasicLimitInformation.LimitFlags offset16.
-    ctypes.c_uint32.from_buffer(limits, 16).value = 0x2200  # KILL_ON_JOB_CLOSE + JOB_MEMORY
-    ctypes.c_size_t.from_buffer(limits, 120).value = memory_limit
+    ctypes.c_uint32.from_buffer(limits, 16).value = 0x2000 | (0x200 if memory_limit else 0)
+    if memory_limit:
+        ctypes.c_size_t.from_buffer(limits, 120).value = memory_limit
+    process_handle = getattr(process, "_handle", None)
+    opened = process_handle is None
+    if opened:
+        api.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+        api.OpenProcess.restype = wintypes.HANDLE
+        process_handle = api.OpenProcess(0x101, False, process.pid)
     if (
         not job
         or not api.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits))
-        or not api.AssignProcessToJobObject(job, int(process._handle))
+        or not process_handle
+        or not api.AssignProcessToJobObject(job, int(process_handle))
     ):
         if job:
             api.CloseHandle(job)
+        if opened and process_handle:
+            api.CloseHandle(process_handle)
         raise WorkspaceError("无法拥有文档处理进程，请重试。")
+    if opened:
+        api.CloseHandle(process_handle)
     return api, job
 
 

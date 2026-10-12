@@ -70,7 +70,7 @@ export type CompanionAction =
   | { kind: 'snooze'; id: string; minutes: number }
   | { kind: 'memory'; text: string }
   | { kind: 'preferences'; value: CompanionPreferences };
-export interface VoiceStatus { tts: boolean; asr: boolean; detail: string }
+export interface VoiceStatus { tts: boolean; asr: boolean; detail: string; provider?: 'piper' | 'the_herta' }
 export interface CompanionBridge {
   snapshot(): Promise<CompanionSnapshot>;
   action(action: CompanionAction): Promise<unknown>;

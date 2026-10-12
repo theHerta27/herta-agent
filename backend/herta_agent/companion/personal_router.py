@@ -41,9 +41,7 @@ def personal_router(settings):
         if body.kind == "persona":
             return p.persona(body.text, body.revision)
         if body.kind == "voice":
-            if request.app.state.speech.active_children:
-                raise ValueError("请先停止语音，再切换音色。")
-            return p.voice(body.provider, body.emotion)
+            return await request.app.state.speech.change_voice(body.provider, body.emotion)
         if body.kind == "memory":
             return p.memory(body.id, body.revision, body.action, body.text)
         if body.kind == "draft":

@@ -38,10 +38,25 @@ class SpeechService:
         self.herta = HertaSpeech(VOICE_ROOT.parent / "gpt-sovits")
         self._children = set()
         self._slot = asyncio.Semaphore(1)
+        self._voice_gate = asyncio.Lock()
+        self._admitted = 0
 
     @property
     def active_children(self):
-        return len(self._children) + self.herta.active_children
+        return max(self._admitted, len(self._children) + self.herta.active_children)
+
+    async def change_voice(self, provider, emotion):
+        if self.active_children or self._voice_gate.locked():
+            raise ValueError("请先停止语音，再切换音色。")
+        async with self._voice_gate:
+            await self.herta.shutdown()
+            result = self.personal.voice(provider, emotion)
+            self.prewarm()
+            return result
+
+    def prewarm(self):
+        if self.personal and self.personal.snapshot()["voice"]["provider"] == "the_herta":
+            self.herta.prewarm()
 
     def status(self):
         tts = bool(importlib.util.find_spec("piper")) and all(
@@ -62,7 +77,13 @@ class SpeechService:
             "provider": selected,
             "providers": {"piper": tts, "the_herta": self.herta.ready()},
             "detail": (
-                "大黑塔音色就绪 · 首段需要加载模型"
+                (
+                    "大黑塔声音正在准备，准备后朗读更快。"
+                    if self.herta.initializing
+                    else "大黑塔声音已准备。"
+                    if self.herta.loaded
+                    else "大黑塔音色就绪 · 首段需要准备声音。"
+                )
                 if selected == "the_herta"
                 else "Piper本地语音就绪"
             )
@@ -104,27 +125,51 @@ class SpeechService:
     async def synthesize(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 1500 or "\x00" in text:
             raise ValueError("朗读内容需为1–1500字。")
-        if not self.status()["tts"]:
-            raise ValueError("本地朗读模型未准备。")
-        if self.personal and self.personal.snapshot()["voice"]["provider"] == "the_herta":
-            return await self.herta.synthesize(text, self.personal.snapshot()["voice"]["emotion"])
-        return await self.run_worker(
-            [sys.executable, "-m", "herta_agent.companion.speech_worker", "tts", str(self.root)],
-            text.encode("utf-8"),
-        )
+        self._admitted += 1
+        try:
+            async with self._voice_gate:
+                if not self.status()["tts"]:
+                    raise ValueError("本地朗读模型未准备。")
+                if self.personal and self.personal.snapshot()["voice"]["provider"] == "the_herta":
+                    return await self.herta.synthesize(
+                        text, self.personal.snapshot()["voice"]["emotion"]
+                    )
+                return await self.run_worker(
+                    [
+                        sys.executable,
+                        "-m",
+                        "herta_agent.companion.speech_worker",
+                        "tts",
+                        str(self.root),
+                    ],
+                    text.encode("utf-8"),
+                )
+        finally:
+            self._admitted -= 1
 
     async def transcribe(self, data):
         validate_audio(data)
-        with wave.open(io.BytesIO(data), "rb") as audio:
-            pcm = np.frombuffer(audio.readframes(audio.getnframes()), dtype="<i2").astype(
-                np.float32
-            )
-        if np.max(np.abs(pcm)) < 128:
-            return {"text": ""}
-        if not self.status()["asr"]:
-            raise ValueError("本地识别模型未准备。")
-        output = await self.run_worker(
-            [sys.executable, "-m", "herta_agent.companion.speech_worker", "asr", str(self.root)],
-            data,
-        )
-        return json.loads(output)
+        self._admitted += 1
+        try:
+            async with self._voice_gate:
+                with wave.open(io.BytesIO(data), "rb") as audio:
+                    pcm = np.frombuffer(audio.readframes(audio.getnframes()), dtype="<i2").astype(
+                        np.float32
+                    )
+                if np.max(np.abs(pcm)) < 128:
+                    return {"text": ""}
+                if not self.status()["asr"]:
+                    raise ValueError("本地识别模型未准备。")
+                output = await self.run_worker(
+                    [
+                        sys.executable,
+                        "-m",
+                        "herta_agent.companion.speech_worker",
+                        "asr",
+                        str(self.root),
+                    ],
+                    data,
+                )
+                return json.loads(output)
+        finally:
+            self._admitted -= 1
