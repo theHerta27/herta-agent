@@ -12,6 +12,82 @@ from herta_agent.workspace.service import WorkspaceService
 
 
 class DocumentTests(unittest.IsolatedAsyncioTestCase):
+    def test_artifact_quota_is_reserved_atomically_by_concurrent_publishers(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from unittest.mock import patch
+
+        with patch("herta_agent.documents.service.MAX_PENDING_BYTES", 10, create=True):
+            self.d._publish(self.id, "base.md", b"123456", [])
+
+            def publish(index):
+                try:
+                    self.d._publish(self.id, f"next-{index}.md", b"1234", [])
+                    return True
+                except WorkspaceError:
+                    return False
+
+            with ThreadPoolExecutor(2) as pool:
+                results = list(pool.map(publish, range(2)))
+            self.assertEqual(sum(results), 1)
+            self.assertEqual(
+                self.w._rows("SELECT SUM(size) total FROM document_artifacts")[0]["total"], 10
+            )
+
+    def test_failed_plan_save_does_not_leak_artifact(self):
+        from unittest.mock import patch
+
+        with patch.object(self.w.plans, "_save", side_effect=WorkspaceError("save failed")):
+            with self.assertRaises(WorkspaceError):
+                self.d._publish(self.id, "failed.md", b"generated", [])
+        self.assertEqual(
+            self.w._rows("SELECT COUNT(*) total FROM document_artifacts")[0]["total"], 0
+        )
+
+    def test_expired_artifacts_reclaim_quota_and_preserve_plan_metadata(self):
+        from datetime import UTC, datetime, timedelta
+
+        plan = self.d._publish(self.id, "expired.md", b"old", [])
+        artifact = plan["operations"][-1]["artifact_id"]
+        self.w._write(
+            "UPDATE document_artifacts SET size=? WHERE id=?", (512 * 1024 * 1024, artifact)
+        )
+        self.w._write(
+            "UPDATE file_plans SET created_at=? WHERE id=?",
+            ((datetime.now(UTC) - timedelta(minutes=11)).isoformat(), plan["id"]),
+        )
+        next_plan = self.d._publish(self.id, "new.md", b"new", [])
+        self.assertEqual(self.preserved_plan(plan["id"])["digest"], plan["digest"])
+        old = self.w._rows("SELECT * FROM document_artifacts WHERE id=?", (artifact,))[0]
+        self.assertIsNone(old["data"])
+        self.assertEqual(old["size"], 0)
+        self.assertEqual(next_plan["operations"][-1]["size"], 3)
+        self.assertFalse((self.root / "expired.md").exists())
+
+    def preserved_plan(self, identifier):
+        return self.w.plans.get(identifier)
+
+    def test_quota_reclamation_keeps_artifact_for_interrupted_intent(self):
+        from datetime import UTC, datetime, timedelta
+
+        plan = self.d._publish(self.id, "uncertain.md", b"owned", [])
+        artifact = plan["operations"][-1]["artifact_id"]
+        old = (datetime.now(UTC) - timedelta(minutes=11)).isoformat()
+        self.w._write(
+            "UPDATE document_artifacts SET size=? WHERE id=?", (512 * 1024 * 1024, artifact)
+        )
+        self.w._write("UPDATE file_plans SET created_at=? WHERE id=?", (old, plan["id"]))
+        self.w._write(
+            "INSERT INTO file_jobs VALUES(?,?,?,?,?,?,?)",
+            ("uncertain", plan["id"], self.id, "uncertain", "interrupted", old, None),
+        )
+        self.w._write("INSERT INTO file_receipts VALUES(?,?,?,?)", ("uncertain", 0, "intent", "{}"))
+        with self.assertRaises(WorkspaceError):
+            self.d._publish(self.id, "new.md", b"new", [])
+        self.assertEqual(
+            self.w._rows("SELECT data FROM document_artifacts WHERE id=?", (artifact,))[0]["data"],
+            b"owned",
+        )
+
     async def test_semantic_fragments_preserve_tail_within_local_encoder_input_limit(self):
         from types import SimpleNamespace
         from unittest.mock import patch

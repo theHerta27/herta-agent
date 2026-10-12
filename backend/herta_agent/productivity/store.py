@@ -203,9 +203,35 @@ class ProductivityStore:
                     row["notes"] = notes
             if (row["remind"] or row["repeat"] != "once") and not row["due_at"]:
                 raise ValueError("关联提醒和重复任务不能清空日期。")
+            if action == "reopen" and row["reminder_id"] and row["remind"]:
+                delivered = db.execute(
+                    "SELECT 1 FROM deliveries WHERE reminder_id=? AND due_at=?",
+                    (row["reminder_id"], row["due_at"]),
+                ).fetchone()
+                if delivered:
+                    if (
+                        db.execute("SELECT COUNT(*) FROM reminders WHERE enabled=1").fetchone()[0]
+                        >= 200
+                    ):
+                        raise ValueError("启用的提醒已达到200项。")
+                    self.daily.clear_snoozes(db, row["reminder_id"])
+                    db.execute("UPDATE reminders SET enabled=0 WHERE id=?", (row["reminder_id"],))
+                    row["reminder_id"] = uuid4().hex
+                    db.execute(
+                        "INSERT INTO reminders VALUES(?,?,?,?,1)",
+                        (row["reminder_id"], row["title"], row["due_at"], row["repeat"]),
+                    )
             db.execute(
-                "UPDATE tasks SET title=?,notes=?,due_at=?,status=?,revision=revision+1 WHERE id=?",
-                (row["title"], row["notes"], row["due_at"], row["status"], identifier),
+                "UPDATE tasks SET title=?,notes=?,due_at=?,status=?,reminder_id=?,"
+                "revision=revision+1 WHERE id=?",
+                (
+                    row["title"],
+                    row["notes"],
+                    row["due_at"],
+                    row["status"],
+                    row["reminder_id"],
+                    identifier,
+                ),
             )
             if row["reminder_id"]:
                 db.execute(
@@ -217,7 +243,8 @@ class ProductivityStore:
                         row["reminder_id"],
                     ),
                 )
-                if action in {"complete", "cancel", "postpone"}:
+                if action in {"complete", "cancel", "postpone"} or row["due_at"] != before_due:
+                    self.daily.clear_snoozes(db, row["reminder_id"])
                     db.execute(
                         "UPDATE deliveries SET acknowledged=1 WHERE reminder_id=?",
                         (row["reminder_id"],),

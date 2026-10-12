@@ -10,6 +10,7 @@ import { CompanionRuntime } from './state/companion-runtime';
 import { CompanionPanel } from './components/CompanionPanel';
 import { VoiceInput } from './components/VoiceInput';
 import { WorkspacePanel } from './components/WorkspacePanel';
+import { appendReferenceDraft } from './state/referenceDraft';
 import { ProductivityPanel } from './components/ProductivityPanel';
 import { PersonalPanel } from './components/PersonalPanel';
 import { applyQuickInput } from './state/quick-input';
@@ -92,7 +93,7 @@ export function App() {
     {mcpOpen && <MCPPanel onClose={() => setMCPOpen(false)} />}
     {personalOpen && <PersonalPanel runtime={daily} onClose={() => setPersonalOpen(false)} />}
     {settingsOpen && <SettingsDialog backend={status} busy={Object.values(state.views).some(value => store.isBusy(value))} onClose={() => setSettingsOpen(false)} />}
-    {filesOpen && <WorkspacePanel onClose={() => setFilesOpen(false)} onDraft={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n\n' + text : text); }} />}
+    {filesOpen && <WorkspacePanel onClose={() => setFilesOpen(false)} onDraft={reference => { store.setDraft(appendReferenceDraft(store.view().draft, reference)); }} />}
     {learningOpen && <ProductivityPanel runtime={daily} sessionKey={state.selected ?? 'draft'} onClose={() => setLearningOpen(false)} onDraft={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n\n' + text : text); }} />}
     <ConversationSidebar sessions={state.sessions.map(s => ({ ...s, active: store.isBusy(store.view(s.session_id)) }))} selected={state.selected} onSelect={id => store.select(id)} onNew={() => store.select(null)}
       collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} light={light} onTheme={() => setLight(!light)} />

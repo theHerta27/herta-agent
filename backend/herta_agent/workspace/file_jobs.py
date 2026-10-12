@@ -265,11 +265,10 @@ class FileJobs:
                         if digest != operation["sha256"]:
                             raise WorkspaceError("生成成果发布校验失败。")
                         rename_open_file(outgoing, target, directory_handle=handles[target.parent])
+                        return snapshot(outgoing)
                     except BaseException:
                         delete_open_file(outgoing)
                         raise
-                with open_file(target, directory_handle=handles[target.parent]) as stream:
-                    return snapshot(stream)
             if kind == "copy":
                 staging = target.parent / temporary
                 with open_file(source, directory_handle=handles[source.parent]) as incoming:
@@ -285,6 +284,7 @@ class FileJobs:
                             rename_open_file(
                                 outgoing, target, directory_handle=handles[target.parent]
                             )
+                            return snapshot(outgoing)
                         except BaseException:
                             delete_open_file(outgoing)  # Bound to this task's still-open file.
                             raise
@@ -298,11 +298,7 @@ class FileJobs:
                         delete_open_file(stream)
                         return {"removed": True}
                     rename_open_file(stream, target, directory_handle=handles[target.parent])
-            with open_file(target, directory_handle=handles[target.parent]) as stream:
-                result = snapshot(stream)
-                if result["sha256"] != operation["snapshot"]["sha256"]:
-                    raise WorkspaceError("完成后文件发生变化，需人工核查。")
-            return result
+                    return snapshot(stream)
 
     def cancel(self, job_id):
         for _task, stop, owned_id in self.tasks.values():

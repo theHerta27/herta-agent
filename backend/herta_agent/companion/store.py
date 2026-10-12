@@ -34,6 +34,9 @@ class CompanionStore:
                     UNIQUE(reminder_id,due_at));
                 CREATE TABLE IF NOT EXISTS memories(
                     id TEXT PRIMARY KEY,text TEXT NOT NULL,status TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS reminder_snoozes(
+                    reminder_id TEXT PRIMARY KEY,parent_id TEXT NOT NULL,
+                    occurrence_due_at TEXT NOT NULL);
             """)
             if "notified" not in {row[1] for row in db.execute("PRAGMA table_info(deliveries)")}:
                 db.execute("ALTER TABLE deliveries ADD COLUMN notified INTEGER NOT NULL DEFAULT 0")
@@ -123,9 +126,20 @@ class CompanionStore:
             db.execute("BEGIN IMMEDIATE")
             if not db.execute("UPDATE reminders SET enabled=0 WHERE id=?", (identifier,)).rowcount:
                 raise ValueError("提醒不存在。")
+            self.clear_snoozes(db, identifier)
             db.execute(
                 "UPDATE tasks SET remind=0,revision=revision+1 WHERE reminder_id=?", (identifier,)
             )
+
+    @staticmethod
+    def clear_snoozes(db, parent_id):
+        # Keep the history; retire only the derived snoozed occurrences.
+        children = "SELECT reminder_id FROM reminder_snoozes WHERE parent_id=?"
+        db.execute(f"UPDATE reminders SET enabled=0 WHERE id IN ({children})", (parent_id,))
+        db.execute(
+            f"UPDATE deliveries SET acknowledged=1 WHERE reminder_id IN ({children})",
+            (parent_id,),
+        )
 
     def snooze(self, identifier, minutes=10, *, now=None):
         if type(minutes) is not int or not 1 <= minutes <= 10080:
@@ -152,9 +166,19 @@ class CompanionStore:
                     >= 200
                 ):
                     raise ValueError("启用的提醒已达到200项，请先取消旧提醒。")
+                child = uuid4().hex
+                occurrence = db.execute(
+                    "SELECT due_at FROM deliveries WHERE reminder_id=? "
+                    "ORDER BY created_at DESC,rowid DESC LIMIT 1",
+                    (identifier,),
+                ).fetchone()
                 db.execute(
                     "INSERT INTO reminders VALUES(?,?,?,?,1)",
-                    (uuid4().hex, reminder["title"], due.isoformat(), "once"),
+                    (child, reminder["title"], due.isoformat(), "once"),
+                )
+                db.execute(
+                    "INSERT INTO reminder_snoozes VALUES(?,?,?)",
+                    (child, identifier, occurrence[0] if occurrence else reminder["due_at"]),
                 )
             db.execute("UPDATE deliveries SET acknowledged=1 WHERE reminder_id=?", (identifier,))
 

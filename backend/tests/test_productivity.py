@@ -7,6 +7,46 @@ from herta_agent.companion.store import CompanionStore
 
 
 class ProductivityTests(unittest.TestCase):
+    def test_reopened_delivered_task_creates_new_occurrence_without_losing_history(self):
+        task = self.task()
+        self.daily.tick(self.due)
+        done = self.p.update_task(task["id"], "complete", task["revision"], now=self.due)
+        reopened = self.p.update_task(task["id"], "reopen", done["revision"], now=self.due)
+        self.daily.tick(self.due + timedelta(seconds=1))
+        with self.daily.connection() as db:
+            deliveries = [dict(r) for r in db.execute("SELECT * FROM deliveries")]
+        self.assertEqual(len(deliveries), 2)
+        self.assertEqual(sum(not r["acknowledged"] for r in deliveries), 1)
+        self.assertNotEqual(reopened["reminder_id"], task["reminder_id"])
+        self.assertEqual(len(self.p.history(task["id"])), 2)
+
+    def test_recurring_snooze_follows_task_completion_cancel_and_postpone(self):
+        for action in ("complete", "cancel", "postpone", "edit"):
+            with self.subTest(action=action):
+                task = self.task(repeat="daily")
+                self.daily.tick(self.due)
+                self.daily.snooze(task["reminder_id"], 10, now=self.due)
+                values = (
+                    {"due_at": (self.due + timedelta(days=2)).isoformat()}
+                    if action in {"postpone", "edit"}
+                    else {}
+                )
+                updated = self.p.update_task(
+                    task["id"], action, task["revision"], now=self.due, **values
+                )
+                self.daily.tick(self.due + timedelta(minutes=11))
+                with self.daily.connection() as db:
+                    active = db.execute(
+                        "SELECT COUNT(*) FROM deliveries WHERE acknowledged=0"
+                    ).fetchone()[0]
+                    original = db.execute(
+                        "SELECT * FROM reminders WHERE id=?", (task["reminder_id"],)
+                    ).fetchone()
+                self.assertEqual(active, 0, "完成、取消或改期后不能再响本次稍后提醒")
+                self.assertEqual(bool(original["enabled"]), action != "cancel")
+                self.assertEqual(original["due_at"], updated["due_at"])
+                self.p.update_task(task["id"], "cancel", updated["revision"], now=self.due)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="Herta 学习任务 ")
         self.addCleanup(self.temp.cleanup)

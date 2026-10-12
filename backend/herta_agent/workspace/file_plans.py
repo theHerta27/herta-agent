@@ -109,7 +109,7 @@ class FilePlans:
             check_chain(path)
         return path
 
-    def _save(self, root_id, scope, operations, parents, conflicts, *, undo_of=None):
+    def _save(self, root_id, scope, operations, parents, conflicts, *, undo_of=None, db=None):
         payload = {
             "schema_version": 1,
             "root_id": root_id,
@@ -123,10 +123,11 @@ class FilePlans:
         }
         encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         digest, plan_id = hashlib.sha256(encoded.encode()).hexdigest(), uuid4().hex
-        self.w._write(
-            "INSERT INTO file_plans VALUES(?,?,?,?,?)",
-            (plan_id, root_id, datetime.now(UTC).isoformat(), digest, encoded),
-        )
+        values = (plan_id, root_id, datetime.now(UTC).isoformat(), digest, encoded)
+        if db is None:
+            self.w._write("INSERT INTO file_plans VALUES(?,?,?,?,?)", values)
+        else:
+            db.execute("INSERT INTO file_plans VALUES(?,?,?,?,?)", values)
         return self.get(plan_id)
 
     def get(self, plan_id, *, private=False):

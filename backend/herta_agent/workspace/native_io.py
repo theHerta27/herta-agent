@@ -175,6 +175,20 @@ def open_file(path, *, delete=False, create=False, directory_handle=None, direct
         finally:
             kernel.CloseHandle(handle)
         return
+    if create:
+        # SetFileTime freezes this writer's timestamp before any writes, allowing
+        # a stable receipt while the renamed file is still protected by this handle.
+        kernel.SetFileTime.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(wintypes.FILETIME),
+            ctypes.POINTER(wintypes.FILETIME),
+            ctypes.POINTER(wintypes.FILETIME),
+        ]
+        kernel.SetFileTime.restype = wintypes.BOOL
+        frozen = wintypes.FILETIME(0xFFFFFFFF, 0xFFFFFFFF)
+        if not kernel.SetFileTime(handle, None, None, ctypes.byref(frozen)):
+            kernel.CloseHandle(handle)
+            raise native_error()
     try:
         fd = msvcrt.open_osfhandle(handle, os.O_BINARY | (os.O_RDWR if create else os.O_RDONLY))
     except Exception:

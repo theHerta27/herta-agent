@@ -33,7 +33,7 @@ export class ChatStore {
     let id = this.state.selected;
     const view = this.view();
     const text = view.draft.trim();
-    if (!text || text.length > 10000 || view.loading || !view.loaded || this.isBusy(view) || this.state.backend.state !== 'ready') return;
+    if (!text || text.length > MAX_CHAT_CHARS || view.loading || !view.loaded || this.isBusy(view) || this.state.backend.state !== 'ready') return;
     const selection = this.selectionVersion;
     const request = newRun(crypto.randomUUID(), id ?? 'draft', text, view.messages.at(-1)?.seq ?? 0);
     view.request = request; view.draft = ''; view.error = undefined; this.emit();
@@ -162,3 +162,4 @@ export class ChatStore {
     finally { if (this.versions.get(id) === version) { view.loading = false; this.emit(); } }
   }
 }
+import { MAX_CHAT_CHARS } from './referenceDraft';

@@ -3,6 +3,7 @@ import type { AnalysisJob, FileListing, TextPreview, WorkspaceRoot, FilePlan } f
 import '../styles/files.css';
 import { FileActions } from './FileActions';
 import { DocumentsPanel } from './DocumentsPanel';
+import type { DraftReference } from '../state/referenceDraft';
 
 const bridge = window.herta.workspace;
 const hints: Record<string, string> = { folder: '文件夹', file: '文件', project: '工程 · 整体保留', cache: '缓存 · 仅统计', protected: '受保护', link: '链接 · 不读取', shortcut: '快捷方式' };
@@ -15,7 +16,7 @@ function bytes(value: number) {
   return `${size.toFixed(1)} ${units[index]}`;
 }
 
-export function WorkspacePanel({ onClose, onDraft }: { onClose: () => void; onDraft: (text: string) => void }) {
+export function WorkspacePanel({ onClose, onDraft }: { onClose: () => void; onDraft: (text: DraftReference | string) => void }) {
   const dialog = useRef<HTMLDialogElement>(null), live = useRef(true);
   const [roots, setRoots] = useState<WorkspaceRoot[]>([]), [selected, setSelected] = useState('');
   const [error, setError] = useState(''), [choosing, setChoosing] = useState(false);
@@ -36,11 +37,11 @@ export function WorkspacePanel({ onClose, onDraft }: { onClose: () => void; onDr
     <div className="file-layout"><aside className="file-roots"><button onClick={() => void choose()} disabled={choosing}>{choosing ? '正在选择…' : '选择目录'}</button><p>本机授权目录</p>
       {roots.map(r => <button key={r.id} aria-pressed={r.id === selected} onClick={() => setSelected(r.id)}>{r.label}<small>{r.shared ? '聊天可读取' : '仅本地查看'}</small></button>)}
       {!roots.length && <p>选择一个本机目录开始。</p>}{error && <p className="error" role="alert">{error}</p>}
-    </aside>{root ? <WorkspaceFolder key={root.id} root={root} onRoot={next => setRoots(all => all.map(r => r.id === next.id ? next : r))} onRevoke={() => { setRoots(all => all.filter(r => r.id !== root.id)); setSelected(''); }} onDraft={text => { onDraft(text); onClose(); }} /> : <div className="file-empty">选择目录后，可以浏览文件、预览文本或分析空间。工程与敏感文件会分别标注。</div>}</div>
+    </aside>{root ? <WorkspaceFolder key={root.id} root={root} onRoot={next => setRoots(all => all.map(r => r.id === next.id ? next : r))} onRevoke={() => { setRoots(all => all.filter(r => r.id !== root.id)); setSelected(''); }} onDraft={text => { try { onDraft(text); onClose(); } catch (cause) { setError(String(cause)); } }} /> : <div className="file-empty">选择目录后，可以浏览文件、预览文本或分析空间。工程与敏感文件会分别标注。</div>}</div>
   </dialog>;
 }
 
-function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceRoot; onRoot: (root: WorkspaceRoot) => void; onRevoke: () => void; onDraft: (text: string) => void }) {
+function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceRoot; onRoot: (root: WorkspaceRoot) => void; onRevoke: () => void; onDraft: (text: DraftReference | string) => void }) {
   const live = useRef(true), revision = useRef(0);
   const [path, setPath] = useState(''), [query, setQuery] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);

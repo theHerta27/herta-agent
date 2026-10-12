@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DocumentPreview, DocumentTransform, FilePlan, KnowledgeResults, WorkspaceRoot } from '../../shared/workspace-contracts';
+import type { DraftReference } from '../state/referenceDraft';
 
 const bridge = window.herta.workspace;
-export function DocumentsPanel({ root, selected, onPlan, onDraft }: { root: WorkspaceRoot; selected: string[]; onPlan: (plan: FilePlan) => void; onDraft: (text: string) => void }) {
+export function DocumentsPanel({ root, selected, onPlan, onDraft }: { root: WorkspaceRoot; selected: string[]; onPlan: (plan: FilePlan) => void; onDraft: (text: DraftReference | string) => void }) {
   const live = useRef(true);
   const [document, setDocument] = useState<DocumentPreview>(), [shown, setShown] = useState(100);
   const [semantic, setSemantic] = useState(true), [query, setQuery] = useState(''), [results, setResults] = useState<KnowledgeResults>();
@@ -27,8 +28,9 @@ export function DocumentsPanel({ root, selected, onPlan, onDraft }: { root: Work
   const materials = selected.filter(path => /\.(pdf|docx|txt|md)$/i.test(path));
   const draft = (summarize = false) => {
     if (!document) return;
-    const contents = document.segments.map(s => `[${s.citation}]\n${s.text}`).join('\n\n').slice(0, 12000);
-    onDraft(`${summarize ? '请根据以下有引用的资料整理学习笔记，列出核心概念、例子、待复习问题，保留原引用。' : '以下是我主动分享的文档资料。'}\n资料：${root.label}/${document.path}${document.truncated ? '（正文抽取已截断）' : ''}\n\n${contents}${contents.length >= 12000 ? '\n（聊天草稿限制为前12000字符）' : ''}`);
+    try {
+      onDraft({ header: `${summarize ? '请根据以下有引用的资料整理学习笔记，列出核心概念、例子、待复习问题，保留原引用。' : '以下是我主动分享的文档资料。'}\n资料：${root.label}/${document.path}${document.truncated ? '（正文抽取已截断）' : ''}`, body: document.segments.map(s => `[${s.citation}]\n${s.text}`).join('\n\n') });
+    } catch (cause) { setError(String(cause)); }
   };
   return <section className="documents-panel" aria-label="文档与个人知识">
     <div className="file-actions-heading"><h3>文档与个人知识</h3><span>本地处理 · 引用保留</span></div>

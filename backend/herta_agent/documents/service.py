@@ -3,6 +3,7 @@ import hashlib
 import json
 import math
 import re
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,6 +13,8 @@ from herta_agent.workspace.native_io import open_file
 from herta_agent.workspace.paths import WorkspaceError
 
 from .process import run_document
+
+MAX_PENDING_BYTES = 512 * 1024 * 1024
 
 
 class DocumentService:
@@ -74,20 +77,9 @@ class DocumentService:
                 else:
                     operations.append({"kind": "mkdir", "target": path})
         size = len(data)
-        if (
-            size > 32 * 1024 * 1024
-            or self.w._rows("SELECT COALESCE(SUM(size),0) AS total FROM document_artifacts")[0][
-                "total"
-            ]
-            + size
-            > 512 * 1024 * 1024
-        ):
+        if size > 32 * 1024 * 1024:
             raise WorkspaceError("生成结果超过32 MiB或本地待存成果超过512 MiB。")
         artifact, digest = uuid4().hex, hashlib.sha256(data).hexdigest()
-        self.w._write(
-            "INSERT INTO document_artifacts VALUES(?,?,?,?,?)",
-            (artifact, root_id, digest, size, data),
-        )
         operations.append(
             {
                 "kind": "publish",
@@ -99,7 +91,46 @@ class DocumentService:
             }
         )
         conflicts = [f"目标已存在：{target}"] if destination.exists() else []
-        return self.w.plans._save(root_id, scope, operations, parents, conflicts)
+        # Quota reservation, payload and plan either commit together or roll back.
+        with self.w.lock, self.w.db as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._reclaim_artifacts(db)
+            total = db.execute("SELECT COALESCE(SUM(size),0) FROM document_artifacts").fetchone()[0]
+            if total + size > MAX_PENDING_BYTES:
+                raise WorkspaceError("本地待存成果超过512 MiB，请先保存仍有效的方案。")
+            db.execute(
+                "INSERT INTO document_artifacts VALUES(?,?,?,?,?)",
+                (artifact, root_id, digest, size, data),
+            )
+            return self.w.plans._save(root_id, scope, operations, parents, conflicts, db=db)
+
+    @staticmethod
+    def _reclaim_artifacts(db):
+        cutoff = datetime.now(UTC) - timedelta(minutes=10)
+        keep = set()
+        rows = db.execute(
+            "SELECT p.*,r.active,r.revision,j.status AS job_status,"
+            "EXISTS(SELECT 1 FROM file_receipts f WHERE f.job_id=j.id AND f.state='intent') "
+            "AS uncertain FROM file_plans p LEFT JOIN roots r ON r.id=p.root_id "
+            "LEFT JOIN file_jobs j ON j.plan_id=p.id"
+        ).fetchall()
+        for row in rows:
+            try:
+                payload = json.loads(row["payload"])
+                fresh = datetime.fromisoformat(row["created_at"]) > cutoff
+                valid = row["active"] and row["revision"] == payload["root_revision"]
+                protected = row["job_status"] in {"queued", "running"} or row["uncertain"]
+                if protected or (fresh and valid and not payload["conflicts"]):
+                    keep.update(
+                        op["artifact_id"] for op in payload["operations"] if op["kind"] == "publish"
+                    )
+            except (ValueError, KeyError, TypeError):
+                return  # Corrupt metadata must not release a potentially owned result.
+        for row in db.execute("SELECT id FROM document_artifacts WHERE data IS NOT NULL"):
+            if row["id"] not in keep:
+                db.execute(
+                    "UPDATE document_artifacts SET data=NULL,size=0 WHERE id=?", (row["id"],)
+                )
 
     def transform(self, root_id, paths, kind, target, *, pages=None, rotation=0, cancel=None):
         if (

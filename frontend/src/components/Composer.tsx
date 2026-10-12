@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import { shouldSend } from './composer-input';
+import { MAX_CHAT_CHARS } from '../state/referenceDraft';
 
 export function Composer({ value, onChange, onSend, onStop, busy, cancelling, disabled }: {
   value: string; onChange: (text: string) => void; onSend: () => void; onStop: () => void;
@@ -9,7 +10,7 @@ export function Composer({ value, onChange, onSend, onStop, busy, cancelling, di
   useLayoutEffect(() => {
     if (input.current) { input.current.style.height = '0px'; input.current.style.height = Math.min(180, input.current.scrollHeight) + 'px'; }
   }, [value]);
-  const canSend = !busy && !disabled && !!value.trim() && value.length <= 10000;
+  const canSend = !busy && !disabled && !!value.trim() && value.length <= MAX_CHAT_CHARS;
   return <div className="composer-wrap">
     <form className="composer" onSubmit={event => { event.preventDefault(); if (canSend) onSend(); }}>
       <textarea ref={input} aria-label="消息" placeholder="向 Herta 提问…" value={value}

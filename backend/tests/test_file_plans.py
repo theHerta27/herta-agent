@@ -12,6 +12,65 @@ from herta_agent.workspace.service import WorkspaceService
 
 
 class FilePlanTests(unittest.IsolatedAsyncioTestCase):
+    async def test_receipt_keeps_owned_identity_after_copy_publish_move_and_restore(self):
+        from contextlib import contextmanager
+
+        from herta_agent.workspace.native_io import open_file
+
+        for kind in ("copy", "publish", "move", "restore_move"):
+            with self.subTest(kind=kind):
+                (self.root / "笔记.md").write_text("原始笔记", encoding="utf-8")
+                target = self.root / f"{kind}.md"
+                if kind == "publish":
+                    plan = self.w.documents._publish(self.id, target.name, b"generated", [])
+                elif kind == "restore_move":
+                    original = self.propose("move", target="restore-source.md")
+                    first = self.jobs.confirm(original["id"], original["digest"], "restore-first")
+                    await self.jobs.wait()
+                    plan = self.p.preview_undo(first["id"])
+                    target = self.root / "笔记.md"
+                else:
+                    plan = self.propose(kind, target=target.name)
+                owned = []
+
+                @contextmanager
+                def replacing(path, kind=kind, target=target, owned=owned, **options):
+                    with open_file(path, **options) as stream:
+                        yield stream
+                        if options.get("create") or options.get("delete"):
+                            from herta_agent.workspace.file_plans import snapshot
+
+                            owned.append(snapshot(stream))
+                    if owned and target.exists() and not (self.root / f"old-{kind}.md").exists():
+                        target.rename(self.root / f"old-{kind}.md")
+                        target.write_bytes(
+                            b"user replacement" if kind == "publish" else "原始笔记".encode()
+                        )
+
+                with patch("herta_agent.workspace.file_jobs.open_file", replacing):
+                    job = self.jobs.confirm(plan["id"], plan["digest"], f"race-{kind}")
+                    await self.jobs.wait()
+                receipt = self.jobs.get(job["id"])["receipts"][-1]
+                self.assertEqual(receipt["state"], "done")
+                self.assertEqual(
+                    receipt["data"]["result"], owned[-1], "收据不能接管后来替换的用户文件"
+                )
+                if kind != "restore_move":
+                    self.assertTrue(self.p.preview_undo(job["id"])["conflicts"])
+                self.assertTrue(target.exists())
+                if kind == "move":
+                    (self.root / "笔记.md").write_text("原始笔记", encoding="utf-8")
+
+    async def test_copy_receipt_remains_valid_after_writer_closes(self):
+        plan = self.propose()
+        job = self.jobs.confirm(plan["id"], plan["digest"], "copy-stable")
+        await self.jobs.wait()
+        undo = self.p.preview_undo(job["id"])
+        self.assertFalse(undo["conflicts"])
+        self.jobs.confirm(undo["id"], undo["digest"], "copy-stable-undo")
+        await self.jobs.wait()
+        self.assertFalse((self.root / "文档").exists())
+
     async def test_replaced_empty_directory_is_not_deleted_by_undo(self):
         from herta_agent.workspace.native_io import remove_empty_directory
 
