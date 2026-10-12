@@ -39,7 +39,9 @@
 
 **尚未作为成熟产品能力交付的重点：**
 
-桌面与磁盘分析、受控批量文件整理、通用文档转换、Obsidian 学习工作流、完整长期目标管理、自动提炼与复用 Skills、特定角色声线 GPT-SoVITS 接入、按需屏幕理解。
+受控批量文件整理、通用文档转换、Obsidian 学习工作流、完整长期目标管理、自动提炼与复用 Skills、特定角色声线 GPT-SoVITS 接入、按需屏幕理解。
+
+2026-10-12 已实现 V2.1 只读工作台：目录授权、浏览/名称搜索、文本预览、空间排行、有限重复候选、取消及历史。它仅进行本地读取与确定性分析，真实模型的文件工具路由尚未验收。
 
 后续开发应以实际源码和运行结果为准，不因规划文档存在就将功能标记为已实现。
 
@@ -220,9 +222,9 @@ Skills 不能自行获得额外文件访问或执行权限。
 
 **当前大黑塔模型的特殊问题：**
 
-现有 `.pth`、`.ckpt` 和参考音频资源与 GPT-SoVITS v2ProPlus 命名方式相符，但 `.pth` 曾出现文件结构异常，真实推理尚未验证。
+用户提供的 `.pth`、`.ckpt` 与5段参考音频已规范化至 `models/voice/the-herta/v2proplus`。两组权重均已完成 `weights_only=True` 受限加载，移动前后 SHA256 一致，原 ZIP 保留。`.pth` 的 `06` 特殊文件头属于官方 v2ProPlus 格式，先前“文件结构异常”的判断已更正；只在内存中适配，原始字节未修改。[官方格式处理](https://raw.githubusercontent.com/RVC-Boss/GPT-SoVITS/main/GPT_SoVITS/process_ckpt.py)
 
-因此先核实模型来源、格式、兼容版本与使用许可，再在隔离环境中验证语音生成。
+用户已授权本机使用和整理；分发许可材料未提供。真实推理尚未验证，仍需独立环境、预训练依赖及本机语音生成验收。参考文本暂取自原音频文件名，未人工核对朗读内容；资源说明见 `VOICE_ASSETS.md`。
 
 在确认模型能够安全、正确加载之前，不修改权重字节、不绕过加载保护、不默认打包分发该模型。
 
@@ -261,7 +263,7 @@ Python + asyncio + Pydantic。
 - Learning Service。
 - Task Scheduler。
 - Speech Service。
-- Media Controller。
+- 语音播放与打断协调。
 - Screen Context Service。
 - MCP Tool Adapters。
 
@@ -294,6 +296,8 @@ Python + asyncio + Pydantic。
 不重写已有 Agent Loop。
 
 ### V2.1：桌面与磁盘只读分析
+
+**状态：** 已实现；本地回归与限制详见 `READONLY_WORKBENCH_ACCEPTANCE.md`。不开放复制、移动、重命名或删除。
 
 **目标：** 先让 Herta 看得清楚，再决定是否操作。
 

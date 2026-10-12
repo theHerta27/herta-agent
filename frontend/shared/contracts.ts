@@ -1,3 +1,5 @@
+import type { WorkspaceBridge } from './workspace-contracts';
+
 export type BackendStatus = {
   state: 'starting' | 'ready' | 'needs_configuration' | 'unavailable' | 'stopping' | 'stopped';
   reason?: 'start_failed' | 'process_exited' | 'stop_failed';
@@ -5,6 +7,7 @@ export type BackendStatus = {
 };
 
 export interface DesktopBridge {
+  workspace: WorkspaceBridge;
   companion: CompanionBridge;
   getSettings(): Promise<PublicSettings>;
   applySettings(settings: PublicSettings): Promise<SettingsApplyResult>;

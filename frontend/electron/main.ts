@@ -1,14 +1,15 @@
-import { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage, globalShortcut, Notification } from 'electron';
+import { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage, globalShortcut, Notification, dialog } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BackendProcess } from './backend-process';
 import { BackendClient, readHealth } from './backend-client';
 import { RunTransport } from './run-transport';
 import { DesktopSettings } from './desktop-settings';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { CompanionClient } from './companion';
 import { identifier } from './backend-client';
+import { WorkspaceClient } from './workspace';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -32,18 +33,22 @@ export const client = new BackendClient(() => {
   return backend.endpoint;
 });
 const daily = new CompanionClient(client);
+const workspaceToken = randomBytes(32).toString('hex');
+const workspaceClient = new WorkspaceClient(client.endpoint, workspaceToken);
+let workspacePending = 0;
 
-const settings = new DesktopSettings(join(data, 'settings.json'), process.env, {
+const settings = new DesktopSettings(join(data, 'settings.json'), { ...process.env, HERTA_WORKSPACE_TOKEN: workspaceToken }, {
   get status() { return backend.status; },
   stop: () => backend.stop(),
   configureEnvironment: env => { if (!closing) backend.configureEnvironment(env); },
   start: async () => { if (!closing) await backend.start(); },
 },
-  () => transport?.activeCount ?? 0,
+  () => (transport?.activeCount ?? 0) + workspacePending,
   async () => {
     if (closing || ['starting', 'stopping'].includes(backend.status.state)) throw new Error('backend_busy');
     if (!backend.endpoint) return 0;
-    return (await readHealth(backend.endpoint)).active_runs;
+    const health = await readHealth(backend.endpoint);
+    return health.active_runs + (health.workspace_active_jobs ?? 0);
   });
 backend.configureEnvironment(settings.environment());
 
@@ -117,6 +122,34 @@ if (!app.requestSingleInstanceLock()) {
     const checkSender = (event: Electron.IpcMainInvokeEvent) => {
       if (event.senderFrame !== window?.webContents.mainFrame) throw new Error('invalid_sender');
     };
+    const workspaceAction = async <T>(event: Electron.IpcMainInvokeEvent, action: () => Promise<T>) => {
+      checkSender(event);
+      if (settings.applying || closing) throw new Error('settings_busy');
+      workspacePending++;
+      try { return await action(); } finally { workspacePending--; }
+    };
+    ipcMain.handle('herta:workspace-roots', event => workspaceAction(event, workspaceClient.roots));
+    ipcMain.handle('herta:workspace-choose', event => workspaceAction(event, async () => {
+      const result = await dialog.showOpenDialog(window!, { title: '选择 Herta 可读取的目录', properties: ['openDirectory'] });
+      return result.canceled || result.filePaths.length !== 1 ? null : workspaceClient.grant(result.filePaths[0]);
+    }));
+    ipcMain.handle('herta:workspace-share', (event, id, enabled) => workspaceAction(event, async () => {
+      if (typeof enabled !== 'boolean') throw new Error('invalid_request');
+      const root = (await workspaceClient.roots()).find(r => r.id === identifier(id));
+      if (!root) throw new Error('目录未授权。');
+      if (enabled) {
+        const result = await dialog.showMessageBox(window!, { type: 'question', title: '允许聊天读取目录', message: `允许 Herta 在聊天中读取「${root.label}」？`, detail: '文件名、文本预览和分析报告可能进入聊天上下文，并发送给你配置的模型服务。敏感文件仍受保护。关闭共享只停止后续读取，已进入会话的内容仍保存在历史中。', buttons: ['取消', '允许读取'], defaultId: 0, cancelId: 0 });
+        if (result.response !== 1) return root;
+      }
+      return workspaceClient.share(id, enabled);
+    }));
+    ipcMain.handle('herta:workspace-revoke', (event, id) => workspaceAction(event, () => workspaceClient.revoke(id)));
+    ipcMain.handle('herta:workspace-list', (event, id, path) => workspaceAction(event, () => workspaceClient.list(id, path)));
+    ipcMain.handle('herta:workspace-search', (event, id, query) => workspaceAction(event, () => workspaceClient.search(id, query)));
+    ipcMain.handle('herta:workspace-read', (event, id, path) => workspaceAction(event, () => workspaceClient.read(id, path)));
+    ipcMain.handle('herta:workspace-jobs', (event, id) => workspaceAction(event, () => workspaceClient.jobs(id)));
+    ipcMain.handle('herta:workspace-start', (event, id, duplicates) => workspaceAction(event, () => workspaceClient.start(id, duplicates)));
+    ipcMain.handle('herta:workspace-cancel', (event, id) => workspaceAction(event, () => workspaceClient.cancel(id)));
     ipcMain.handle('herta:daily-snapshot', event => { checkSender(event); return daily.snapshot(); });
     ipcMain.handle('herta:daily-action', (event, action) => { checkSender(event); return daily.action(action); });
     ipcMain.handle('herta:voice-status', event => { checkSender(event); return daily.voiceStatus(); });

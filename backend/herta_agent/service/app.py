@@ -30,6 +30,10 @@ from herta_agent.storage.models import StoreError
 from herta_agent.storage.sqlite import SQLiteSessionStore
 from herta_agent.tools.echo import echo_registry
 from herta_agent.tools.search_knowledge import search_knowledge_spec
+from herta_agent.workspace.paths import WorkspaceError
+from herta_agent.workspace.router import workspace_router
+from herta_agent.workspace.service import WorkspaceService
+from herta_agent.workspace.tools import workspace_tools
 
 
 def error_response(status, code, message):
@@ -47,6 +51,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         app.state.mcp_available = False
         app.state.mcp_error = None
         app.state.companion = CompanionStore(settings.db_path.with_name("companionship.sqlite3"))
+        app.state.workspace = WorkspaceService(settings.db_path.with_name("workspace.sqlite3"))
         ticker = asyncio.create_task(scheduler(app.state.companion))
         mcp_stack = AsyncExitStack()
         clients = []
@@ -57,6 +62,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             registry = echo_registry()
             daily_specs, daily_policy = companion_tools(app.state.companion)
             for spec in daily_specs:
+                registry.register(spec)
+            for spec in workspace_tools(app.state.workspace):
                 registry.register(spec)
             unavailable = RagError("index_missing", "知识检索未配置。")
             if selected is None and settings.provider == "demo":
@@ -127,6 +134,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                 await app.state.manager.shutdown()
             else:
                 await store.close()
+            await app.state.workspace.shutdown()
+            app.state.workspace.close()
             await mcp_stack.aclose()
             for client in reversed(clients):
                 await client.aclose()
@@ -134,6 +143,11 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
     app.include_router(companion_router())
     app.include_router(speech_router())
+    app.include_router(workspace_router(settings))
+
+    @app.exception_handler(WorkspaceError)
+    async def workspace_error(request, error):
+        return error_response(422, "workspace_unavailable", str(error))
 
     @app.exception_handler(ValueError)
     async def companion_error(request, error):
@@ -164,6 +178,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             "chat_available": manager is not None,
             "rag_available": app.state.rag_available,
             "active_runs": manager.active_count if manager else 0,
+            "workspace_active_jobs": app.state.workspace.active_count,
             "embedding_provider": app.state.embedding_provider,
             "embedding_model": app.state.embedding_model,
             "mcp_available": app.state.mcp_available,

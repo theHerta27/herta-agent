@@ -5,6 +5,7 @@ export interface Health {
   chat_available: boolean;
   rag_available: boolean;
   active_runs: number;
+  workspace_active_jobs?: number;
   embedding_provider?: string; embedding_model?: string; mcp_available?: boolean; mcp_error?: string;
 }
 

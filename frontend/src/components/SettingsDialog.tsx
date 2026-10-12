@@ -28,7 +28,7 @@ export function SettingsDialog({ busy, backend, onClose }: { busy: boolean; back
     catch (cause) {
       setError(true);
       const code = String(cause);
-      setMessage(code.includes('runs_active') ? '请等待所有运行结束或停止运行后，再应用设置。'
+      setMessage(code.includes('runs_active') ? '请等待聊天、文件操作和空间分析结束或停止后，再应用设置。'
         : code.includes('invalid_settings') ? '请检查 Base URL 和预算；输出预留需小于窗口减 256。'
         : code.includes('settings_restart_failed') ? '服务启动失败，已恢复原设置。请检查本地环境后重试。'
         : code.includes('settings_recovery_failed') ? '服务启动失败，原设置已保留，但服务恢复失败。请检查本地环境后重新打开应用。'

@@ -32,4 +32,4 @@ Harness只负责模型/工具/上下文/事件；文件、媒体、调度和解�
 
 继续遵守用户“目前阶段不允许真实验收，本地测试就行”。临时目录、离线Provider、真实HTTP/SQLite/Electron构成工程验收；自然语言选择质量与真实服务效果保持未测。不得拿上一版计数宣称新功能已通过。
 
-A2的既有书面设计见[文件工作台v1](superpowers/specs/2026-10-12-file-workbench-design.md)。下一阶段先完成A1，再修订A2的桌面与项目保护范围；尚未实现文件功能。后续每批均更新实际能力、测试结果和使用入口。
+A1 已实现只读文件工作台、目录授权、名称搜索、文本预览与空间报告，见[验收报告](READONLY_WORKBENCH_ACCEPTANCE.md)。A2的既有书面设计见[文件工作台v1](superpowers/specs/2026-10-12-file-workbench-design.md)，下一批补受控方案预览与文件操作。大黑塔音色资源已校验和规范化，实际 GPT-SoVITS 推理接入仍待完成。

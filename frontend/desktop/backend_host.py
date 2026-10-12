@@ -15,9 +15,8 @@ from herta_agent.service.settings import ServiceSettings
 
 
 async def serve(db_path: Path):
-    settings = ServiceSettings(
-        **{**ServiceSettings.from_env().model_dump(), "db_path": db_path, "port": 0}
-    )
+    # Preserve private settings excluded from public serialization (workspace token).
+    settings = ServiceSettings.from_env().model_copy(update={"db_path": db_path, "port": 0})
     app = create_app(settings)
     stopping = asyncio.Event()
     startup_finished = asyncio.Event()

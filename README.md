@@ -1,6 +1,6 @@
 # Herta Agent
 
-Windows 本地桌面陪伴助手，保留大黑塔人格、持续会话与知识检索，提供语音、提醒和可管理记忆。Electron 管理本机 Python 服务；Agent Loop、工具执行、上下文预算与 SQLite 历史均由 Herta 自己实现。工程机制主要参考项目中的 Hermes 源码，Cyrene 用于产品功能思路。
+Windows 个人 AI 桌面助手，保留大黑塔人格、持续会话与知识检索，提供语音、提醒、可管理记忆和只读文件工作台。Electron 管理本机 Python 服务；Agent Loop、工具执行、上下文预算与 SQLite 历史均由 Herta 自己实现。工程机制主要参考项目中的 Hermes 源码，Cyrene 用于产品功能思路。
 
 ## 现在就用
 
@@ -27,6 +27,19 @@ Windows 本地桌面陪伴助手，保留大黑塔人格、持续会话与知识
 
 在新环境启用语音，双击 **`准备本地语音.cmd`**：按锁文件安装可选依赖，再下载公共 Whisper/Piper 模型到 `.local/voice`。日常运行不会自动下载模型，缺失时显示不可用。模型来源、版本、文件哈希和现有验收见 [陪伴版报告](docs/COMPANION_ACCEPTANCE.md)。
 
+## 文件与空间分析
+
+点击右上角“文件”，通过系统目录选择器添加本机目录：
+
+- 浏览文件夹、按名称搜索，识别工程、缓存和快捷方式；快捷方式不解析目标。
+- 预览 1 MiB 内的常见 UTF-8 文本；预览最多400行/10,000字符，截断会明确提示。可加入聊天草稿，编辑后自行发送。
+- 点击“分析空间”查看磁盘可用空间、目录逻辑大小、大文件和目录排行。可选择检查有界的重复内容候选；支持停止与历史报告。
+- 默认仅本地查看。开启“允许聊天读取此目录”需要原生确认：模型可以调用5个只读文件工具，内容可能发送给你配置的服务。关闭共享或撤销授权会阻止后续工具读取，已进入会话的内容仍保留在历史中。
+
+此版本不修改或清理文件。敏感配置、系统目录、链接与重解析点受保护；缓存仅统计大小。分析最多20,000项/16层/30秒，搜索最多5,000项/8层，受限制或无法读取的结果有提示。逻辑大小不能当作实际可释放空间，重复内容不能当作删除授权。退出会停止自有分析，重启后将未完成任务标记中断；分析期间拒绝设置重启。
+
+授权与报告单独保存在 `workspace.sqlite3`，不迁移或清空原有会话、提醒和记忆。更多验证见 [只读工作台报告](docs/READONLY_WORKBENCH_ACCEPTANCE.md)。
+
 ## 本机知识检索
 
 项目内没有发现完整的千问模型。找到并接入的是 **BAAI/bge-large-zh**，位于：
@@ -47,7 +60,9 @@ C:\Users\Administrator\.cache\huggingface\hub\models--BAAI--bge-large-zh\snapsho
 | --- | --- |
 | 桌面会话数据库 | `.local/desktop/sessions.sqlite3` |
 | 日常偏好 / 提醒 / 记忆 | `.local/desktop/companionship.sqlite3` |
+| 目录授权 / 空间分析历史 | `.local/desktop/workspace.sqlite3` |
 | 本地语音权重和哈希清单 | `.local/voice/manifest.json` |
+| 大黑塔角色音色资源（尚未接入推理） | `models/voice/the-herta/v2proplus/manifest.json` |
 | 非敏感设置 | `.local/desktop/settings.json` |
 | 版本化知识索引 | `.local/rag/` |
 | 启动检查报告 | `.local/desktop/startup-report.json` |
@@ -61,9 +76,9 @@ Key 仅存在于主进程/后端环境，不进入 renderer、公共设置、索
 
 ## 本地验收
 
-当前日常能力以语音、提醒、专注和记忆为准。最新247项后端、49项前端单元、14项Electron全部通过，见[清理验收报告](docs/MUSIC_REMOVAL_ACCEPTANCE.md)。旧SQLite无需清空，旧元数据不会触发播放，原音频文件保留。
+当前提供语音、提醒、专注、记忆与只读文件/空间工作台。最新266项后端、52项前端单元、16项Electron全部通过，见[工作台验收报告](docs/READONLY_WORKBENCH_ACCEPTANCE.md)。旧SQLite无需清空，旧元数据不会触发播放，原音频文件保留。
 
-清理前陪伴版基线为243项后端、46项前端单元和14项Electron E2E；现行计数以[清理验收报告](docs/MUSIC_REMOVAL_ACCEPTANCE.md)为准。E2E 使用真实 Electron/Python/HTTP/SQLite 和离线模型夹具，不冒充真实回答质量。
+清理版基线为247项后端、49项前端单元和14项Electron E2E，见[清理验收报告](docs/MUSIC_REMOVAL_ACCEPTANCE.md)。E2E 使用真实 Electron/Python/HTTP/SQLite 和离线模型夹具，不冒充真实回答质量。
 
 2026-10-09 旧首版基线为223项后端、35项前端单元和11项Electron E2E；当前计数以陪伴版报告为准。
 

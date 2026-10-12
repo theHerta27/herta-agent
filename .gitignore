@@ -11,6 +11,11 @@
 !.env.example
 /.local/
 
+# 用户提供的本地音色资源与原始备份；不随源码分发。
+/theHerta/
+/models/voice/
+/大黑塔.zip
+
 # 后续阶段产生的环境、构建产物与缓存。
 .venv/
 __pycache__/

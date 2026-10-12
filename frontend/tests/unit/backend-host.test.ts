@@ -12,6 +12,7 @@ let backend: BackendProcess | undefined;
 const environment = () => ({
   ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('HERTA_') && key !== 'WEB_CONCURRENCY')),
   HERTA_SERVICE_PROVIDER: 'demo',
+  HERTA_WORKSPACE_TOKEN: 'local-test-token',
 });
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
@@ -42,6 +43,8 @@ it('stdio EOF shuts down the actual interpreter, without touching another Python
       child.on('error', reject);
     });
     expect(alive(ready.pid)).toBe(true);
+    const roots = await fetch(`http://127.0.0.1:${ready.port}/workspace/roots`, { headers: { Authorization: 'Bearer local-test-token' } });
+    expect(roots.status).toBe(200);
     child.stdin.end(); // Parent pipe disappears, without an explicit shutdown command.
     await closed;
     expect(alive(ready.pid)).toBe(false);
@@ -50,6 +53,7 @@ it('stdio EOF shuts down the actual interpreter, without touching another Python
     backend = new BackendProcess({ python, host, root: folder, db: join(folder, 'sessions.sqlite3'), env: environment() });
     await backend.start();
     expect(backend.status.state).toBe('ready');
+    expect((await fetch(backend.endpoint + '/workspace/roots', { headers: { Authorization: 'Bearer local-test-token' } })).status).toBe(200);
   } finally {
     child.stdin.end();
     await closed;

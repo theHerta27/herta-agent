@@ -19,6 +19,7 @@ class ServiceSettings(BaseModel):
     knowledge_path: Path = ROOT / "knowledge"
     index_path: Path = ROOT / ".local" / "rag"
     provider: Literal["openai", "demo"] = "openai"
+    workspace_token: str | None = Field(default=None, repr=False, exclude=True)
     host: Literal["127.0.0.1"] = "127.0.0.1"
     port: int = Field(default=8765, strict=True, ge=0, le=65535)
     workers: Literal[1] = 1
@@ -40,6 +41,7 @@ class ServiceSettings(BaseModel):
                 "port": int(os.environ.get("HERTA_SERVICE_PORT", "8765")),
                 "workers": int(os.environ.get("WEB_CONCURRENCY", "1")),
                 "provider": os.environ.get("HERTA_SERVICE_PROVIDER", "openai"),
+                "workspace_token": os.environ.get("HERTA_WORKSPACE_TOKEN"),
             }
             for field, env in (
                 ("db_path", "HERTA_SERVICE_DB"),

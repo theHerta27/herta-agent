@@ -2,6 +2,18 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  workspace: {
+    roots: () => ipcRenderer.invoke('herta:workspace-roots'),
+    chooseRoot: () => ipcRenderer.invoke('herta:workspace-choose'),
+    share: (id, enabled) => ipcRenderer.invoke('herta:workspace-share', id, enabled),
+    revoke: id => ipcRenderer.invoke('herta:workspace-revoke', id),
+    list: (id, path) => ipcRenderer.invoke('herta:workspace-list', id, path),
+    search: (id, query) => ipcRenderer.invoke('herta:workspace-search', id, query),
+    read: (id, path) => ipcRenderer.invoke('herta:workspace-read', id, path),
+    jobs: id => ipcRenderer.invoke('herta:workspace-jobs', id),
+    start: (id, duplicates) => ipcRenderer.invoke('herta:workspace-start', id, duplicates),
+    cancel: id => ipcRenderer.invoke('herta:workspace-cancel', id),
+  },
   companion: {
     snapshot: () => ipcRenderer.invoke('herta:daily-snapshot'),
     action: action => ipcRenderer.invoke('herta:daily-action', action),

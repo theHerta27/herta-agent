@@ -150,3 +150,12 @@
 - CompanionStore在同库创建tracks，并从settings读playback与preferences.volume；提醒/记忆不能通过重建数据库清理。旧字段仅兼容读取，既有音乐元数据留存但运行层不暴露。
 - AudioCoordinator同时管理音乐与语音；CompanionRuntime启动时创建音乐Audio并根据快照播放，focus触发播放。保留生成号、blob释放、语音停止/录音协调与订阅，删除音乐部分。
 - 主进程有herta-media协议、导入文件选择器和playback-report IPC；CSP含herta-media许可。移除这些不影响现有voice IPC与blob音频许可。
+
+## 2026-10-12 V2.1实施与theHerta资源
+- 用户当前目录有1个GPT .ckpt（155313011字节）、1个SoVITS .pth（172765299字节）及5种情绪中文参考音频；均为48kHz单声道，约3.25–7.62秒。原始大黑塔.zip保留可恢复备份。
+- .ckpt起始PK，.pth起始ASCII 06但zipfile可读取内部目录；不能直接将自定义头视为坏文件，需对照官方process_ckpt识别版本，不改字节或绕过pickle保护。
+- 当前模型目录和ZIP尚未被Git忽略，已补精确ignore规则防止用户权重进入源码提交；既有Piper/Whisper保留。
+- 按用户现行规划先交付只读桌面/磁盘工作台，写入/移动用户普通文件仍为V2.2，不提前实现。音色资源仅在用户指定范围内规范化，区别于产品普通文件自动操作。
+- 原先对.pth头部异常的推测已更正：GPT-SoVITS官方v2ProPlus使用ASCII06；两组权重仅在内存适配并weights_only加载，未修改原始字节。
+- 音色规范目录models/voice/the-herta/v2proplus，原ZIP7成员哈希与整理后文件逐项吻合；参照文本取原文件名，未人工核听；角色推理尚未接入。
+- Windows仅属性目录句柄不阻止替换，实际竞态测试复现；最终使用GENERIC_READ + SHARE_READ + BACKUP_SEMANTICS + OPEN_REPARSE_POINT锁定目录及祖先，测试证明rename被阻止；不得退化为普通路径快照。
