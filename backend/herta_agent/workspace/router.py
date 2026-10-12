@@ -48,7 +48,7 @@ class NoteBody(ToolParameters):
     text: str = Field(min_length=1, max_length=100000)
 
 
-def workspace_router(settings):
+def control_authorization(settings):
     async def authorize(request: Request):
         token = settings.workspace_token
         if not token:
@@ -57,7 +57,11 @@ def workspace_router(settings):
         if not secrets.compare_digest(value, f"Bearer {token}"):
             raise HTTPException(401, "目录授权需要桌面应用令牌。")
 
-    router = APIRouter(prefix="/workspace", dependencies=[Depends(authorize)])
+    return authorize
+
+
+def workspace_router(settings):
+    router = APIRouter(prefix="/workspace", dependencies=[Depends(control_authorization(settings))])
 
     @router.get("/roots")
     async def roots(request: Request):

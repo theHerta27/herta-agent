@@ -39,8 +39,48 @@ def native_error():
     )
 
 
+def directory_identity(handle):
+    class Information(ctypes.Structure):
+        _fields_ = [
+            ("attributes", wintypes.DWORD),
+            ("created", wintypes.FILETIME),
+            ("accessed", wintypes.FILETIME),
+            ("written", wintypes.FILETIME),
+            ("volume", wintypes.DWORD),
+            ("size_high", wintypes.DWORD),
+            ("size_low", wintypes.DWORD),
+            ("links", wintypes.DWORD),
+            ("index_high", wintypes.DWORD),
+            ("index_low", wintypes.DWORD),
+        ]
+
+    kernel = api()
+    kernel.GetFileInformationByHandle.argtypes = [wintypes.HANDLE, ctypes.POINTER(Information)]
+    info = Information()
+    if not kernel.GetFileInformationByHandle(handle, ctypes.byref(info)):
+        raise native_error()
+    if info.attributes & 0x400 or not info.attributes & 0x10:
+        raise WorkspaceError("目录已成为链接，不能执行。")
+
+    class FileId(ctypes.Structure):
+        _fields_ = [("volume", ctypes.c_ulonglong), ("identifier", ctypes.c_ubyte * 16)]
+
+    kernel.GetFileInformationByHandleEx.argtypes = [
+        wintypes.HANDLE,
+        ctypes.c_int,
+        wintypes.LPVOID,
+        wintypes.DWORD,
+    ]
+    file_id = FileId()
+    if not kernel.GetFileInformationByHandleEx(
+        handle, 18, ctypes.byref(file_id), ctypes.sizeof(file_id)
+    ):
+        raise native_error()
+    return f"{file_id.volume}:{int.from_bytes(bytes(file_id.identifier), 'little')}"
+
+
 @contextmanager
-def open_file(path, *, delete=False, create=False, directory_handle=None):
+def open_file(path, *, delete=False, create=False, directory_handle=None, directory=False):
     import msvcrt
 
     kernel = api()
@@ -106,10 +146,10 @@ def open_file(path, *, delete=False, create=False, directory_handle=None):
             ctypes.byref(attributes),
             ctypes.byref(status),
             None,
-            0x80,
+            0x10 if directory else 0x80,
             1,
             2 if create else 1,
-            0x00200060,
+            0x00200021 if directory else 0x00200060,
             None,
             0,
         )
@@ -119,10 +159,22 @@ def open_file(path, *, delete=False, create=False, directory_handle=None):
         handle = output.value
     else:
         handle = kernel.CreateFileW(
-            str(path), access, 1, None, 1 if create else 3, 0x00200000, None
+            str(path),
+            access,
+            1,
+            None,
+            1 if create else 3,
+            0x02200000 if directory else 0x00200000,
+            None,
         )
         if handle == ctypes.c_void_p(-1).value:
             raise native_error()
+    if directory:
+        try:
+            yield handle
+        finally:
+            kernel.CloseHandle(handle)
+        return
     try:
         fd = msvcrt.open_osfhandle(handle, os.O_BINARY | (os.O_RDWR if create else os.O_RDONLY))
     except Exception:

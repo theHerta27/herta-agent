@@ -18,6 +18,8 @@ from herta_agent.config import ProviderSettings
 from herta_agent.llm.demo import DemoProvider
 from herta_agent.llm.openai_compatible import OpenAICompatibleProvider
 from herta_agent.persona import PersonaContextBuilder
+from herta_agent.productivity.router import productivity_router
+from herta_agent.productivity.tools import productivity_tools
 from herta_agent.rag.errors import RagError
 from herta_agent.rag.service import load_retriever
 from herta_agent.runtime.agent import Agent
@@ -62,6 +64,9 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             registry = echo_registry()
             daily_specs, daily_policy = companion_tools(app.state.companion)
             for spec in daily_specs:
+                registry.register(spec)
+            task_specs, task_policy = productivity_tools(app.state.companion)
+            for spec in task_specs:
                 registry.register(spec)
             workspace_specs = workspace_tools(app.state.workspace)
             for spec in workspace_specs:
@@ -126,6 +131,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     streaming=callable(getattr(selected, "stream", None)),
                     tool_policy=lambda spec: (
                         daily_policy(spec)
+                        or task_policy(spec)
                         or any(
                             spec is trusted and trusted.name == "propose_file_plan"
                             for trusted in workspace_specs
@@ -151,6 +157,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
     app.include_router(companion_router())
     app.include_router(speech_router())
     app.include_router(workspace_router(settings))
+    app.include_router(productivity_router(settings))
 
     @app.exception_handler(WorkspaceError)
     async def workspace_error(request, error):

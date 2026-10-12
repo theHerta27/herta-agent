@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  productivity: {
+    snapshot: () => ipcRenderer.invoke('herta:productivity-snapshot'),
+    action: value => ipcRenderer.invoke('herta:productivity-action', value),
+    material: id => ipcRenderer.invoke('herta:productivity-document', id),
+    history: id => ipcRenderer.invoke('herta:productivity-history', id),
+  },
   workspace: {
     roots: () => ipcRenderer.invoke('herta:workspace-roots'),
     chooseRoot: () => ipcRenderer.invoke('herta:workspace-choose'),

@@ -10,6 +10,7 @@ import { execFile } from 'node:child_process';
 import { CompanionClient } from './companion';
 import { identifier } from './backend-client';
 import { WorkspaceClient } from './workspace';
+import { ProductivityClient } from './productivity';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -35,6 +36,7 @@ export const client = new BackendClient(() => {
 const daily = new CompanionClient(client);
 const workspaceToken = randomBytes(32).toString('hex');
 const workspaceClient = new WorkspaceClient(client.endpoint, workspaceToken);
+const productivity = new ProductivityClient(client.endpoint, workspaceToken);
 let workspacePending = 0;
 
 const settings = new DesktopSettings(join(data, 'settings.json'), { ...process.env, HERTA_WORKSPACE_TOKEN: workspaceToken }, {
@@ -164,6 +166,10 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:workspace-note', (event, id, target, text) => workspaceAction(event, () => workspaceClient.note(id, target, text)));
     ipcMain.handle('herta:workspace-indexed', (event, id) => workspaceAction(event, () => workspaceClient.indexedDocuments(id)));
     ipcMain.handle('herta:workspace-forget', (event, id, path) => workspaceAction(event, () => workspaceClient.forgetDocument(id, path)));
+    ipcMain.handle('herta:productivity-snapshot', event => workspaceAction(event, () => productivity.snapshot()));
+    ipcMain.handle('herta:productivity-action', (event, value) => workspaceAction(event, () => productivity.action(value)));
+    ipcMain.handle('herta:productivity-document', (event, id) => workspaceAction(event, () => productivity.material(id)));
+    ipcMain.handle('herta:productivity-history', (event, id) => workspaceAction(event, () => productivity.history(id)));
     ipcMain.handle('herta:workspace-confirm', (event, id, digest) => workspaceAction(event, async () => {
       const plan = await workspaceClient.privatePlan(id);
       if (typeof digest !== 'string' || digest !== plan.digest || plan.conflicts.length) throw new Error('方案冲突或摘要变化，请重新预览。');

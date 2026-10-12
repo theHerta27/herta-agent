@@ -1,4 +1,5 @@
 import type { WorkspaceBridge } from './workspace-contracts';
+import type { ProductivityBridge } from './productivity-contracts';
 
 export type BackendStatus = {
   state: 'starting' | 'ready' | 'needs_configuration' | 'unavailable' | 'stopping' | 'stopped';
@@ -9,6 +10,7 @@ export type BackendStatus = {
 export interface DesktopBridge {
   workspace: WorkspaceBridge;
   companion: CompanionBridge;
+  productivity: ProductivityBridge;
   getSettings(): Promise<PublicSettings>;
   applySettings(settings: PublicSettings): Promise<SettingsApplyResult>;
   getRunDiagnostics(id: string): Promise<RunDiagnostics>;

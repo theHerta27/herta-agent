@@ -9,7 +9,13 @@ from uuid import uuid4
 
 from .directory_guard import directory_guard
 from .file_plans import snapshot
-from .native_io import delete_open_file, open_file, remove_empty_directory, rename_open_file
+from .native_io import (
+    delete_open_file,
+    directory_identity,
+    open_file,
+    remove_empty_directory,
+    rename_open_file,
+)
 from .paths import WorkspaceError, identity
 
 
@@ -208,8 +214,13 @@ class FileJobs:
                     raise WorkspaceError("操作父目录已变化。")
             self._check(plan, stop)
             if kind == "mkdir":
-                target.mkdir()  # No exist_ok; each new directory has its own intent.
-                return {"identity": identity(target.lstat())}
+                with open_file(
+                    target,
+                    create=True,
+                    directory=True,
+                    directory_handle=handles[target.parent],
+                ) as directory:
+                    return {"identity": directory_identity(directory)}
             if kind == "remove_directory":
                 if identity(target.lstat()) != operation["identity"]:
                     raise WorkspaceError("目录被替换，不能撤销。")

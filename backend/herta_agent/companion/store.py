@@ -37,6 +37,9 @@ class CompanionStore:
             """)
             if "notified" not in {row[1] for row in db.execute("PRAGMA table_info(deliveries)")}:
                 db.execute("ALTER TABLE deliveries ADD COLUMN notified INTEGER NOT NULL DEFAULT 0")
+        from herta_agent.productivity.store import ProductivityStore
+
+        self.productivity = ProductivityStore(self)
 
     @contextmanager
     def connection(self):
@@ -114,8 +117,12 @@ class CompanionStore:
 
     def cancel_reminder(self, identifier):
         with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")
             if not db.execute("UPDATE reminders SET enabled=0 WHERE id=?", (identifier,)).rowcount:
                 raise ValueError("提醒不存在。")
+            db.execute(
+                "UPDATE tasks SET remind=0,revision=revision+1 WHERE reminder_id=?", (identifier,)
+            )
 
     def snooze(self, identifier, minutes=10, *, now=None):
         if type(minutes) is not int or not 1 <= minutes <= 10080:
@@ -129,6 +136,11 @@ class CompanionStore:
             if reminder["repeat"] == "once":
                 db.execute(
                     "UPDATE reminders SET due_at=?,enabled=1 WHERE id=?",
+                    (due.isoformat(), identifier),
+                )
+                db.execute(
+                    "UPDATE tasks SET due_at=?,revision=revision+1 "
+                    "WHERE reminder_id=? AND status='open'",
                     (due.isoformat(), identifier),
                 )
             else:

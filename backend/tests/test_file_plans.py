@@ -321,3 +321,81 @@ class FilePlanTests(unittest.IsolatedAsyncioTestCase):
                 app.state.workspace.share(self.id, False)
                 await client.post(f"/sessions/{session}/runs", json={"text": "再次提出"})
                 self.assertFalse(outcomes[-1]["ok"])
+
+    async def test_in_place_parent_reparse_change_cannot_redirect_directory_creation(self):
+        import ctypes
+        import os
+        import struct
+        from contextlib import contextmanager
+        from ctypes import wintypes
+
+        from herta_agent.workspace.directory_guard import directory_guard
+        from herta_agent.workspace.native_io import api
+
+        if os.name != "nt":
+            self.skipTest("Windows native boundary")
+        parent = self.root / "empty-parent"
+        parent.mkdir()
+        outside = Path(self.temp.name) / "outside"
+        outside.mkdir()
+        plan = self.p.propose(self.id, [{"kind": "mkdir", "target": "empty-parent/new-directory"}])
+        changed = []
+
+        @contextmanager
+        def changing(path, **options):
+            with directory_guard(path, **options) as guarded:
+                if path == parent.resolve() and options.get("writable_children") and not changed:
+                    target = str(outside.resolve())
+                    substitute = ("\\??\\" + target).encode("utf-16-le")
+                    printed = target.encode("utf-16-le")
+                    data = (
+                        struct.pack(
+                            "<LHHHHHH",
+                            0xA0000003,
+                            8 + len(substitute) + len(printed) + 4,
+                            0,
+                            0,
+                            len(substitute),
+                            len(substitute) + 2,
+                            len(printed),
+                        )
+                        + substitute
+                        + b"\0\0"
+                        + printed
+                        + b"\0\0"
+                    )
+                    kernel = api()
+                    kernel.DeviceIoControl.argtypes = [
+                        wintypes.HANDLE,
+                        wintypes.DWORD,
+                        wintypes.LPVOID,
+                        wintypes.DWORD,
+                        wintypes.LPVOID,
+                        wintypes.DWORD,
+                        ctypes.POINTER(wintypes.DWORD),
+                        wintypes.LPVOID,
+                    ]
+                    handle = kernel.CreateFileW(str(path), 0x40000000, 7, None, 3, 0x02200000, None)
+                    if handle != ctypes.c_void_p(-1).value:
+                        try:
+                            buffer = ctypes.create_string_buffer(data)
+                            returned = wintypes.DWORD()
+                            if kernel.DeviceIoControl(
+                                handle,
+                                0x000900A4,
+                                buffer,
+                                len(data),
+                                None,
+                                0,
+                                ctypes.byref(returned),
+                                None,
+                            ):
+                                changed.append(True)
+                        finally:
+                            kernel.CloseHandle(handle)
+                yield guarded
+
+        with patch("herta_agent.workspace.file_jobs.directory_guard", changing):
+            self.jobs.confirm(plan["id"], plan["digest"], "directory-retag")
+            await self.jobs.wait()
+        self.assertFalse((outside / "new-directory").exists(), "目录动作不得写入授权范围外")
