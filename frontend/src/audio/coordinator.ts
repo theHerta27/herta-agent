@@ -13,7 +13,8 @@ export class AudioCoordinator {
   private url?: string;
   private finishSpeech?: () => void;
   private listeners = new Set<() => void>();
-  state: 'idle' | 'loading' | 'speaking' | 'recording' = 'idle';
+  state: 'idle' | 'loading' | 'speaking' | 'paused' | 'recording' = 'idle';
+  private lastText = '';
   error = '';
   constructor(private bridge: CompanionBridge, private createAudio: () => AudioPort) {}
   subscribe = (handler: () => void) => { this.listeners.add(handler); return () => { this.listeners.delete(handler); }; };
@@ -34,7 +35,16 @@ export class AudioCoordinator {
     this.update('recording'); return true;
   }
   endRecording() { this.update('idle'); }
+  pause() { if (this.state === 'speaking' && this.speech) { this.speech.pause(); this.update('paused'); } }
+  async resume() {
+    if (this.state !== 'paused' || !this.speech) return;
+    const generation = this.generation;
+    try { await this.speech.play(); if (generation === this.generation) this.update('speaking'); }
+    catch { if (generation === this.generation) { await this.stopVoice(); this.update('idle', '播放失败，请重播。'); } }
+  }
+  replay() { return this.lastText ? this.read(this.lastText) : Promise.resolve(); }
   async read(text: string) {
+    this.lastText = text;
     const stopping = this.stopVoice(); const generation = this.generation;
     await stopping;
     if (generation !== this.generation) return;

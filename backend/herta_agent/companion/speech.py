@@ -30,14 +30,18 @@ def validate_audio(data: bytes):
 
 
 class SpeechService:
-    def __init__(self, root=VOICE_ROOT):
+    def __init__(self, root=VOICE_ROOT, *, personal=None):
         self.root = root
+        self.personal = personal
+        from herta_agent.companion.herta_speech import HertaSpeech
+
+        self.herta = HertaSpeech(VOICE_ROOT.parent / "gpt-sovits")
         self._children = set()
         self._slot = asyncio.Semaphore(1)
 
     @property
     def active_children(self):
-        return len(self._children)
+        return len(self._children) + self.herta.active_children
 
     def status(self):
         tts = bool(importlib.util.find_spec("piper")) and all(
@@ -48,11 +52,30 @@ class SpeechService:
             (self.root / "asr" / name).is_file()
             for name in ("model.bin", "config.json", "tokenizer.json")
         )
+        choice = self.personal.snapshot()["voice"] if self.personal else {"provider": "piper"}
+        selected = choice["provider"]
+        ready = tts if selected == "piper" else self.herta.ready()
         return {
-            "tts": tts,
+            "tts": ready,
             "asr": asr,
-            "detail": "本地语音就绪" if tts and asr else "运行准备本地语音.cmd准备模型和依赖。",
+            "active_workers": self.active_children,
+            "provider": selected,
+            "providers": {"piper": tts, "the_herta": self.herta.ready()},
+            "detail": (
+                "大黑塔音色就绪 · 首段需要加载模型"
+                if selected == "the_herta"
+                else "Piper本地语音就绪"
+            )
+            if ready
+            else "运行语音准备脚本或切换已准备的音色。",
         }
+
+    async def shutdown(self):
+        for child in tuple(self._children):
+            if child.returncode is None:
+                child.kill()
+            await child.wait()
+        await self.herta.shutdown()
 
     async def run_worker(self, command, data):
         async with self._slot:
@@ -83,6 +106,8 @@ class SpeechService:
             raise ValueError("朗读内容需为1–1500字。")
         if not self.status()["tts"]:
             raise ValueError("本地朗读模型未准备。")
+        if self.personal and self.personal.snapshot()["voice"]["provider"] == "the_herta":
+            return await self.herta.synthesize(text, self.personal.snapshot()["voice"]["emotion"])
         return await self.run_worker(
             [sys.executable, "-m", "herta_agent.companion.speech_worker", "tts", str(self.root)],
             text.encode("utf-8"),

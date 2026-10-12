@@ -9,6 +9,18 @@ class AudioDevice implements AudioPort {
   async play() { this.paused = false; }
   pause() { this.paused = true; }
 }
+it('pause resumes the same segment and replay uses the last text, while stop invalidates resume', async () => {
+  const device = new AudioDevice(); const spoken: string[] = [];
+  const bridge = { cancelVoice: async () => {}, synthesize: async (text: string) => { spoken.push(text); return new Uint8Array([1]); } } as unknown as CompanionBridge;
+  const audio = new AudioCoordinator(bridge, () => device);
+  const reading = audio.read('朗读这句');
+  await new Promise(resolve => setTimeout(resolve, 0));
+  audio.pause(); expect(audio.state).toBe('paused'); expect(device.paused).toBe(true);
+  await audio.resume(); expect(audio.state).toBe('speaking'); expect(spoken).toHaveLength(1);
+  await audio.stopVoice(); await reading; await audio.resume(); expect(audio.state).toBe('idle');
+  const replay = audio.replay(); await new Promise(resolve => setTimeout(resolve, 0));
+  expect(spoken).toEqual(['朗读这句', '朗读这句']); await audio.stopVoice(); await replay;
+});
 it('starting recording stops a playing speech segment and owns the audio state', async () => {
   const speech = new AudioDevice();
   const bridge = { cancelVoice: async () => {}, synthesize: async () => new Uint8Array([1]) } as unknown as CompanionBridge;

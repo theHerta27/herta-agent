@@ -51,7 +51,7 @@ def companion_tools(store: CompanionStore):
 
     async def propose(args):
         return {
-            "candidate": store.propose_memory(args.text),
+            "candidate": store.propose_memory(args.text, source="chat_proposal"),
             "note": "待用户在日常面板确认保存，尚未进入长期记忆。",
         }
 

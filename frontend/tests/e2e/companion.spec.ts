@@ -113,6 +113,9 @@ test('local microphone fixture fills an editable draft; speaking and session can
     });
     await page.getByRole('button', { name: '朗读', exact: true }).last().click();
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.voicePlayed), { timeout: 20000 }).toBe('yes');
+    await page.getByRole('button', { name: '暂停朗读', exact: true }).click();
+    await expect(page.getByRole('button', { name: '继续朗读', exact: true })).toBeEnabled();
+    await page.getByRole('button', { name: '继续朗读', exact: true }).click();
     await page.getByRole('button', { name: '停止声音' }).click();
     await expect(page.getByRole('button', { name: '朗读', exact: true }).last()).toBeVisible();
     await page.evaluate(async () => {

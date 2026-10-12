@@ -1,5 +1,6 @@
 import type { WorkspaceBridge } from './workspace-contracts';
 import type { ProductivityBridge } from './productivity-contracts';
+import type { PersonalBridge } from './personal-contracts';
 
 export type BackendStatus = {
   state: 'starting' | 'ready' | 'needs_configuration' | 'unavailable' | 'stopping' | 'stopped';
@@ -8,6 +9,7 @@ export type BackendStatus = {
 };
 
 export interface DesktopBridge {
+  personal: PersonalBridge;
   workspace: WorkspaceBridge;
   companion: CompanionBridge;
   productivity: ProductivityBridge;

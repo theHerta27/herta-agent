@@ -3,8 +3,6 @@ import asyncio
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
 
-from herta_agent.companion.speech import SpeechService
-
 
 class SpeechText(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
@@ -31,16 +29,15 @@ async def owned_request(request, operation):
 
 def speech_router():
     router = APIRouter(prefix="/companion/speech")
-    service = SpeechService()
 
     @router.get("")
-    async def status():
-        return service.status()
+    async def status(request: Request):
+        return request.app.state.speech.status()
 
     @router.post("/tts")
     async def synthesize(body: SpeechText, request: Request):
         try:
-            data = await owned_request(request, service.synthesize(body.text))
+            data = await owned_request(request, request.app.state.speech.synthesize(body.text))
         except ValueError:
             raise HTTPException(503, "本地朗读失败，请检查语音模型。") from None
         return Response(data, media_type="audio/wav")
@@ -53,7 +50,7 @@ def speech_router():
             if len(data) > 2_000_000:
                 raise HTTPException(413, "录音超过大小限制。")
         try:
-            return await owned_request(request, service.transcribe(bytes(data)))
+            return await owned_request(request, request.app.state.speech.transcribe(bytes(data)))
         except ValueError:
             raise HTTPException(422, "录音格式或本地识别模型不可用。") from None
 

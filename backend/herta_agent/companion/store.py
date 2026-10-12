@@ -40,6 +40,9 @@ class CompanionStore:
         from herta_agent.productivity.store import ProductivityStore
 
         self.productivity = ProductivityStore(self)
+        from herta_agent.companion.personalization import Personalization
+
+        self.personal = Personalization(self)
 
     @contextmanager
     def connection(self):
@@ -192,7 +195,7 @@ class CompanionStore:
         with self.connection() as db:
             db.execute("UPDATE deliveries SET notified=1 WHERE id=?", (identifier,))
 
-    def propose_memory(self, text):
+    def propose_memory(self, text, *, source="user"):
         text = text.strip()
         if not text or len(text) > 200:
             raise ValueError("记忆内容需为1–200字。")
@@ -200,13 +203,22 @@ class CompanionStore:
             if db.execute("SELECT COUNT(*) FROM memories").fetchone()[0] >= 100:
                 raise ValueError("请先删除不需要的记忆。")
             row = {"id": uuid4().hex, "text": text, "status": "pending"}
-            db.execute("INSERT INTO memories VALUES(?,?,?)", tuple(row.values()))
+            db.execute(
+                "INSERT INTO memories(id,text,status,source) VALUES(?,?,?,?)",
+                (
+                    row["id"],
+                    text,
+                    "pending",
+                    source,
+                ),
+            )
         return row
 
     def approve_memory(self, identifier):
         with self.connection() as db:
             if not db.execute(
-                "UPDATE memories SET status='approved' WHERE id=?", (identifier,)
+                "UPDATE memories SET status='approved',revision=revision+1 WHERE id=?",
+                (identifier,),
             ).rowcount:
                 raise ValueError("记忆不存在。")
 

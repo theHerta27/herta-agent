@@ -56,12 +56,22 @@ export class CompanionClient {
   }
   voiceStatus = () => this.client.json<VoiceStatus>('/companion/speech');
   cancelVoice() { this.voiceAbort?.abort(); this.voiceAbort = undefined; }
+  async cancelAndWait() {
+    this.cancelVoice();
+    for (let attempt = 0; attempt < 50; attempt++) {
+      let status: VoiceStatus & { active_workers?: number };
+      try { status = await this.voiceStatus(); } catch { return; }
+      if (!status.active_workers) return;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error('voice_cancel_pending');
+  }
   private async voice(path: string, body: BodyInit, contentType: string): Promise<Response> {
     this.cancelVoice();
     const controller = new AbortController(); this.voiceAbort = controller;
     const response = await fetch(this.client.endpoint() + path, {
       method: 'POST', body, headers: { 'Content-Type': contentType }, redirect: 'error',
-      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(120000)]),
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(190000)]),
     });
     if (!response.ok) throw new Error(`voice_http_${response.status}`);
     return response;

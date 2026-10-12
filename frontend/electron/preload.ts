@@ -2,6 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  personal: {
+    snapshot: () => ipcRenderer.invoke('herta:personal-snapshot'),
+    action: value => ipcRenderer.invoke('herta:personal-action', value),
+  },
   productivity: {
     snapshot: () => ipcRenderer.invoke('herta:productivity-snapshot'),
     action: value => ipcRenderer.invoke('herta:productivity-action', value),

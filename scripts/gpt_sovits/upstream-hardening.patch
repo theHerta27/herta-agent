@@ -1,0 +1,90 @@
+diff --git a/GPT_SoVITS/TTS_infer_pack/TTS.py b/GPT_SoVITS/TTS_infer_pack/TTS.py
+index 80d1897..e3b5650 100644
+--- a/GPT_SoVITS/TTS_infer_pack/TTS.py
++++ b/GPT_SoVITS/TTS_infer_pack/TTS.py
+@@ -587,7 +587,7 @@ class TTS:
+             info = path_sovits + i18n("SoVITS %s 底模缺失，无法加载相应 LoRA 权重" % model_version)
+             raise FileNotFoundError(info)
+ 
+-        # dict_s2 = torch.load(weights_path, map_location=self.configs.device,weights_only=False)
++        # dict_s2 = torch.load(weights_path, map_location=self.configs.device,weights_only=True)
+         dict_s2 = load_sovits_new(weights_path)
+         hps = dict_s2["config"]
+         hps["model"]["semantic_frame_rate"] = "25hz"
+@@ -685,7 +685,7 @@ class TTS:
+         self.configs.t2s_weights_path = weights_path
+         self.configs.save_configs()
+         self.configs.hz = 50
+-        dict_s1 = torch.load(weights_path, map_location=self.configs.device, weights_only=False)
++        dict_s1 = torch.load(weights_path, map_location=self.configs.device, weights_only=True)
+         config = dict_s1["config"]
+         self.configs.max_sec = config["data"]["max_sec"]
+         t2s_model = Text2SemanticLightningModule(config, "****", is_train=False)
+@@ -748,7 +748,7 @@ class TTS:
+                 "%s/GPT_SoVITS/pretrained_models/gsv-%s-pretrained/vocoder.pth" %
+                 (now_dir, "v5" if version in V5_VERSIONS else version),
+                 map_location="cpu",
+-                weights_only=False,
++                weights_only=True,
+             )
+             print("loading vocoder", self.vocoder.load_state_dict(state_dict_g))
+ 
+diff --git a/GPT_SoVITS/process_ckpt.py b/GPT_SoVITS/process_ckpt.py
+index 8f362af..710546f 100644
+--- a/GPT_SoVITS/process_ckpt.py
++++ b/GPT_SoVITS/process_ckpt.py
+@@ -135,13 +135,5 @@ def get_sovits_version_from_path_fast(sovits_path):
+     return version, model_version, if_lora_v3
+ 
+ 
+-def load_sovits_new(sovits_path):
+-    f = open(sovits_path, "rb")
+-    meta = f.read(2)
+-    if meta != b"PK":
+-        data = b"PK" + f.read()
+-        bio = BytesIO()
+-        bio.write(data)
+-        bio.seek(0)
+-        return torch.load(bio, map_location="cpu", weights_only=False)
+-    return torch.load(sovits_path, map_location="cpu", weights_only=False)
++
++from strict_loading import load_sovits_new
+diff --git a/GPT_SoVITS/sv.py b/GPT_SoVITS/sv.py
+index 22e7036..94960d7 100644
+--- a/GPT_SoVITS/sv.py
++++ b/GPT_SoVITS/sv.py
+@@ -10,7 +10,7 @@ import kaldi as Kaldi
+ 
+ class SV:
+     def __init__(self, device, is_half):
+-        pretrained_state = torch.load(sv_path, map_location="cpu", weights_only=False)
++        pretrained_state = torch.load(sv_path, map_location="cpu", weights_only=True)
+         embedding_model = ERes2NetV2(baseWidth=24, scale=4, expansion=4)
+         embedding_model.load_state_dict(pretrained_state)
+         embedding_model.eval()
+diff --git a/GPT_SoVITS/text/LangSegmenter/langsegmenter.py b/GPT_SoVITS/text/LangSegmenter/langsegmenter.py
+index 99b3a42..50b7681 100644
+--- a/GPT_SoVITS/text/LangSegmenter/langsegmenter.py
++++ b/GPT_SoVITS/text/LangSegmenter/langsegmenter.py
+@@ -8,7 +8,7 @@ jieba.setLogLevel(logging.CRITICAL)
+ # 更改fast_langdetect大模型位置
+ from pathlib import Path
+ import fast_langdetect
+-fast_langdetect.infer._default_detector = fast_langdetect.infer.LangDetector(fast_langdetect.infer.LangDetectConfig(cache_dir=Path(__file__).parent.parent.parent / "pretrained_models" / "fast_langdetect"))
++fast_langdetect.infer._default_detector = fast_langdetect.infer.LangDetector(fast_langdetect.infer.LangDetectConfig(custom_model_path=str(Path(fast_langdetect.__file__).parent / "resources" / "lid.176.ftz"), cache_dir=Path(__file__).parent.parent.parent / "pretrained_models" / "fast_langdetect"))
+ 
+ 
+ from split_lang import LangSplitter
+diff --git a/GPT_SoVITS/text/chinese2.py b/GPT_SoVITS/text/chinese2.py
+index acfebfe..7175bdc 100644
+--- a/GPT_SoVITS/text/chinese2.py
++++ b/GPT_SoVITS/text/chinese2.py
+@@ -25,7 +25,7 @@ import jieba_fast.posseg as psg
+ 
+ # is_g2pw_str = os.environ.get("is_g2pw", "True")##默认开启
+ # is_g2pw = False#True if is_g2pw_str.lower() == 'true' else False
+-is_g2pw = True  # True if is_g2pw_str.lower() == 'true' else False
++is_g2pw = False  # True if is_g2pw_str.lower() == 'true' else False
+ if is_g2pw:
+     # print("当前使用g2pw进行拼音推理")
+     from text.g2pw import G2PWPinyin, correct_pronunciation

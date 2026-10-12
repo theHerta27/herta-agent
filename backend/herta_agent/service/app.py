@@ -53,6 +53,13 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         app.state.mcp_available = False
         app.state.mcp_error = None
         app.state.companion = CompanionStore(settings.db_path.with_name("companionship.sqlite3"))
+        from herta_agent.companion.speech import SpeechService
+
+        app.state.speech = SpeechService(personal=app.state.companion.personal)
+        with app.state.companion.connection() as db:
+            new_voice = app.state.companion._get(db, "personal_voice", None) is None
+        if new_voice and settings.provider != "demo" and app.state.speech.herta.ready():
+            app.state.companion.personal.voice("the_herta", "neutral")
         app.state.workspace = WorkspaceService(settings.db_path.with_name("workspace.sqlite3"))
         ticker = asyncio.create_task(scheduler(app.state.companion))
         mcp_stack = AsyncExitStack()
@@ -142,6 +149,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             yield
         finally:
             await stop_scheduler(ticker)
+            await app.state.speech.shutdown()
             # A shutdown timeout must not close clients underneath a still-owned Run.
             if app.state.manager is not None:
                 await app.state.manager.shutdown()
@@ -158,6 +166,9 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
     app.include_router(speech_router())
     app.include_router(workspace_router(settings))
     app.include_router(productivity_router(settings))
+    from herta_agent.companion.personal_router import personal_router
+
+    app.include_router(personal_router(settings))
 
     @app.exception_handler(WorkspaceError)
     async def workspace_error(request, error):

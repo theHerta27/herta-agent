@@ -11,6 +11,7 @@ import { CompanionClient } from './companion';
 import { identifier } from './backend-client';
 import { WorkspaceClient } from './workspace';
 import { ProductivityClient } from './productivity';
+import { PersonalClient } from './personal';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -37,6 +38,7 @@ const daily = new CompanionClient(client);
 const workspaceToken = randomBytes(32).toString('hex');
 const workspaceClient = new WorkspaceClient(client.endpoint, workspaceToken);
 const productivity = new ProductivityClient(client.endpoint, workspaceToken);
+const personal = new PersonalClient(client.endpoint, workspaceToken);
 let workspacePending = 0;
 
 const settings = new DesktopSettings(join(data, 'settings.json'), { ...process.env, HERTA_WORKSPACE_TOKEN: workspaceToken }, {
@@ -167,6 +169,8 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:workspace-indexed', (event, id) => workspaceAction(event, () => workspaceClient.indexedDocuments(id)));
     ipcMain.handle('herta:workspace-forget', (event, id, path) => workspaceAction(event, () => workspaceClient.forgetDocument(id, path)));
     ipcMain.handle('herta:productivity-snapshot', event => workspaceAction(event, () => productivity.snapshot()));
+    ipcMain.handle('herta:personal-snapshot', event => workspaceAction(event, () => personal.snapshot()));
+    ipcMain.handle('herta:personal-action', (event, value) => workspaceAction(event, () => personal.action(value)));
     ipcMain.handle('herta:productivity-action', (event, value) => workspaceAction(event, () => productivity.action(value)));
     ipcMain.handle('herta:productivity-document', (event, id) => workspaceAction(event, () => productivity.material(id)));
     ipcMain.handle('herta:productivity-history', (event, id) => workspaceAction(event, () => productivity.history(id)));
@@ -182,7 +186,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:voice-status', event => { checkSender(event); return daily.voiceStatus(); });
     ipcMain.handle('herta:synthesize', (event, text) => { checkSender(event); return daily.synthesize(text); });
     ipcMain.handle('herta:transcribe', (event, wav) => { checkSender(event); return daily.transcribe(wav); });
-    ipcMain.handle('herta:cancel-voice', event => { checkSender(event); daily.cancelVoice(); });
+    ipcMain.handle('herta:cancel-voice', event => { checkSender(event); return daily.cancelAndWait(); });
     const show = () => { window?.show(); if (window?.isMinimized()) window.restore(); window?.focus(); };
     const pixels = Buffer.alloc(16 * 16 * 4);
     for (let y = 1; y < 15; y++) for (let x = 1; x < 15; x++) {

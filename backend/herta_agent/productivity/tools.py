@@ -18,6 +18,12 @@ class CompletionArgs(ToolParameters):
     revision: int = Field(ge=1)
 
 
+class SkillArgs(ToolParameters):
+    task_id: str = Field(min_length=1, max_length=64)
+    title: str = Field(min_length=1, max_length=100)
+    instructions: str = Field(min_length=1, max_length=4000)
+
+
 def productivity_tools(daily):
     async def listing(_args):
         data = daily.productivity.snapshot()
@@ -46,6 +52,32 @@ def productivity_tools(daily):
                 "task_changed", "任务已变化或不能完成，请重新查询并核对用户选择。"
             ) from None
 
+    async def skill(args):
+        try:
+            from herta_agent.companion.personalization import bounded
+
+            bounded(args.title, 100)
+            bounded(args.instructions, 4000)
+            draft = daily.personal.from_task(args.task_id)
+            edited = daily.personal.change_skill(
+                draft["id"],
+                draft["revision"],
+                "edit",
+                title=args.title,
+                instructions=args.instructions,
+            )
+            return {k: edited[k] for k in ("id", "title", "status")}
+        except ValueError:
+            raise ToolExecutionError(
+                "skill_invalid", "需要真实任务完成记录；只能提议待审核草案。"
+            ) from None
+
+    def can_learn():
+        with daily.connection() as db:
+            return bool(
+                db.execute("SELECT 1 FROM task_events WHERE action='complete' LIMIT 1").fetchone()
+            )
+
     specs = (
         ToolSpec(
             "list_tasks",
@@ -66,6 +98,14 @@ def productivity_tools(daily):
             CompletionArgs,
             complete,
             permission="side_effect",
+        ),
+        ToolSpec(
+            "propose_skill",
+            "按用户要求从已完成任务提炼方法草案；需要用户编辑审核后才用于未来对话。",
+            SkillArgs,
+            skill,
+            permission="side_effect",
+            available=can_learn,
         ),
     )
 
