@@ -10,6 +10,8 @@ try {
     if (!(Test-Path -LiteralPath $taskPython) -or !(Test-Path -LiteralPath $taskElectron)) {
         throw 'Project dependencies are missing. Follow README installation steps first.'
     }
+    . (Join-Path $PSScriptRoot 'Test-HertaDesktopFresh.ps1')
+    Assert-HertaDesktopFresh -Root $taskRoot
     Remove-Item -LiteralPath 'Env:ELECTRON_RUN_AS_NODE' -ErrorAction SilentlyContinue
     foreach ($taskName in @('DEEPSEEK_API_KEY','HERTA_API_KEY','HERTA_EMBEDDING_API_KEY')) {
         if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($taskName, 'Process'))) {
@@ -63,6 +65,7 @@ try {
     Write-Host 'Herta desktop opened.'
 } catch {
     Write-Host 'Unable to start Herta. Check dependencies and public settings in README.' -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
     Read-Host 'Press Enter to close'
     exit 1
 }
