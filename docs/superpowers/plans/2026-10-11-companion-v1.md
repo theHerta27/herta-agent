@@ -2,13 +2,15 @@
 
 > **For agentic workers:** Use superpowers:executing-plans inline; one final independent review. User has already approved the product direction and instructed implementation; proceed without a second approval round.
 
-**Goal:** Deliver the first usable daily companion release: local music, voice, reminders, tray and editable preferences.
+**Goal:** Deliver the first usable daily companion release: voice, reminders, tray and editable preferences.
 
 **Architecture:** Preserve Python Agent.run. Add a focused SQLite-backed companion service with trusted tools and deterministic HTTP APIs; Electron owns media transport, notifications, microphone permission and tray. Local speech runs in cancellable subprocesses.
 
 **Tech Stack:** Existing Python/FastAPI/SQLite, Electron/React/TypeScript; optional faster-whisper and Piper for offline speech.
 
 **Spec:** docs/companion-v1-design.md
+
+历史阶段完成记录；2026-10-12按现行接口同步。后续清理与验证以[退役计划](2026-10-12-remove-music.md)及[当前验收](../../MUSIC_REMOVAL_ACCEPTANCE.md)为准。
 
 ## Global Constraints
 
@@ -22,8 +24,6 @@
 ## Review Focus
 
 - Sleep/restart across reminder deadlines: no lost unread occurrence and no repeat flood.
-- Stale playback updates after next/pause: never overwrite newer revision.
-- Path/symlink changes after import: fail clearly; never accept arbitrary paths from renderer/model.
 - Cancellation/backend restart during speech: child cleanup and no late playback/transcript.
 - Permission revocation during a Run: companion actions stop; MCP stays denied.
 
@@ -31,7 +31,7 @@
 
 **Files:** companion/{models,store,tools,context,router}.py; service/app.py; tools/executor.py; runtime/agent.py; tests/test_companion.py
 
-**Interfaces:** CompanionStore(path).snapshot(), create_reminder(title,due_at,repeat), tick(now), update_preferences(values), propose_memory(text), music_command(action,track_id,volume). trusted_tool_policy(spec)->bool. Agent(..., tool_policy=None).
+**Interfaces:** CompanionStore(path).snapshot(), create_reminder(title,due_at,repeat), tick(now), update_preferences(values), propose_memory(text). trusted_tool_policy(spec)->bool. Agent(..., tool_policy=None).
 
 - [x] Test real SQLite restart, due occurrence dedup/two connections, daily skip, invalid time, unread ack, approved preference vs pending memory, media ID validation/stale revision, denied generic side effects and revoked companion action.
 - [x] Run `.venv/Scripts/python.exe -m unittest discover -s backend/tests -p test_companion.py` and observe missing behavior.
@@ -42,11 +42,11 @@
 
 **Files:** frontend/electron/{companion,main,preload}.ts; shared/contracts.ts; index.html; tests/unit/companion.test.ts; tests/e2e/companion.spec.ts
 
-**Interfaces:** DesktopBridge.companion exposes snapshot(), action(action), importMusic(), reportPlayback(), voiceStatus(), synthesize(text), transcribe(wav), cancelVoice(). The media URL uses opaque IDs through herta-media. Companion snapshot contains preferences, memories, reminders, deliveries, tracks and playback.
+**Interfaces:** DesktopBridge.companion exposes snapshot(), action(action), voiceStatus(), synthesize(text), transcribe(wav), cancelVoice(). Companion snapshot contains preferences, memories, reminders, deliveries and deliveries.
 
-- [x] Test input validation and actual HTTP action results; Electron import fixture WAV, playback state, reminder due-card receipt, hidden window restoration, explicit quit cleanup. OS toast visibility remains system-dependent as specified.
+- [x] Test input validation and actual HTTP action results; reminder due-card receipt, hidden window restoration, explicit quit cleanup. OS toast visibility remains system-dependent as specified.
 - [x] Watch tests fail before adding bridge/protocol/lifecycle.
-- [x] Add fixed-route validated bridge; approved file import; restricted media protocol; polling delivery loop + Notification; tray and shortcut, backgroundThrottling disabled for audio.
+- [x] Add fixed-route validated bridge; polling delivery loop + Notification; tray and shortcut, backgroundThrottling disabled for audio.
 - [x] Verify units/typecheck/build and targeted Electron tests, update existing close assertions for hide vs quit.
 
 ### Task 3: Local speech preparation and cancellation
@@ -55,7 +55,7 @@
 
 **Interfaces:** SpeechService.status(), synthesize(text), transcribe(wav); bounded local subprocesses. AudioCoordinator controls actual Audio and cancels generations. Recorder produces 16k mono PCM WAV <=60 seconds.
 
-- [x] Test malformed/oversize WAV, silence, absent model, killed request child; stale TTS response never plays; stop restores music level; resampling output header/frame limits.
+- [x] Test malformed/oversize WAV, silence, absent model, killed request child; stale TTS response never plays; stop cancels speech playback; resampling output header/frame limits.
 - [x] Run failing tests, implement offline local providers without runtime downloads and abortable bridge requests.
 - [x] Prepare dependencies/public Chinese voice + multilingual ASR under .local/voice; run local synth/ASR smoke.
 - [x] Verify tests/lockfile/model manifest and cleanup behavior.
@@ -66,8 +66,8 @@
 
 **Interfaces:** Uses Task 2 bridge and Task 3 coordinator; voice result updates existing draft, never creates another model loop.
 
-- [x] Add real Electron tests for creating/cancelling/snoozing reminder, preferences save/reopen, music import/play/pause, recording draft, memory approval, focus routine and message read/stop.
-- [x] Implement compact music/reminder/preference panel using existing tokens, same chat entry and readable errors.
+- [x] Add real Electron tests for creating/cancelling/snoozing reminder, preferences save/reopen, recording draft, memory approval, focus routine and message read/stop.
+- [x] Implement compact reminder/preference panel using existing tokens, same chat entry and readable errors.
 - [x] Verify keyboard, empty/error states, persistence, local audio and screenshots.
 
 ### Task 5: Integrated local verification and delivery

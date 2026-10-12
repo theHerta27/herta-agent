@@ -144,3 +144,9 @@
 - 已读Hermes tools/write_approval.py：候选写入独立持久记录，经审阅再执行；其默认不审批不是Herta要继承的产品策略。agent/file_safety.py明确防御检查不是OS沙箱，原始Windows命名空间在resolve前拒绝，不能把Path.resolve误称安全隔离。
 - 下一版应通过Electron主进程文件夹选择器授予root_id，模型/renderer只持有相对路径和不透明ID。保存方案不授予执行权限；具体动作和文件快照绑定审批，后续Skills也不应绕过。
 - 所有测试目录需为专用临时夹具，产品未操作真实下载目录。当前只进行静态设计，既有243/46/14是上一版证据，不能作为文件功能验收。
+
+## 2026-10-12 音乐业务退役
+- 用户指定的新docs/herta-agent-plan.md含现有音乐能力、外部播放器章节、V2.6外部控制及架构业务列表，需要移除；语音音量/音色/音频播放属于独立语音规划，保留。
+- CompanionStore在同库创建tracks，并从settings读playback与preferences.volume；提醒/记忆不能通过重建数据库清理。旧字段仅兼容读取，既有音乐元数据留存但运行层不暴露。
+- AudioCoordinator同时管理音乐与语音；CompanionRuntime启动时创建音乐Audio并根据快照播放，focus触发播放。保留生成号、blob释放、语音停止/录音协调与订阅，删除音乐部分。
+- 主进程有herta-media协议、导入文件选择器和playback-report IPC；CSP含herta-media许可。移除这些不影响现有voice IPC与blob音频许可。

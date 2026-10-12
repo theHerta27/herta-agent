@@ -5,8 +5,6 @@ const bridge: DesktopBridge = {
   companion: {
     snapshot: () => ipcRenderer.invoke('herta:daily-snapshot'),
     action: action => ipcRenderer.invoke('herta:daily-action', action),
-    importMusic: () => ipcRenderer.invoke('herta:import-music'),
-    reportPlayback: (revision, actual, error) => ipcRenderer.invoke('herta:playback-report', revision, actual, error),
     voiceStatus: () => ipcRenderer.invoke('herta:voice-status'),
     synthesize: text => ipcRenderer.invoke('herta:synthesize', text),
     transcribe: wav => ipcRenderer.invoke('herta:transcribe', wav),

@@ -1,6 +1,5 @@
 import tempfile
 import unittest
-import wave
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -92,36 +91,17 @@ class CompanionStoreTests(unittest.TestCase):
         self.assertIn("开拓者", snapshot.system_text)
 
     def test_preferences_and_user_approved_memories_survive_restart(self):
-        self.store.update_preferences({"nickname": "开拓者", "volume": 25})
-        memory = self.store.propose_memory("学习时喜欢安静的音乐")
+        self.store.update_preferences({"nickname": "开拓者"})
+        memory = self.store.propose_memory("学习时喜欢先看总结")
         self.assertEqual(self.store.context_memories(), [])
         self.store.approve_memory(memory["id"])
         other = CompanionStore(self.path)
-        self.assertEqual(other.snapshot()["preferences"]["volume"], 25)
-        self.assertEqual(other.context_memories(), ["学习时喜欢安静的音乐"])
+        self.assertEqual(other.snapshot()["preferences"]["nickname"], "开拓者")
+        self.assertEqual(other.context_memories(), ["学习时喜欢先看总结"])
         other.delete_memory(memory["id"])
         self.assertEqual(self.store.context_memories(), [])
         with self.assertRaises(ValueError):
             self.store.update_preferences({"api_key": "never-store-this"})
-
-    def test_media_id_and_revision_protect_files_and_newer_controls(self):
-        path = Path(self.temp.name) / "本地音乐.wav"
-        with wave.open(str(path), "wb") as output:
-            output.setparams((1, 2, 16000, 0, "NONE", "not compressed"))
-            output.writeframes(bytes(32000))
-        track = self.store.import_tracks([str(path)])[0]
-        self.assertEqual(self.store.media_path(track["id"]), path.resolve())
-        self.assertNotIn("path", track)
-        first = self.store.music_command("play", track["id"])
-        second = self.store.music_command("pause")
-        self.store.report_playback(first["revision"], "playing")
-        self.assertNotEqual(self.store.snapshot()["playback"]["actual"], "playing")
-        self.store.report_playback(second["revision"], "paused")
-        self.assertEqual(self.store.snapshot()["playback"]["actual"], "paused")
-        with self.assertRaises(ValueError):
-            self.store.media_path("../../secret")
-        with self.assertRaises(ValueError):
-            self.store.music_command("play", "unknown")
 
 
 class CompanionPermissionTests(unittest.IsolatedAsyncioTestCase):

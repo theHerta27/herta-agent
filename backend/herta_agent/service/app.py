@@ -137,7 +137,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
 
     @app.exception_handler(ValueError)
     async def companion_error(request, error):
-        return error_response(422, "invalid_request", "日常操作参数无效，请检查时间、歌曲或记录。")
+        return error_response(422, "invalid_request", "日常操作参数无效，请检查时间或记录。")
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(request, error):

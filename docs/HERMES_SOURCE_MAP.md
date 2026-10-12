@@ -42,4 +42,4 @@ Herta 不导入/运行 Hermes Runtime。本轮新增逻辑依照接口与机制�
 | `tools/tts_tool_local.py:118` | `companion/speech_worker.py` | 使用 Piper 本地中文声音；独立进程负责载入与生成 WAV，取消会终止自管子进程 |
 | 既有工具 Registry/Executor 和 Persona 冻结机制 | `tools/executor.py`、`companion/context.py` | 日常内置身份白名单、每次执行检查撤销；每 Run 冻结称呼、已确认记忆和北京时间，完整人格继续保留 |
 
-Cyrene 的参考范围是迷你音乐播放器、可编辑语音草稿、日常面板、免打扰和托盘交互。没有复制其 Harness/多执行循环，没有引入 Live2D 或代码协作模式。
+Cyrene 的参考范围是可编辑语音草稿、日常面板、免打扰和托盘交互。没有复制其 Harness/多执行循环，没有引入 Live2D 或代码协作模式。

@@ -47,15 +47,12 @@ export interface ContextDiagnostic {
 export interface RunDiagnostics { contexts: ContextDiagnostic[]; tools: Record<string, unknown>[] }
 export interface SettingsApplyResult { settings: PublicSettings; backend: BackendStatus }
 
-export interface CompanionPreferences { nickname: string; volume: number; auto_read: boolean; allow_tools: boolean; quiet_start: number; quiet_end: number }
-export interface MusicTrack { id: string; title: string }
-export interface Playback { revision: number; track_id: string | null; desired: 'playing' | 'paused' | 'stopped'; actual: 'playing' | 'paused' | 'stopped' | 'pending' | 'error'; volume: number; error: string }
+export interface CompanionPreferences { nickname: string; auto_read: boolean; allow_tools: boolean; quiet_start: number; quiet_end: number }
 export interface Reminder { id: string; title: string; due_at: string; repeat: 'once' | 'daily' | 'weekly'; enabled: boolean }
 export interface Delivery { id: string; reminder_id: string; title: string; due_at: string; created_at: string; notified: number }
 export interface CompanionMemory { id: string; text: string; status: 'pending' | 'approved' }
-export interface CompanionSnapshot { preferences: CompanionPreferences; playback: Playback; tracks: MusicTrack[]; reminders: Reminder[]; deliveries: Delivery[]; memories: CompanionMemory[] }
+export interface CompanionSnapshot { preferences: CompanionPreferences; reminders: Reminder[]; deliveries: Delivery[]; memories: CompanionMemory[] }
 export type CompanionAction =
-  | { kind: 'music'; action: 'play' | 'pause' | 'next' | 'previous' | 'volume' | 'stop'; track_id?: string; volume?: number }
   | { kind: 'create_reminder'; title: string; due_at: string; repeat: Reminder['repeat'] }
   | { kind: 'cancel_reminder' | 'approve_memory' | 'delete_memory' | 'ack'; id: string }
   | { kind: 'snooze'; id: string; minutes: number }
@@ -65,8 +62,6 @@ export interface VoiceStatus { tts: boolean; asr: boolean; detail: string }
 export interface CompanionBridge {
   snapshot(): Promise<CompanionSnapshot>;
   action(action: CompanionAction): Promise<unknown>;
-  importMusic(): Promise<MusicTrack[]>;
-  reportPlayback(revision: number, actual: Playback['actual'], error?: string): Promise<void>;
   voiceStatus(): Promise<VoiceStatus>;
   synthesize(text: string): Promise<Uint8Array>;
   transcribe(wav: Uint8Array): Promise<{ text: string }>;

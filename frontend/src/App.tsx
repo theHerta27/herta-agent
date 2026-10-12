@@ -7,7 +7,7 @@ import { Composer } from './components/Composer';
 import { MessageList } from './components/MessageList';
 import { SettingsDialog } from './components/SettingsDialog';
 import { CompanionRuntime } from './state/companion-runtime';
-import { CompanionPanel, MiniPlayer } from './components/CompanionPanel';
+import { CompanionPanel } from './components/CompanionPanel';
 import { VoiceInput } from './components/VoiceInput';
 import { AudioControls, DailyContext } from './audio/context';
 import './styles/companion.css';
@@ -77,7 +77,6 @@ export function App() {
       collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} light={light} onTheme={() => setLight(!light)} />
     <main className="workspace">
       <header className="chat-header"><strong>{state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话'}</strong><div className="header-actions"><button onClick={() => setDailyOpen(!dailyOpen)} aria-expanded={dailyOpen}>日常</button><button onClick={() => setSettingsOpen(true)}>设置</button><span className="backend-status" role="status" aria-live="polite" data-state={status.state}>{labels[status.state]}</span></div></header>
-      <MiniPlayer runtime={daily} onOpen={() => setDailyOpen(true)} />
       {status.state === 'needs_configuration' && <p className="notice">聊天模型未配置；历史仍可阅读。请打开设置填写模型连接，并通过启动环境配置密钥。</p>}
       {status.state === 'unavailable' && <p className="notice error">{status.reason === 'start_failed' ? 'Python 后端启动失败，请检查本地环境后重新打开应用。' : '后端连接不可用，请重新打开应用。'}</p>}
       {state.error && <p className="notice error">{state.error}<button onClick={() => void store.refresh()}>重试列表</button></p>}

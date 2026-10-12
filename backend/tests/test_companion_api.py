@@ -59,13 +59,6 @@ class CompanionAPITests(unittest.IsolatedAsyncioTestCase):
                     )
                     self.assertIn("run.completed", second.text)
                     self.assertEqual(len((await client.get("/companion")).json()["reminders"]), 1)
-                    invalid = await client.post(
-                        "/companion/music/control", json={"action": "volume", "volume": 101}
-                    )
-                    self.assertEqual(invalid.status_code, 422)
-                    self.assertEqual(
-                        (await client.get("/companion/music/media/unknown")).status_code, 404
-                    )
                     now = datetime.now(UTC)
                     for due in (now - timedelta(minutes=1), now + timedelta(days=731)):
                         invalid = await client.post(

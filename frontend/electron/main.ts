@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, session, Tray, Menu, nativeImage, globalShortcut, Notification, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, session, Tray, Menu, nativeImage, globalShortcut, Notification } from 'electron';
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BackendProcess } from './backend-process';
@@ -9,8 +9,6 @@ import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { CompanionClient } from './companion';
 import { identifier } from './backend-client';
-
-protocol.registerSchemesAsPrivileged([{ scheme: 'herta-media', privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true, corsEnabled: true } }]);
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -94,14 +92,6 @@ if (!app.requestSingleInstanceLock()) {
     session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(
       contents === window?.webContents && permission === 'media' && 'mediaTypes' in details && details.mediaTypes?.every(type => type === 'audio') === true));
     session.defaultSession.setPermissionCheckHandler((contents, permission, _origin, details) => contents === window?.webContents && permission === 'media' && details.mediaType === 'audio');
-    protocol.handle('herta-media', request => {
-      try {
-        const url = new URL(request.url);
-        if (url.hostname !== 'music' || url.search || url.hash) return new Response(null, { status: 404 });
-        const id = identifier(url.pathname.slice(1));
-        return net.fetch(client.endpoint() + '/companion/music/media/' + id, { headers: request.headers, redirect: 'error' });
-      } catch { return new Response(null, { status: 404 }); }
-    });
     window = new BrowserWindow({
       title: 'Herta', width: 1200, height: 800, minWidth: 800, minHeight: 600,
       backgroundColor: '#17181c',
@@ -129,13 +119,6 @@ if (!app.requestSingleInstanceLock()) {
     };
     ipcMain.handle('herta:daily-snapshot', event => { checkSender(event); return daily.snapshot(); });
     ipcMain.handle('herta:daily-action', (event, action) => { checkSender(event); return daily.action(action); });
-    ipcMain.handle('herta:import-music', async event => {
-      checkSender(event);
-      const selection = await dialog.showOpenDialog(window!, { title: '导入本地音乐', properties: ['openFile', 'multiSelections'], filters: [{ name: '音乐', extensions: ['wav', 'mp3', 'ogg', 'flac', 'm4a', 'aac', 'opus'] }] });
-      if (selection.canceled || !selection.filePaths.length) return [];
-      return daily.importTracks(selection.filePaths.slice(0, 200));
-    });
-    ipcMain.handle('herta:playback-report', (event, revision, actual, error) => { checkSender(event); return daily.report(revision, actual, error); });
     ipcMain.handle('herta:voice-status', event => { checkSender(event); return daily.voiceStatus(); });
     ipcMain.handle('herta:synthesize', (event, text) => { checkSender(event); return daily.synthesize(text); });
     ipcMain.handle('herta:transcribe', (event, wav) => { checkSender(event); return daily.transcribe(wav); });

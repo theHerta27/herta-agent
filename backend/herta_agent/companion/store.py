@@ -1,6 +1,5 @@
 """Small SQLite transactions; no model, shell or audio execution in this store."""
 
-import hashlib
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -8,9 +7,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from herta_agent.companion.models import MusicInput, Preferences, ReminderInput
-
-_AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac", ".m4a", ".aac", ".opus"}
+from herta_agent.companion.models import Preferences, ReminderInput
 
 
 def instant(text):
@@ -37,8 +34,6 @@ class CompanionStore:
                     UNIQUE(reminder_id,due_at));
                 CREATE TABLE IF NOT EXISTS memories(
                     id TEXT PRIMARY KEY,text TEXT NOT NULL,status TEXT NOT NULL);
-                CREATE TABLE IF NOT EXISTS tracks(
-                    id TEXT PRIMARY KEY,title TEXT NOT NULL,path TEXT NOT NULL UNIQUE);
             """)
             if "notified" not in {row[1] for row in db.execute("PRAGMA table_info(deliveries)")}:
                 db.execute("ALTER TABLE deliveries ADD COLUMN notified INTEGER NOT NULL DEFAULT 0")
@@ -61,21 +56,11 @@ class CompanionStore:
         db.execute("INSERT OR REPLACE INTO settings VALUES(?,?)", (key, json.dumps(value)))
 
     def _preferences(self, db):
-        return Preferences.model_validate(self._get(db, "preferences", {})).model_dump()
-
-    def _playback(self, db):
-        return self._get(
-            db,
-            "playback",
-            {
-                "revision": 0,
-                "track_id": None,
-                "desired": "stopped",
-                "actual": "stopped",
-                "volume": self._preferences(db)["volume"],
-                "error": "",
-            },
-        )
+        values = self._get(db, "preferences", {})
+        # Compatibility projection only: never reinterpret the retired setting as speech volume.
+        if isinstance(values, dict):
+            values = {key: value for key, value in values.items() if key != "volume"}
+        return Preferences.model_validate(values).model_dump()
 
     def snapshot(self):
         with self.connection() as db:
@@ -90,7 +75,6 @@ class CompanionStore:
                 row["enabled"] = bool(row["enabled"])
             return {
                 "preferences": self._preferences(db),
-                "playback": self._playback(db),
                 "reminders": reminders,
                 "deliveries": [
                     dict(row)
@@ -103,10 +87,6 @@ class CompanionStore:
                     dict(row)
                     for row in db.execute("SELECT * FROM memories ORDER BY rowid DESC LIMIT 100")
                 ],
-                "tracks": [
-                    dict(row)
-                    for row in db.execute("SELECT id,title FROM tracks ORDER BY rowid LIMIT 1000")
-                ],
             }
 
     def update_preferences(self, values):
@@ -114,10 +94,6 @@ class CompanionStore:
             db.execute("BEGIN IMMEDIATE")
             prefs = Preferences.model_validate({**self._preferences(db), **values}).model_dump()
             self._put(db, "preferences", prefs)
-            if "volume" in values:
-                playback = self._playback(db)
-                playback.update(volume=prefs["volume"], revision=playback["revision"] + 1)
-                self._put(db, "playback", playback)
             return prefs
 
     def create_reminder(self, title, due_at, repeat="once"):
@@ -234,67 +210,3 @@ class CompanionStore:
                     "SELECT text FROM memories WHERE status='approved' ORDER BY rowid DESC LIMIT 8"
                 )
             ]
-
-    def import_tracks(self, paths):
-        if not 1 <= len(paths) <= 200:
-            raise ValueError("每次导入1–200首音乐。")
-        rows = []
-        for raw in paths:
-            source = Path(raw)
-            if not source.is_absolute():
-                raise ValueError("音乐路径必须来自文件选择器。")
-            path = source.resolve(strict=True)
-            if not path.is_file() or path.suffix.lower() not in _AUDIO_EXTENSIONS:
-                raise ValueError("请选择本地音频文件。")
-            identifier = hashlib.sha256(str(path).encode()).hexdigest()[:32]
-            rows.append((identifier, path.stem[:200], str(path)))
-        with self.connection() as db:
-            existing = db.execute("SELECT COUNT(*) FROM tracks").fetchone()[0]
-            if existing + len(rows) > 1000:
-                raise ValueError("音乐库最多1000首。")
-            db.executemany("INSERT OR IGNORE INTO tracks VALUES(?,?,?)", rows)
-        return [{"id": row[0], "title": row[1]} for row in rows]
-
-    def media_path(self, identifier):
-        with self.connection() as db:
-            row = db.execute("SELECT path FROM tracks WHERE id=?", (identifier,)).fetchone()
-        if row is None:
-            raise ValueError("音乐不存在，请重新导入。")
-        path = Path(row[0])
-        if path.resolve(strict=True) != path or not path.is_file():
-            raise ValueError("音乐文件已移动或链接发生变化，请重新导入。")
-        return path
-
-    def music_command(self, action, track_id=None, volume=None):
-        request = MusicInput(action=action, track_id=track_id, volume=volume)
-        with self.connection() as db:
-            db.execute("BEGIN IMMEDIATE")
-            playback = self._playback(db)
-            ids = [row[0] for row in db.execute("SELECT id FROM tracks ORDER BY rowid")]
-            if request.action in ("play", "next", "previous"):
-                current = track_id or playback["track_id"] or (ids[0] if ids else None)
-                if current not in ids:
-                    raise ValueError("音乐库为空或歌曲不存在，请先导入音乐。")
-                if request.action in ("next", "previous"):
-                    current = ids[(ids.index(current) + (1 if action == "next" else -1)) % len(ids)]
-                playback.update(track_id=current, desired="playing")
-            elif request.action == "volume":
-                if volume is None:
-                    raise ValueError("请指定0–100音量。")
-                playback["volume"] = volume
-                prefs = self._preferences(db)
-                prefs["volume"] = volume
-                self._put(db, "preferences", prefs)
-            else:
-                playback["desired"] = "paused" if action == "pause" else "stopped"
-            playback.update(revision=playback["revision"] + 1, actual="pending", error="")
-            self._put(db, "playback", playback)
-            return playback
-
-    def report_playback(self, revision, actual, error=""):
-        with self.connection() as db:
-            db.execute("BEGIN IMMEDIATE")
-            playback = self._playback(db)
-            if playback["revision"] == revision:
-                playback.update(actual=actual, error=error[:200])
-                self._put(db, "playback", playback)
