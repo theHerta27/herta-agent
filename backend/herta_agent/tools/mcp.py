@@ -12,7 +12,7 @@ import logging
 import os
 import re
 from collections.abc import AsyncIterator, Collection, Iterator
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 from dataclasses import replace
 from pathlib import Path
 
@@ -82,7 +82,13 @@ class MCPServerConfig(BaseModel):
 
 class MCPConfig(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
-    servers: list[MCPServerConfig] = Field(min_length=1, max_length=1)
+    servers: list[MCPServerConfig] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def unique_servers(self):
+        if len({s.name for s in self.servers}) != len(self.servers):
+            raise ValueError("MCP server names must be unique")
+        return self
 
 
 def load_mcp_config(path: str | Path) -> MCPConfig:
@@ -275,6 +281,20 @@ async def connect_mcp_tools(
     cannot enclose the application's lifespan task. Transport crashes close the
     boundary and fail pending/future calls; ordinary application work continues.
     """
+    if len(config.servers) > 1:
+        async with AsyncExitStack() as stack:
+            specs, reserved = [], set(reserved_names)
+            for server in config.servers:
+                tools = await stack.enter_async_context(
+                    connect_mcp_tools(
+                        MCPConfig(servers=[server]),
+                        reserved_names=reserved,
+                    )
+                )
+                specs.extend(tools)
+                reserved.update(spec.name for spec in tools)
+            yield tuple(specs)
+        return
     ready: asyncio.Future[tuple[ToolSpec, ...]] = asyncio.get_running_loop().create_future()
     stopping = asyncio.Event()
     closed = asyncio.Event()

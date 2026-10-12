@@ -16,7 +16,7 @@ class CredentialAliasTests(unittest.TestCase):
         self.assertNotIn("fixture-private", repr(settings))
         self.assertNotIn("fixture-private", settings.model_dump_json())
 
-    def test_explicit_herta_overrides_alias_and_empty_key_does_not_fallback(self):
+    def test_other_provider_uses_generic_key_and_rejects_empty_generic_key(self):
         with patch.dict(
             os.environ,
             {
@@ -32,7 +32,13 @@ class CredentialAliasTests(unittest.TestCase):
         self.assertEqual(settings.api_key.get_secret_value(), "local")
         with (
             patch.dict(
-                os.environ, {"HERTA_API_KEY": "", "DEEPSEEK_API_KEY": "private"}, clear=True
+                os.environ,
+                {
+                    "HERTA_API_KEY": "",
+                    "DEEPSEEK_API_KEY": "private",
+                    "HERTA_BASE_URL": "http://127.0.0.1:8080/v1",
+                },
+                clear=True,
             ),
             self.assertRaises(AgentError),
         ):

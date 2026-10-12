@@ -11,7 +11,7 @@ from ctypes import wintypes
 from herta_agent.workspace.paths import WorkspaceError
 
 
-def attach_job(process):
+def attach_job(process, *, memory_limit=1024 * 1024 * 1024):
     if os.name != "nt":
         return None
 
@@ -32,7 +32,8 @@ def attach_job(process):
     job = api.CreateJobObjectW(None, None)
     limits = Limits()
     # JOBOBJECT_EXTENDED_LIMIT_INFORMATION, x64 BasicLimitInformation.LimitFlags offset16.
-    ctypes.c_uint32.from_buffer(limits, 16).value = 0x2000  # KILL_ON_JOB_CLOSE
+    ctypes.c_uint32.from_buffer(limits, 16).value = 0x2200  # KILL_ON_JOB_CLOSE + JOB_MEMORY
+    ctypes.c_size_t.from_buffer(limits, 120).value = memory_limit
     if (
         not job
         or not api.SetInformationJobObject(job, 9, ctypes.byref(limits), ctypes.sizeof(limits))

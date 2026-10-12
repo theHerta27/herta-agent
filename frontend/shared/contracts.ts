@@ -1,6 +1,8 @@
 import type { WorkspaceBridge } from './workspace-contracts';
 import type { ProductivityBridge } from './productivity-contracts';
 import type { PersonalBridge } from './personal-contracts';
+import type { QuickBridge } from './quick-contracts';
+import type { MCPBridge, SharingBridge } from './sharing-contracts';
 
 export type BackendStatus = {
   state: 'starting' | 'ready' | 'needs_configuration' | 'unavailable' | 'stopping' | 'stopped';
@@ -9,6 +11,9 @@ export type BackendStatus = {
 };
 
 export interface DesktopBridge {
+  sharing: SharingBridge;
+  mcp: MCPBridge;
+  quick: QuickBridge;
   personal: PersonalBridge;
   workspace: WorkspaceBridge;
   companion: CompanionBridge;
@@ -57,7 +62,7 @@ export interface SettingsApplyResult { settings: PublicSettings; backend: Backen
 export interface CompanionPreferences { nickname: string; auto_read: boolean; allow_tools: boolean; quiet_start: number; quiet_end: number }
 export interface Reminder { id: string; title: string; due_at: string; repeat: 'once' | 'daily' | 'weekly'; enabled: boolean }
 export interface Delivery { id: string; reminder_id: string; title: string; due_at: string; created_at: string; notified: number }
-export interface CompanionMemory { id: string; text: string; status: 'pending' | 'approved' }
+export interface CompanionMemory { id: string; text: string; status: 'pending' | 'approved' | 'disabled' }
 export interface CompanionSnapshot { preferences: CompanionPreferences; reminders: Reminder[]; deliveries: Delivery[]; memories: CompanionMemory[] }
 export type CompanionAction =
   | { kind: 'create_reminder'; title: string; due_at: string; repeat: Reminder['repeat'] }

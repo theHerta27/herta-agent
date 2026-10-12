@@ -12,6 +12,9 @@ import { identifier } from './backend-client';
 import { WorkspaceClient } from './workspace';
 import { ProductivityClient } from './productivity';
 import { PersonalClient } from './personal';
+import { QuickWindow } from './quick-window';
+import { SharingClient } from './sharing';
+import { configureMCPEnvironment, MCPSettings } from './mcp-settings';
 
 const root = resolve(__dirname, '../../..');
 const data = resolve(process.env.HERTA_DESKTOP_DATA_DIR ?? join(root, '.local/desktop'));
@@ -29,6 +32,7 @@ let quitting = false;
 let closing = false;
 let transport: RunTransport | undefined;
 let tray: Tray | undefined;
+let quick: QuickWindow | undefined;
 let dailyTimer: ReturnType<typeof setInterval> | undefined;
 export const client = new BackendClient(() => {
   if (!backend.endpoint || closing) throw new Error('backend_unavailable');
@@ -39,9 +43,13 @@ const workspaceToken = randomBytes(32).toString('hex');
 const workspaceClient = new WorkspaceClient(client.endpoint, workspaceToken);
 const productivity = new ProductivityClient(client.endpoint, workspaceToken);
 const personal = new PersonalClient(client.endpoint, workspaceToken);
+const sharing = new SharingClient(client.endpoint, workspaceToken);
 let workspacePending = 0;
 
-const settings = new DesktopSettings(join(data, 'settings.json'), { ...process.env, HERTA_WORKSPACE_TOKEN: workspaceToken }, {
+const settingsEnv: NodeJS.ProcessEnv = { ...process.env, HERTA_WORKSPACE_TOKEN: workspaceToken };
+const mcpPath = join(data, 'mcp.json');
+configureMCPEnvironment(mcpPath, settingsEnv);
+const settings = new DesktopSettings(join(data, 'settings.json'), settingsEnv, {
   get status() { return backend.status; },
   stop: () => backend.stop(),
   configureEnvironment: env => { if (!closing) backend.configureEnvironment(env); },
@@ -55,6 +63,9 @@ const settings = new DesktopSettings(join(data, 'settings.json'), { ...process.e
     return health.active_runs + (health.workspace_active_jobs ?? 0);
   });
 backend.configureEnvironment(settings.environment());
+const mcp = new MCPSettings(mcpPath, settingsEnv, async () => (await settings.apply(settings.get())).backend, async value => {
+  const choice = await dialog.showMessageBox(window!, { type: 'question', title: '允许启动这些MCP程序？', message: '这些程序将以当前用户权限运行。仅接入白名单中声明只读的工具。', detail: value.servers.map(s => `${s.name}\n程序：${s.command}\n参数：${s.args.join(' ')}\n工具：${s.allowed_tools.join(', ')}`).join('\n\n'), buttons: ['取消', '允许并连接'], defaultId: 0, cancelId: 0 }); return choice.response === 1;
+}, async () => { if (settings.applying || workspacePending || (transport?.activeCount ?? 0) || closing) throw new Error('runs_active'); if (backend.endpoint) { const health = await readHealth(backend.endpoint); if (health.active_runs + (health.workspace_active_jobs ?? 0)) throw new Error('runs_active'); } });
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -71,7 +82,10 @@ if (!app.requestSingleInstanceLock()) {
     closing = true;
     if (dailyTimer) clearInterval(dailyTimer);
     daily.cancelVoice();
+    sharing.cancel();
+    quick?.dispose();
     globalShortcut.unregister('CommandOrControl+Shift+H');
+    globalShortcut.unregister('CommandOrControl+Shift+Space');
     tray?.destroy();
     // stop() normally finishes within 20s + 5s tree kill + 5s pipe drain.
     // A rejected/stalled shutdown must not retain this process's instance lock.
@@ -128,7 +142,7 @@ if (!app.requestSingleInstanceLock()) {
     };
     const workspaceAction = async <T>(event: Electron.IpcMainInvokeEvent, action: () => Promise<T>) => {
       checkSender(event);
-      if (settings.applying || closing) throw new Error('settings_busy');
+      if (settings.applying || mcp.applying || closing) throw new Error('settings_busy');
       workspacePending++;
       try { return await action(); } finally { workspacePending--; }
     };
@@ -171,6 +185,13 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:productivity-snapshot', event => workspaceAction(event, () => productivity.snapshot()));
     ipcMain.handle('herta:personal-snapshot', event => workspaceAction(event, () => personal.snapshot()));
     ipcMain.handle('herta:personal-action', (event, value) => workspaceAction(event, () => personal.action(value)));
+    ipcMain.handle('herta:sharing-clipboard', event => workspaceAction(event, sharing.clipboard));
+    ipcMain.handle('herta:sharing-sources', event => workspaceAction(event, () => sharing.sources()));
+    ipcMain.handle('herta:sharing-capture', (event, id) => workspaceAction(event, () => sharing.capture(id)));
+    ipcMain.handle('herta:sharing-ocr', (event, png) => workspaceAction(event, () => sharing.ocr(png)));
+    ipcMain.handle('herta:sharing-cancel', event => { checkSender(event); sharing.cancel(); });
+    ipcMain.handle('herta:mcp-get', event => { checkSender(event); return mcp.get(); });
+    ipcMain.handle('herta:mcp-apply', (event, value) => { checkSender(event); if (settings.applying || closing) throw new Error('settings_busy'); return mcp.apply(value); });
     ipcMain.handle('herta:productivity-action', (event, value) => workspaceAction(event, () => productivity.action(value)));
     ipcMain.handle('herta:productivity-document', (event, id) => workspaceAction(event, () => productivity.material(id)));
     ipcMain.handle('herta:productivity-history', (event, id) => workspaceAction(event, () => productivity.history(id)));
@@ -230,7 +251,7 @@ if (!app.requestSingleInstanceLock()) {
     }));
     ipcMain.on('herta:subscribe-runs', event => { if (event.senderFrame === window?.webContents.mainFrame) subscribed = true; });
     ipcMain.on('herta:run-ack', (event, batchId) => { if (event.senderFrame === window?.webContents.mainFrame) acknowledgements.get(batchId)?.(); });
-    ipcMain.handle('herta:start-run', (event, request) => { checkSender(event); if (settings.applying || closing) throw new Error('settings_busy'); if (!subscribed) throw new Error('renderer_unavailable'); transport!.start(request); });
+    ipcMain.handle('herta:start-run', (event, request) => { checkSender(event); if (settings.applying || mcp.applying || closing) throw new Error('settings_busy'); if (!subscribed) throw new Error('renderer_unavailable'); transport!.start(request); });
     ipcMain.handle('herta:cancel-request', (event, id) => { checkSender(event); return transport!.cancel(id); });
     const dropStreams = () => { subscribed = false; transport?.dispose(); };
     window.webContents.on('render-process-gone', dropStreams);
@@ -239,13 +260,15 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:create-session', event => { checkSender(event); return client.createSession(); });
     ipcMain.handle('herta:get-session', (event, id, after, limit) => { checkSender(event); return client.getSession(id, after, limit); });
     ipcMain.handle('herta:get-settings', event => { checkSender(event); return settings.get(); });
-    ipcMain.handle('herta:apply-settings', (event, value) => { checkSender(event); return settings.apply(value); });
+    ipcMain.handle('herta:apply-settings', (event, value) => { checkSender(event); if (mcp.applying) throw new Error('settings_busy'); return settings.apply(value); });
     ipcMain.handle('herta:get-run-diagnostics', (event, id) => { checkSender(event); return client.getRunDiagnostics(id); });
     ipcMain.handle('herta:get-run', (event, id) => { checkSender(event); return client.getRun(id); });
     backend.subscribe(status => {
       if (window && !window.isDestroyed()) window.webContents.send('herta:backend-status-changed', status);
     });
     const devUrl = process.env.HERTA_DESKTOP_DEV_URL;
+    quick = new QuickWindow(window, __dirname, devUrl);
+    globalShortcut.register('CommandOrControl+Shift+Space', () => { void quick?.open(); });
     if (devUrl) {
       const url = new URL(devUrl);
       if (url.protocol !== 'http:' || url.hostname !== '127.0.0.1') throw new Error('invalid_dev_url');

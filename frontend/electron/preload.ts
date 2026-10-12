@@ -2,6 +2,20 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendStatus, DesktopBridge, RunPacket } from '../shared/contracts';
 
 const bridge: DesktopBridge = {
+  sharing: {
+    clipboard: () => ipcRenderer.invoke('herta:sharing-clipboard'),
+    sources: () => ipcRenderer.invoke('herta:sharing-sources'),
+    capture: id => ipcRenderer.invoke('herta:sharing-capture', id),
+    ocr: png => ipcRenderer.invoke('herta:sharing-ocr', png),
+    cancel: () => ipcRenderer.invoke('herta:sharing-cancel'),
+  },
+  mcp: { get: () => ipcRenderer.invoke('herta:mcp-get'), apply: value => ipcRenderer.invoke('herta:mcp-apply', value) },
+  quick: {
+    open: () => ipcRenderer.invoke('herta:quick-open'),
+    publish: value => ipcRenderer.invoke('herta:quick-publish', value),
+    onInput: handler => { const listener = (_event: Electron.IpcRendererEvent, value: Parameters<typeof handler>[0]) => handler(value); ipcRenderer.on('herta:quick-request', listener); return () => { ipcRenderer.removeListener('herta:quick-request', listener); }; },
+    respond: (id, error) => ipcRenderer.invoke('herta:quick-response', id, error),
+  },
   personal: {
     snapshot: () => ipcRenderer.invoke('herta:personal-snapshot'),
     action: value => ipcRenderer.invoke('herta:personal-action', value),

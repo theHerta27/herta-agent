@@ -12,6 +12,24 @@ from herta_agent.workspace.service import WorkspaceService
 
 
 class DocumentTests(unittest.IsolatedAsyncioTestCase):
+    async def test_semantic_fragments_preserve_tail_within_local_encoder_input_limit(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        text = "量子" * 400 + "末尾关键知识"
+        (self.root / "long.txt").write_text(text, encoding="utf-8")
+        inputs = []
+        self.d.embedding = SimpleNamespace(fingerprint="fixture")
+
+        def encode(values):
+            inputs.extend(values)
+            return [[1.0, 0.0] for _ in values]
+
+        with patch.object(self.d, "_vectors", side_effect=encode):
+            await self.w.io(self.d.index, self.id, ["long.txt"], semantic=True)
+        self.assertEqual("".join(inputs), text)
+        self.assertLessEqual(max(map(len, inputs)), 300, "BGE的512-token窗口不能静默丢掉片段末尾")
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="Herta 文档 ")
         self.addCleanup(self.temp.cleanup)

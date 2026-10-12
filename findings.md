@@ -159,3 +159,9 @@
 - 原先对.pth头部异常的推测已更正：GPT-SoVITS官方v2ProPlus使用ASCII06；两组权重仅在内存适配并weights_only加载，未修改原始字节。
 - 音色规范目录models/voice/the-herta/v2proplus，原ZIP7成员哈希与整理后文件逐项吻合；参照文本取原文件名，未人工核听；角色推理尚未接入。
 - Windows仅属性目录句柄不阻止替换，实际竞态测试复现；最终使用GENERIC_READ + SHARE_READ + BACKUP_SEMANTICS + OPEN_REPARSE_POINT锁定目录及祖先，测试证明rename被阻止；不得退化为普通路径快照。
+
+## 2026-10-13持续实施
+- V2.2-V2.6功能已接通，仍以Hermes工程结构为参考，Cyrene仅产品启发；无音乐/Live2D/代码协作。
+- 已有角色模型真实CUDA推理通过，所有原始音色权重与录音保留；独立stdio环境采用安全加载。
+- 私人发行目录約12GB，uv启动器必须重新建立为可移动环境，不能只修改pyvenv.cfg；真实移动、取消及桌面重开通过。
+- 仅本地Provider/模型/夹具验收，未进行真实聊天服务或远程Embedding测试。

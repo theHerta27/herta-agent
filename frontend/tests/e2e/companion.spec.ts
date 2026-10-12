@@ -40,7 +40,7 @@ test('legacy data retains reminders, preferences, memory, history and focus with
     await page.getByRole('textbox', { name: '记住一件事' }).fill('学习时喜欢分步解释');
     await page.getByRole('button', { name: '添加记忆' }).click();
     await page.locator('.memory-item').filter({ hasText: '学习时喜欢分步解释' }).getByRole('button', { name: '保存' }).click();
-    await expect(page.locator('.memory-item').filter({ hasText: '学习时喜欢分步解释' })).toContainText('已保存');
+    await expect(page.locator('.memory-item').filter({ hasText: '学习时喜欢分步解释' })).toContainText('已启用');
     await page.evaluate(async () => {
       const snapshot = await window.herta.companion.snapshot();
       await window.herta.companion.action({ kind: 'preferences', value: { ...snapshot.preferences, quiet_start: 0, quiet_end: 0 } });

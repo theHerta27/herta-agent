@@ -56,6 +56,9 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         from herta_agent.companion.speech import SpeechService
 
         app.state.speech = SpeechService(personal=app.state.companion.personal)
+        from herta_agent.desktop.service import DesktopService
+
+        app.state.desktop = DesktopService()
         with app.state.companion.connection() as db:
             new_voice = app.state.companion._get(db, "personal_voice", None) is None
         if new_voice and settings.provider != "demo" and app.state.speech.herta.ready():
@@ -150,6 +153,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
         finally:
             await stop_scheduler(ticker)
             await app.state.speech.shutdown()
+            await app.state.desktop.shutdown()
             # A shutdown timeout must not close clients underneath a still-owned Run.
             if app.state.manager is not None:
                 await app.state.manager.shutdown()
@@ -169,6 +173,9 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
     from herta_agent.companion.personal_router import personal_router
 
     app.include_router(personal_router(settings))
+    from herta_agent.desktop.router import desktop_router
+
+    app.include_router(desktop_router(settings))
 
     @app.exception_handler(WorkspaceError)
     async def workspace_error(request, error):
@@ -203,7 +210,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             "chat_available": manager is not None,
             "rag_available": app.state.rag_available,
             "active_runs": manager.active_count if manager else 0,
-            "workspace_active_jobs": app.state.workspace.active_count,
+            "workspace_active_jobs": app.state.workspace.active_count
+            + app.state.desktop.active_count,
             "embedding_provider": app.state.embedding_provider,
             "embedding_model": app.state.embedding_model,
             "mcp_available": app.state.mcp_available,

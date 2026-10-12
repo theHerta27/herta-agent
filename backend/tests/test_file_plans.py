@@ -12,6 +12,27 @@ from herta_agent.workspace.service import WorkspaceService
 
 
 class FilePlanTests(unittest.IsolatedAsyncioTestCase):
+    async def test_replaced_empty_directory_is_not_deleted_by_undo(self):
+        from herta_agent.workspace.native_io import remove_empty_directory
+
+        plan = self.propose("move")
+        job = self.jobs.confirm(plan["id"], plan["digest"], "create-for-undo")
+        await self.jobs.wait()
+        undo = self.p.preview_undo(job["id"])
+        target = self.root / "文档"
+        displaced = self.root / "original-empty"
+
+        def replacing(path, **options):
+            path.rename(displaced)
+            path.mkdir()  # Simulates a later user's replacement between check and open.
+            return remove_empty_directory(path, **options)
+
+        with patch("herta_agent.workspace.file_jobs.remove_empty_directory", replacing):
+            self.jobs.confirm(undo["id"], undo["digest"], "undo-race")
+            await self.jobs.wait()
+        self.assertTrue(target.is_dir(), "撤销不能删除被用户后来替换的空目录")
+        self.assertTrue(displaced.is_dir())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="Herta 文件执行 ")
         self.addCleanup(self.temp.cleanup)

@@ -12,6 +12,9 @@ import { VoiceInput } from './components/VoiceInput';
 import { WorkspacePanel } from './components/WorkspacePanel';
 import { ProductivityPanel } from './components/ProductivityPanel';
 import { PersonalPanel } from './components/PersonalPanel';
+import { applyQuickInput } from './state/quick-input';
+import { SharingPanel } from './components/SharingPanel';
+import { MCPPanel } from './components/MCPPanel';
 import { AudioControls, DailyContext } from './audio/context';
 import './styles/companion.css';
 
@@ -38,8 +41,14 @@ export function App() {
   const [filesOpen, setFilesOpen] = useState(false);
   const [learningOpen, setLearningOpen] = useState(false);
   const [personalOpen, setPersonalOpen] = useState(false);
+  const [sharingOpen, setSharingOpen] = useState(false);
+  const [mcpOpen, setMCPOpen] = useState(false);
   const spoken = useRef(new Set<string>());
   const [light, setLight] = useState(() => localStorage.getItem('herta-theme') === 'light');
+  useEffect(() => window.herta.quick.onInput(request => {
+    void daily.audio.stopVoice().then(() => applyQuickInput(store, request.input)).then(() => window.herta.quick.respond(request.id)).catch(error => window.herta.quick.respond(request.id, error instanceof Error ? error.message : '提交失败，请检查主窗口。'));
+  }), []);
+  useEffect(() => { void window.herta.quick.publish({ sessionId: state.selected, draft: view.draft, busy, ready: status.state === 'ready', title: state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话', lastReply: [...view.messages].reverse().find(m => m.message.role === 'assistant' && !m.message.tool_calls.length)?.message.content?.slice(0, 1200) ?? '' }); }, [state, view.draft, busy, status.state, view.messages]);
   useEffect(() => { document.documentElement.dataset.theme = light ? 'light' : 'dark'; localStorage.setItem('herta-theme', light ? 'light' : 'dark'); }, [light]);
   useEffect(() => {
     if (status.state === 'ready' || status.state === 'needs_configuration') daily.start();
@@ -47,14 +56,14 @@ export function App() {
     return () => daily.stop();
   }, [status.state]);
   useEffect(() => {
-    if (filesOpen || learningOpen || personalOpen) return;
+    if (filesOpen || learningOpen || personalOpen || sharingOpen) return;
     for (const message of view.messages) {
       if (spoken.current.has(message.message_id)) continue;
       if (view.request?.runId === message.run_id && view.request.phase !== 'done') continue;
       spoken.current.add(message.message_id);
       if (view.request?.phase === 'done' && view.request.runId === message.run_id && message.message.role === 'assistant' && !message.message.tool_calls.length && daily.state.data?.preferences.auto_read && message.message.content) void daily.audio.read(message.message.content);
     }
-  }, [view.messages, view.request?.phase, filesOpen, learningOpen, personalOpen]);
+  }, [view.messages, view.request?.phase, filesOpen, learningOpen, personalOpen, sharingOpen]);
   useLayoutEffect(() => {
     const element = scroll.current;
     if (!element) return;
@@ -79,6 +88,8 @@ export function App() {
   }, []);
 
   return <DailyContext.Provider value={daily}><div className="app-shell">
+    {sharingOpen && <SharingPanel sessionId={state.selected} draft={view.draft} onApply={value => applyQuickInput(store, value)} onClose={() => setSharingOpen(false)} />}
+    {mcpOpen && <MCPPanel onClose={() => setMCPOpen(false)} />}
     {personalOpen && <PersonalPanel runtime={daily} onClose={() => setPersonalOpen(false)} />}
     {settingsOpen && <SettingsDialog backend={status} busy={Object.values(state.views).some(value => store.isBusy(value))} onClose={() => setSettingsOpen(false)} />}
     {filesOpen && <WorkspacePanel onClose={() => setFilesOpen(false)} onDraft={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n\n' + text : text); }} />}
@@ -86,7 +97,7 @@ export function App() {
     <ConversationSidebar sessions={state.sessions.map(s => ({ ...s, active: store.isBusy(store.view(s.session_id)) }))} selected={state.selected} onSelect={id => store.select(id)} onNew={() => store.select(null)}
       collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} light={light} onTheme={() => setLight(!light)} />
     <main className="workspace">
-      <header className="chat-header"><strong>{state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话'}</strong><div className="header-actions"><button disabled={!['ready', 'needs_configuration'].includes(status.state)} onClick={() => { void daily.audio.stopVoice(); setFilesOpen(true); }}>文件</button><button disabled={!['ready', 'needs_configuration'].includes(status.state)} onClick={() => { void daily.audio.stopVoice(); setLearningOpen(true); }}>学习</button><button onClick={() => { void daily.audio.stopVoice(); setPersonalOpen(true); }}>个性</button><button onClick={() => setDailyOpen(!dailyOpen)} aria-expanded={dailyOpen}>日常</button><button onClick={() => setSettingsOpen(true)}>设置</button><span className="backend-status" role="status" aria-live="polite" data-state={status.state}>{labels[status.state]}</span></div></header>
+      <header className="chat-header"><strong>{state.sessions.find(s => s.session_id === state.selected)?.title ?? '新对话'}</strong><div className="header-actions"><button disabled={!['ready', 'needs_configuration'].includes(status.state)} onClick={() => { void daily.audio.stopVoice(); setFilesOpen(true); }}>文件</button><button disabled={!['ready', 'needs_configuration'].includes(status.state)} onClick={() => { void daily.audio.stopVoice(); setLearningOpen(true); }}>学习</button><button onClick={() => { void daily.audio.stopVoice(); setPersonalOpen(true); }}>个性</button><button onClick={() => setDailyOpen(!dailyOpen)} aria-expanded={dailyOpen}>日常</button><button onClick={() => { void daily.audio.stopVoice(); setSharingOpen(true); }}>附加</button><button onClick={() => void window.herta.quick.open()}>快捷</button><button onClick={() => setMCPOpen(true)}>扩展</button><button onClick={() => setSettingsOpen(true)}>设置</button><span className="backend-status" role="status" aria-live="polite" data-state={status.state}>{labels[status.state]}</span></div></header>
       {status.state === 'needs_configuration' && <p className="notice">聊天模型未配置；历史仍可阅读。请打开设置填写模型连接，并通过启动环境配置密钥。</p>}
       {status.state === 'unavailable' && <p className="notice error">{status.reason === 'start_failed' ? 'Python 后端启动失败，请检查本地环境后重新打开应用。' : '后端连接不可用，请重新打开应用。'}</p>}
       {state.error && <p className="notice error">{state.error}<button onClick={() => void store.refresh()}>重试列表</button></p>}
@@ -99,7 +110,7 @@ export function App() {
         {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} onRetryDiagnostics={() => state.selected && void store.load(state.selected)} />}
       </div>
       {showLatest && <button className="latest" onClick={() => { following.current = true; scroll.current!.scrollTop = scroll.current!.scrollHeight; }}>回到最新 ↓</button>}
-      <div className="voice-row"><VoiceInput runtime={daily} disabled={filesOpen || learningOpen || personalOpen || busy || status.state !== 'ready'} sessionKey={state.selected ?? 'draft'} onText={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n' + text : text); }} /><AudioControls /></div>
+      <div className="voice-row"><VoiceInput runtime={daily} disabled={filesOpen || learningOpen || personalOpen || sharingOpen || busy || status.state !== 'ready'} sessionKey={state.selected ?? 'draft'} onText={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n' + text : text); }} /><AudioControls /></div>
       <Composer value={view.draft} onChange={text => store.setDraft(text)} onSend={() => { void daily.audio.stopVoice(); void store.send(); }} onStop={() => { void daily.audio.stopVoice(); void store.stop(); }} busy={busy} cancelling={view.request?.phase === 'cancelling' || view.request?.phase === 'reconciling'} disabled={status.state !== 'ready' || view.loading || !view.loaded} />
     </main>
     {dailyOpen && <CompanionPanel runtime={daily} onClose={() => setDailyOpen(false)} />}

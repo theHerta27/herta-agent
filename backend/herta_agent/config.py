@@ -28,10 +28,17 @@ class ProviderSettings(BaseModel):
     @classmethod
     def from_env(cls) -> "ProviderSettings":
         try:
+            base_url = os.environ.get("HERTA_BASE_URL", "https://api.deepseek.com")
+            generic_key = os.environ.get("HERTA_API_KEY", "").strip()
+            key = (
+                os.environ.get("DEEPSEEK_API_KEY", "").strip() or generic_key
+                if urlsplit(base_url.strip()).hostname == "api.deepseek.com"
+                else generic_key
+            )
             return cls(
-                base_url=os.environ.get("HERTA_BASE_URL", "https://api.deepseek.com"),
+                base_url=base_url,
                 model=os.environ.get("HERTA_MODEL", "deepseek-flash"),
-                api_key=os.environ.get("HERTA_API_KEY", os.environ.get("DEEPSEEK_API_KEY", "")),
+                api_key=key,
             )
         except (KeyError, ValueError):
             raise AgentError(

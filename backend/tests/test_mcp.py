@@ -67,6 +67,20 @@ class MCPConfigTests(unittest.TestCase):
 
 
 class MCPIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_multiple_explicit_readonly_servers_and_cross_server_name_conflicts(self):
+        a = config("probe_read", script=FIXTURE).servers[0].model_dump()
+        b = {**a, "name": "second", "allowed_tools": ["probe_slow"]}
+        both = MCPConfig.model_validate({"servers": [a, b]})
+        async with connect_mcp_tools(both) as specs:
+            self.assertEqual([s.name for s in specs], ["probe_read", "probe_slow"])
+            self.assertIn("fixture", str(await specs[0].handler(specs[0].parameters())))
+        duplicate = MCPConfig.model_validate(
+            {"servers": [a, {**b, "allowed_tools": ["probe_read"]}]}
+        )
+        with self.assertRaises(MCPAdapterError):
+            async with connect_mcp_tools(duplicate):
+                self.fail("duplicate tool authority was exposed")
+
     async def test_real_stdio_discovery_schema_executor_and_closed_lifecycle(self):
         async with connect_mcp_tools(config("herta_demo_status", "herta_demo_fact")) as specs:
             registry = ToolRegistry()

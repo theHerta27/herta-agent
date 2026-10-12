@@ -224,7 +224,9 @@ class FileJobs:
             if kind == "remove_directory":
                 if identity(target.lstat()) != operation["identity"]:
                     raise WorkspaceError("目录被替换，不能撤销。")
-                remove_empty_directory(target)
+                remove_empty_directory(
+                    target, directory_handle=handles[target.parent], expected=operation["identity"]
+                )
                 return {"removed": True}
             if kind == "publish":
                 for proof in operation["proofs"]:

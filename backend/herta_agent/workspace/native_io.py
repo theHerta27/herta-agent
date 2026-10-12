@@ -244,19 +244,11 @@ def delete_open_file(stream):
         raise native_error()
 
 
-def remove_empty_directory(path):
-    kernel = api()
-    handle = kernel.CreateFileW(str(path), 0x80010000, 1, None, 3, 0x02200000, None)
-    if handle == ctypes.c_void_p(-1).value:
-        raise native_error()
-    try:
-        with os.scandir(path) as entries:
-            if next(entries, None) is not None:
-                raise WorkspaceError("目录已有其他内容，不能撤销创建。")
+def remove_empty_directory(path, *, directory_handle, expected):
+    with open_file(path, directory=True, delete=True, directory_handle=directory_handle) as handle:
+        if directory_identity(handle) != expected:
+            raise WorkspaceError("目录被替换，不能撤销创建。")
         info = ctypes.c_ubyte(1)
-        if not kernel.SetFileInformationByHandle(
-            handle, 4, ctypes.byref(info), ctypes.sizeof(info)
-        ):
+        # Windows atomically refuses a nonempty directory. No path-based second lookup.
+        if not api().SetFileInformationByHandle(handle, 4, ctypes.byref(info), ctypes.sizeof(info)):
             raise native_error()
-    finally:
-        kernel.CloseHandle(handle)

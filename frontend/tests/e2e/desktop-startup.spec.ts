@@ -55,7 +55,7 @@ test('three real window cycles from outside cwd; owned Python exits and SQLite r
     expect(await page.evaluate(() => ({
       node: typeof (window as unknown as { require?: unknown }).require,
       bridge: Object.keys(window.herta),
-    }))).toEqual({ node: 'undefined', bridge: ['personal', 'productivity', 'workspace', 'companion', 'getSettings', 'applySettings', 'getRunDiagnostics', 'getBackendStatus', 'listSessions', 'createSession', 'getSession', 'getRun', 'startRun', 'cancelRequest', 'onRunEvents', 'onBackendStatus'] });
+    }))).toEqual({ node: 'undefined', bridge: ['sharing', 'mcp', 'quick', 'personal', 'productivity', 'workspace', 'companion', 'getSettings', 'applySettings', 'getRunDiagnostics', 'getBackendStatus', 'listSessions', 'createSession', 'getSession', 'getRun', 'startRun', 'cancelRequest', 'onRunEvents', 'onBackendStatus'] });
     if (i === 0) await page.screenshot({ path: join(root, '.local/phase6-stage1-window.png') });
     const exited = desktop!.waitForEvent('close');
     await desktop!.evaluate(({ app }) => app.quit());

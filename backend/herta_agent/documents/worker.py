@@ -181,7 +181,11 @@ def main():
             {**file, "data": base64.b64decode(file["data"], validate=True)}
             for file in request["files"]
         ]
-        if request["kind"] == "read":
+        if request["kind"] == "ocr":
+            from herta_agent.desktop.ocr import recognize
+
+            result = recognize(files[0]["data"])
+        elif request["kind"] == "read":
             result = extract(files[0]["data"], files[0]["suffix"])
         else:
             data = transform(files, request)

@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 export const frontend = fileURLToPath(new URL('..', import.meta.url));
 export async function buildMain() {
   await build({
-    absWorkingDir: frontend, entryPoints: ['electron/main.ts', 'electron/preload.ts'],
+    absWorkingDir: frontend, entryPoints: ['electron/main.ts', 'electron/preload.ts', 'electron/quick-preload.ts'],
     bundle: true, platform: 'node', format: 'cjs', target: 'node22',
     external: ['electron'], outdir: 'dist/electron', outExtension: { '.js': '.cjs' },
   });

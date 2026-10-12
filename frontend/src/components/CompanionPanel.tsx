@@ -45,8 +45,8 @@ export function CompanionPanel({ runtime, onClose }: { runtime: CompanionRuntime
       <p className="daily-note">关闭窗口后在托盘继续提醒。完全退出期间不运行，重开后显示错过的提醒。</p></section>
       <section className="daily-section"><h3>偏好</h3><PreferencesForm value={data.preferences} runtime={runtime} /></section>
       <section className="daily-section"><h3>记忆</h3><form className="daily-form" onSubmit={event => { event.preventDefault(); void runtime.action({ kind: 'memory', text: memory }).then(ok => { if (ok) setMemory(''); }); }}><input aria-label="记住一件事" value={memory} maxLength={200} placeholder="希望黑塔记住的一件事" onChange={event => setMemory(event.target.value)} /><button disabled={!memory.trim()}>添加记忆</button></form>
-        {data.memories.map(item => <div className="memory-item" key={item.id}><p>{item.text}</p><div><small>{item.status === 'pending' ? '待确认' : '已保存'}</small>{item.status === 'pending' && <button onClick={() => void runtime.action({ kind: 'approve_memory', id: item.id })}>保存</button>}<button onClick={() => void runtime.action({ kind: 'delete_memory', id: item.id })}>删除</button></div></div>)}
-        <p className="daily-note">只有你保存的记忆会用于后续回答。删除后不再加入新一轮对话。</p>
+        {data.memories.map(item => <div className="memory-item" key={item.id}><p>{item.text}</p><div><small>{item.status === 'pending' ? '待确认' : item.status === 'disabled' ? '已停用' : '已启用'}</small>{item.status === 'pending' && <button onClick={() => void runtime.action({ kind: 'approve_memory', id: item.id })}>保存</button>}<button onClick={() => void runtime.action({ kind: 'delete_memory', id: item.id })}>删除</button></div></div>)}
+        <p className="daily-note">只有已保存且启用的记忆会用于后续回答。修改、来源和停用管理在“个性”面板；删除后不再加入新一轮对话。</p>
       </section>
       <p className="daily-note voice-detail">{voice.detail} · Ctrl+Shift+H 唤出 Herta</p>
     </>}

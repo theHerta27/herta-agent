@@ -22,7 +22,7 @@ try {
         & git -C $upstreamPath checkout 1b47ca07ef43a284e0b8bd7f29d3e1e3ff76082a
         if ($LASTEXITCODE -ne 0) { throw 'Pinned checkout failed.' }
     }
-    $sourceRevision = & git -C $upstreamPath rev-parse HEAD
+    $sourceRevision = if (Test-Path -LiteralPath (Join-Path $upstreamPath '.git')) { & git -C $upstreamPath rev-parse HEAD } else { Get-Content -LiteralPath (Join-Path $runtimeRoot 'source-revision.txt') -Raw }
     if ($sourceRevision.Trim() -ne '1b47ca07ef43a284e0b8bd7f29d3e1e3ff76082a') { throw 'Unexpected upstream source revision.' }
     if (-not $VerifyOnly) {
         & $runtimePython (Join-Path $PSScriptRoot 'gpt_sovits\patch_upstream.py')
