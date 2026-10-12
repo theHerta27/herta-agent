@@ -98,11 +98,11 @@ Key 仅存在于主进程/后端环境，不进入 renderer、公共设置、索
 
 ## 可选只读 MCP
 
-官方 MCP SDK 的 stdio 适配器将白名单工具加入同一个 Registry/Executor。首版仅支持一个显式配置的本机 Server，要求绝对可执行路径、工具白名单及只读声明；副作用工具直接拒绝。示例和配置步骤见 [MCP 示例](examples/mcp/README.md)。可选扩展启动失败或通信损坏不会关闭普通聊天服务。
+官方 MCP SDK 的 stdio 适配器将白名单工具加入同一个 Registry/Executor。当前支持最多3个显式配置的本机 Server，在“扩展”面板审阅并原生确认；要求绝对可执行路径、工具白名单及只读声明，副作用工具直接拒绝，失败恢复旧配置。示例见 [MCP 示例](examples/mcp/README.md)。可选扩展启动失败或通信损坏不会关闭普通聊天服务。
 
 ## 本地验收
 
-当前提供语音、提醒、专注、记忆与只读文件/空间工作台。最新266项后端、52项前端单元、16项Electron全部通过，见[工作台验收报告](docs/READONLY_WORKBENCH_ACCEPTANCE.md)。旧SQLite无需清空，旧元数据不会触发播放，原音频文件保留。
+V2.2–V2.6本机版已完成文件执行、文档/知识、学习任务、人格/记忆/Skills、大黑塔语音、快捷共享/OCR与多MCP。最新331项后端、68项前端单元、24项Electron全部通过；一次独立审查的重要问题已修复，见[完整交付报告](docs/PRODUCT_COMPLETION_REPORT.md)。旧SQLite无需清空，原音频文件保留。私人便携目录为`release/Herta-20261012-portable`，默认使用新数据目录；继续原会话请使用项目根目录启动入口。
 
 清理版基线为247项后端、49项前端单元和14项Electron E2E，见[清理验收报告](docs/MUSIC_REMOVAL_ACCEPTANCE.md)。E2E 使用真实 Electron/Python/HTTP/SQLite 和离线模型夹具，不冒充真实回答质量。
 
