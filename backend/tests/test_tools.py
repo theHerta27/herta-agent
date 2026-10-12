@@ -9,6 +9,28 @@ from herta_agent.tools.registry import ToolRegistry, ToolSpec
 
 
 class ToolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_tool_visibility_is_dynamic_and_does_not_grant_permissions(self):
+        enabled = False
+        registry = ToolRegistry()
+        registry.register(
+            ToolSpec(
+                "scoped",
+                "Scoped",
+                EchoParameters,
+                echo,
+                permission="side_effect",
+                available=lambda: enabled,
+            )
+        )
+        self.assertEqual(registry.definitions(), ())
+        self.assertEqual(registry.names(), ("scoped",))
+        enabled = True
+        self.assertEqual(registry.definitions()[0]["function"]["name"], "scoped")
+        result = await ToolExecutor(registry).execute(
+            ToolCall(id="hidden", name="scoped", arguments='{"text":"x"}')
+        )
+        self.assertEqual(result.error.code, "permission_denied")
+
     async def test_schema_duplicate_and_success(self):
         registry = echo_registry()
         schema = registry.definitions()[0]["function"]["parameters"]

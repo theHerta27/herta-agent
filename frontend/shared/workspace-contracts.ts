@@ -9,6 +9,19 @@ export interface SpaceReport {
   hash_limited: boolean; limits: string; suggestions: string[];
 }
 export interface AnalysisJob { id: string; root_id: string; created_at: string; status: 'running' | 'completed' | 'cancelled' | 'interrupted' | 'failed'; report: SpaceReport | null; error: string | null }
+export interface FileOperation { kind: 'copy' | 'move' | 'mkdir'; source?: string; target: string }
+export interface FilePlan {
+  id: string; root_id: string; root_label: string; created_at: string; digest: string;
+  operations: { kind: string; source?: string; target: string }[]; conflicts: string[]; undo_of?: string | null;
+}
+export interface FileJob {
+  id: string; root_id: string; status: 'queued' | 'running' | 'completed' | 'cancelled' | 'failed' | 'interrupted' | 'undone';
+  created_at: string; error: string | null; plan: FilePlan;
+  receipts: { ordinal: number; state: 'intent' | 'done'; data: { operation: { kind: string; source?: string; target: string } } }[];
+}
+export interface DocumentPreview { path: string; source_hash: string; units: number; truncated: boolean; warnings: string[]; segments: { label: string; citation: string; text: string }[] }
+export interface KnowledgeResults { results: { path: string; citation: string; text: string; score: number }[]; mode: string; warning: string | null; note: string }
+export interface DocumentTransform { paths: string[]; kind: 'merge' | 'split' | 'rotate' | 'images' | 'docx_pdf'; target: string; pages: number[]; rotation: number }
 export interface WorkspaceBridge {
   roots(): Promise<WorkspaceRoot[]>;
   chooseRoot(): Promise<WorkspaceRoot | null>;
@@ -20,4 +33,19 @@ export interface WorkspaceBridge {
   jobs(id: string): Promise<AnalysisJob[]>;
   start(id: string, duplicates: boolean): Promise<AnalysisJob>;
   cancel(id: string): Promise<void>;
+  propose(id: string, operations: FileOperation[]): Promise<FilePlan>;
+  plans(id: string): Promise<FilePlan[]>;
+  confirm(id: string, digest: string): Promise<FileJob | null>;
+  fileJobs(id: string): Promise<FileJob[]>;
+  stopFile(id: string): Promise<void>;
+  undo(id: string): Promise<FilePlan>;
+  document(id: string, path: string): Promise<DocumentPreview>;
+  indexDocuments(id: string, paths: string[], semantic: boolean): Promise<{ documents: number; chunks: number; mode: string; warnings: string[] }>;
+  knowledge(id: string, query: string, semantic: boolean): Promise<KnowledgeResults>;
+  transform(id: string, request: DocumentTransform): Promise<FilePlan>;
+  bindVault(id: string): Promise<{ vault_root_id: string }>;
+  documentSettings(): Promise<{ vault_root_id: string | null }>;
+  note(id: string, target: string, text: string): Promise<FilePlan>;
+  indexedDocuments(id: string): Promise<{ path: string; chunks: number; source_hash: string }[]>;
+  forgetDocument(id: string, path: string): Promise<void>;
 }

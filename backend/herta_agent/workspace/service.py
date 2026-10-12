@@ -38,11 +38,22 @@ class WorkspaceService:
             UPDATE jobs SET status='interrupted' WHERE status='running';
         """)
         self.db.commit()
+        if "revision" not in {row[1] for row in self.db.execute("PRAGMA table_info(roots)")}:
+            self.db.execute("ALTER TABLE roots ADD COLUMN revision INTEGER NOT NULL DEFAULT 1")
+            self.db.commit()
         self.task = None
         self.stop = None
         self.job_id = None
         self.reads = {}
         self.closing = False
+        from .file_jobs import FileJobs
+        from .file_plans import FilePlans
+
+        self.plans = FilePlans(self)
+        self.files = FileJobs(self, self.plans)
+        from herta_agent.documents.service import DocumentService
+
+        self.documents = DocumentService(self)
 
     def close(self):
         self.db.close()
@@ -77,7 +88,8 @@ class WorkspaceService:
         # A regrant is a new scope; never expose an earlier directory's reports.
         root_id = uuid4().hex
         self._write(
-            "INSERT OR REPLACE INTO roots VALUES(?,?,?,?,1,0)",
+            "INSERT OR REPLACE INTO roots(id,path,label,identity,active,shared) "
+            "VALUES(?,?,?,?,1,0)",
             (root_id, str(path), path.name or path.anchor, identity(path.stat())),
         )
         return {"id": root_id, "label": path.name or path.anchor, "shared": False}
@@ -116,11 +128,14 @@ class WorkspaceService:
         self.root(root_id)
         if not isinstance(enabled, bool):
             raise WorkspaceError("共享选项无效。")
-        self._write("UPDATE roots SET shared=? WHERE id=?", (int(enabled), root_id))
+        self._write(
+            "UPDATE roots SET shared=?,revision=revision+1 WHERE id=?", (int(enabled), root_id)
+        )
         return next(r for r in self.roots() if r["id"] == root_id)
 
     def revoke(self, root_id):
-        self._write("UPDATE roots SET active=0,shared=0 WHERE id=?", (root_id,))
+        self._write("UPDATE roots SET active=0,shared=0,revision=revision+1 WHERE id=?", (root_id,))
+        self.files.cancel_root(root_id)
         if self.job_id and any(j["id"] == self.job_id for j in self.jobs(root_id, validate=False)):
             self.stop.set()
         for cancel, scope in self.reads.values():
@@ -136,6 +151,8 @@ class WorkspaceService:
         """Own each worker until it exits, even if its caller times out/cancels."""
         if self.closing:
             raise WorkspaceError("文件工作台正在关闭。")
+        if self.files.active_count:
+            raise WorkspaceError("文件修改正在执行，请稍后读取。")
         cancel = threading.Event()
         task = asyncio.create_task(
             asyncio.to_thread(function, root_id, *args, cancel=cancel, **kwargs)
@@ -275,8 +292,10 @@ class WorkspaceService:
 
     @property
     def active_count(self):
-        return int(self.task is not None and not self.task.done()) + sum(
-            not t.done() for t in self.reads
+        return (
+            self.files.active_count
+            + int(self.task is not None and not self.task.done())
+            + sum(not t.done() for t in self.reads)
         )
 
     def jobs(self, root_id, *, validate=True):
@@ -289,7 +308,11 @@ class WorkspaceService:
 
     def start_analysis(self, root_id, duplicates=False):
         self.root(root_id)
-        if self.closing or (self.task is not None and not self.task.done()):
+        if (
+            self.closing
+            or self.files.active_count
+            or (self.task is not None and not self.task.done())
+        ):
             raise WorkspaceError("已有分析正在进行，请先停止或等待完成。")
         job_id = uuid4().hex
         self.stop = threading.Event()
@@ -331,6 +354,7 @@ class WorkspaceService:
 
     async def shutdown(self):
         self.closing = True
+        await self.files.shutdown()
         if self.stop:
             self.stop.set()
         for cancel, _scope in self.reads.values():

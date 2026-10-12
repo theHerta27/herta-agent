@@ -21,6 +21,7 @@ class ToolSpec:
     handler: Callable[[ToolParameters], Awaitable[object]]
     timeout: float | None = None
     permission: Literal["read_only", "side_effect"] = "read_only"
+    available: Callable[[], bool] | None = None
 
     def __post_init__(self) -> None:
         if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", self.name):
@@ -29,6 +30,8 @@ class ToolSpec:
             raise ValueError("A tool requires a description and ToolParameters model")
         if self.permission not in ("read_only", "side_effect"):
             raise ValueError("Invalid tool permission")
+        if self.available is not None and not callable(self.available):
+            raise ValueError("Tool availability must be callable")
         if self.timeout is not None and (
             isinstance(self.timeout, bool)
             or not isinstance(self.timeout, (int, float))
@@ -50,6 +53,9 @@ class ToolRegistry:
     def get(self, name: str) -> ToolSpec | None:
         return self._tools.get(name)
 
+    def names(self) -> tuple[str, ...]:
+        return tuple(self._tools)
+
     def definitions(self) -> tuple[dict, ...]:
         return tuple(
             {
@@ -61,4 +67,5 @@ class ToolRegistry:
                 },
             }
             for spec in self._tools.values()
+            if spec.available is None or spec.available()
         )

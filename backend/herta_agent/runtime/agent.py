@@ -63,11 +63,11 @@ class Agent:
             context_builder if context_builder is not None else StaticContextBuilder()
         )
 
-    async def _request(self, messages, sink, step, message_id):
+    async def _request(self, messages, sink, step, message_id, tools):
         if not self.streaming:
-            return await self.provider.complete(messages, tools=self.registry.definitions())
+            return await self.provider.complete(messages, tools=tools)
         response = None
-        stream = self.provider.stream(messages, tools=self.registry.definitions())
+        stream = self.provider.stream(messages, tools=tools)
         cleanup = (
             aclosing(stream) if callable(getattr(stream, "aclose", None)) else nullcontext(stream)
         )
@@ -117,9 +117,8 @@ class Agent:
             for step in range(1, self.settings.max_steps + 1):
                 await asyncio.sleep(0)  # Cancellation checkpoint even for immediate providers.
                 message_id = uuid4().hex
-                package = self.context_engine.prepare(
-                    session.history, context, tools=self.registry.definitions()
-                )
+                tools = self.registry.definitions()
+                package = self.context_engine.prepare(session.history, context, tools=tools)
                 record_context = getattr(turn, "record_context", None)
                 if record_context is not None:
                     await record_context(package, step)
@@ -135,7 +134,7 @@ class Agent:
                 await sink.emit(RuntimeEvent(type="llm.started", step=step, message_id=message_id))
                 try:
                     async with asyncio.timeout(self.settings.request_timeout):
-                        response = await self._request(messages, sink, step, message_id)
+                        response = await self._request(messages, sink, step, message_id, tools)
                 except TimeoutError:
                     raise ModelTimeoutError("模型请求超过本轮设置的时间限制。") from None
 

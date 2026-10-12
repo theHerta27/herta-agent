@@ -7,10 +7,10 @@ from .paths import WorkspaceError, check_chain
 
 
 @contextmanager
-def directory_guard(path):
+def directory_guard(path, *, writable_children=False):
     if os.name != "nt":
         check_chain(path)
-        yield
+        yield None
         return
     import ctypes
     from ctypes import wintypes
@@ -48,9 +48,11 @@ def directory_guard(path):
     try:
         for part in reversed((path, *path.parents)):
             # OPEN_EXISTING + BACKUP_SEMANTICS + OPEN_REPARSE_POINT.
-            # Share reads only: reject directory mutation and rename/replacement
-            # during enumeration. This does not prevent writes to child files.
-            handle = api.CreateFileW(str(part), 0x80000000, 0x1, None, 3, 0x02200000, None)
+            # Read-only enumeration denies directory mutation. File jobs also
+            # share writes for the native rename target lookup, bind leaf IO to
+            # this handle, and still deny deletion/replacement of ancestors.
+            share = 3 if writable_children else 1
+            handle = api.CreateFileW(str(part), 0x80000000, share, None, 3, 0x02200000, None)
             if handle == ctypes.c_void_p(-1).value:
                 raise WorkspaceError("目录不可访问或正在变化，请重试。")
             handles.append(handle)
@@ -59,7 +61,7 @@ def directory_guard(path):
                 raise WorkspaceError("无法验证目录句柄。")
             if info.attributes & 0x400 or not info.attributes & 0x10:
                 raise WorkspaceError("不读取符号链接或重解析点。")
-        yield
+        yield handles[-1]
     finally:
         for handle in reversed(handles):
             api.CloseHandle(handle)

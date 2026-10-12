@@ -195,7 +195,14 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
         self.service.share(self.id, False)
         with self.assertRaises(WorkspaceError):
             await tool.handler(args)
-        self.assertTrue(all(s.permission == "read_only" for s in specs.values()))
+        self.assertTrue(
+            all(
+                s.permission == "read_only"
+                for name, s in specs.items()
+                if name != "propose_file_plan"
+            )
+        )
+        self.assertEqual(specs["propose_file_plan"].permission, "side_effect")
 
     async def test_revocation_during_tool_read_suppresses_late_result(self):
         import asyncio

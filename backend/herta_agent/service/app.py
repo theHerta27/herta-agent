@@ -63,7 +63,8 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
             daily_specs, daily_policy = companion_tools(app.state.companion)
             for spec in daily_specs:
                 registry.register(spec)
-            for spec in workspace_tools(app.state.workspace):
+            workspace_specs = workspace_tools(app.state.workspace)
+            for spec in workspace_specs:
                 registry.register(spec)
             unavailable = RagError("index_missing", "知识检索未配置。")
             if selected is None and settings.provider == "demo":
@@ -106,7 +107,7 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     specs = await mcp_stack.enter_async_context(
                         connect_mcp_tools(
                             config,
-                            reserved_names=[d["function"]["name"] for d in registry.definitions()],
+                            reserved_names=registry.names(),
                         )
                     )
                     for spec in specs:
@@ -123,7 +124,13 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                         PersonaContextBuilder(settings.soul_path), app.state.companion
                     ),
                     streaming=callable(getattr(selected, "stream", None)),
-                    tool_policy=daily_policy,
+                    tool_policy=lambda spec: (
+                        daily_policy(spec)
+                        or any(
+                            spec is trusted and trusted.name == "propose_file_plan"
+                            for trusted in workspace_specs
+                        )
+                    ),
                 )
                 app.state.manager = RunManager(store, agent, settings)
             yield

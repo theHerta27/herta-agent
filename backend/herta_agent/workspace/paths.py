@@ -110,7 +110,7 @@ def relative_parts(value):
         not p
         or p in {".", ".."}
         or p[-1] in " ."
-        or any(ord(c) < 32 for c in p)
+        or any(ord(c) < 32 or c in '<>"|?*' for c in p)
         or re.fullmatch(r"(?i)(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?", p)
         for p in parts
     ):

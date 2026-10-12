@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AnalysisJob, FileListing, TextPreview, WorkspaceRoot } from '../../shared/workspace-contracts';
+import type { AnalysisJob, FileListing, TextPreview, WorkspaceRoot, FilePlan } from '../../shared/workspace-contracts';
 import '../styles/files.css';
+import { FileActions } from './FileActions';
+import { DocumentsPanel } from './DocumentsPanel';
 
 const bridge = window.herta.workspace;
 const hints: Record<string, string> = { folder: '文件夹', file: '文件', project: '工程 · 整体保留', cache: '缓存 · 仅统计', protected: '受保护', link: '链接 · 不读取', shortcut: '快捷方式' };
@@ -30,7 +32,7 @@ export function WorkspacePanel({ onClose, onDraft }: { onClose: () => void; onDr
   };
   const root = roots.find(r => r.id === selected);
   return <dialog className="file-workbench" ref={dialog} onCancel={onClose} aria-labelledby="files-title">
-    <header><div><h2 id="files-title">文件工作台</h2><p>浏览资料，了解占用。此版本只读取文件。</p></div><button onClick={onClose}>关闭文件工作台</button></header>
+    <header><div><h2 id="files-title">文件工作台</h2><p>浏览资料，了解占用；审阅并确认具体文件方案。</p></div><button onClick={onClose}>关闭文件工作台</button></header>
     <div className="file-layout"><aside className="file-roots"><button onClick={() => void choose()} disabled={choosing}>{choosing ? '正在选择…' : '选择目录'}</button><p>本机授权目录</p>
       {roots.map(r => <button key={r.id} aria-pressed={r.id === selected} onClick={() => setSelected(r.id)}>{r.label}<small>{r.shared ? '聊天可读取' : '仅本地查看'}</small></button>)}
       {!roots.length && <p>选择一个本机目录开始。</p>}{error && <p className="error" role="alert">{error}</p>}
@@ -41,6 +43,8 @@ export function WorkspacePanel({ onClose, onDraft }: { onClose: () => void; onDr
 function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceRoot; onRoot: (root: WorkspaceRoot) => void; onRevoke: () => void; onDraft: (text: string) => void }) {
   const live = useRef(true), revision = useRef(0);
   const [path, setPath] = useState(''), [query, setQuery] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [incomingPlan, setIncomingPlan] = useState<FilePlan>();
   const [listing, setListing] = useState<FileListing>(), [preview, setPreview] = useState<TextPreview>();
   const [jobs, setJobs] = useState<AnalysisJob[]>([]), [jobId, setJobId] = useState('');
   const [duplicates, setDuplicates] = useState(false), [error, setError] = useState(''), [pending, setPending] = useState(false);
@@ -50,7 +54,7 @@ function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceR
     finally { if (live.current) setPending(false); }
   };
   const browse = async (next: string) => {
-    const version = ++revision.current; setPreview(undefined);
+    const version = ++revision.current; setPreview(undefined); setSelectedFiles([]);
     const value = await bridge.list(root.id, next);
     if (live.current && version === revision.current) { setListing(value); setPath(next); setQuery(''); }
   };
@@ -72,7 +76,7 @@ function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceR
     {error && <p className="error" role="alert">{error}</p>}
     <div className="file-columns"><section className="file-browser" aria-label="目录浏览"><div className="file-breadcrumb"><button disabled={pending} onClick={() => void action(() => browse(''))}>{root.label}</button><span> / {path || '根目录'}</span>{path && <button disabled={pending} onClick={() => void action(() => browse(path.split('/').slice(0, -1).join('/')))}>上一级</button>}</div>
       <form className="file-search" onSubmit={e => { e.preventDefault(); void action(async () => { revision.current++; setPreview(undefined); const value = await bridge.search(root.id, query); if (live.current) setListing(value); }); }}><input aria-label="搜索文件名" placeholder="按名称查找文件" value={query} maxLength={80} onChange={e => setQuery(e.target.value)} /><button disabled={pending || !query.trim()}>搜索</button></form>
-      <div className="file-table"><table><thead><tr><th>名称</th><th>类别</th><th>大小</th></tr></thead><tbody>{listing?.entries.map(entry => <tr key={entry.path}><td><button disabled={pending || ['link', 'protected', 'cache', 'shortcut'].includes(entry.hint)} title={entry.path} onClick={() => void action(async () => { if (entry.kind === 'directory') await browse(entry.path); else { const value = await bridge.read(root.id, entry.path); if (live.current) setPreview(value); } })}>{entry.name}</button>{!listing.path && entry.path !== entry.name && <small>{entry.path}</small>}</td><td>{hints[entry.hint] ?? entry.hint}</td><td>{entry.kind === 'file' ? bytes(entry.size) : '—'}</td></tr>)}</tbody></table>{listing?.entries.length === 0 && <p>没有找到文件。</p>}</div>
+      <div className="file-table"><table><thead><tr><th>名称</th><th>类别</th><th>大小</th></tr></thead><tbody>{listing?.entries.map(entry => <tr key={entry.path}><td>{entry.kind === 'file' && entry.hint === 'file' && <input type="checkbox" aria-label={`选择 ${entry.name}`} checked={selectedFiles.includes(entry.path)} onChange={e => setSelectedFiles(all => e.target.checked ? [...all, entry.path] : all.filter(p => p !== entry.path))} />}<button disabled={pending || ['link', 'protected', 'cache', 'shortcut'].includes(entry.hint)} title={entry.path} onClick={() => void action(async () => { if (entry.kind === 'directory') await browse(entry.path); else { const value = await bridge.read(root.id, entry.path); if (live.current) setPreview(value); } })}>{entry.name}</button>{!listing.path && entry.path !== entry.name && <small>{entry.path}</small>}</td><td>{hints[entry.hint] ?? entry.hint}</td><td>{entry.kind === 'file' ? bytes(entry.size) : '—'}</td></tr>)}</tbody></table>{listing?.entries.length === 0 && <p>没有找到文件。</p>}</div>
       {listing?.truncated && <p className="file-note">结果已截断，请进入子目录或缩小搜索范围。</p>}
       {preview && <div className="file-preview"><strong>{preview.path}</strong><span> · 从第 {preview.start_line} 行</span><pre>{preview.text}</pre>{preview.truncated && <p>仅展示文本前部。</p>}<button onClick={() => onDraft(`资料：${root.label}/${preview.path}（从第1行${preview.truncated ? '，已截断' : ''}）\n\n${preview.text}`)}>加入聊天草稿</button><p className="file-note">加入后可编辑；点击发送才会交给聊天模型。</p></div>}
     </section><section className="file-analysis" aria-label="空间分析"><h3>空间分析</h3><label><input type="checkbox" checked={duplicates} onChange={e => setDuplicates(e.target.checked)} disabled={pending || !!active} />检查重复候选</label><div className="file-analysis-actions"><button disabled={pending || !!active} onClick={() => void action(async () => { const next = await bridge.start(root.id, duplicates); if (live.current) { setJobs(all => [next, ...all]); setJobId(next.id); } })}>分析空间</button>{active && <button disabled={pending} onClick={() => void action(() => bridge.cancel(active.id))}>停止分析</button>}</div>
@@ -83,5 +87,7 @@ function WorkspaceFolder({ root, onRoot, onRevoke, onDraft }: { root: WorkspaceR
         {report.suggestions.map(text => <p className="file-note" key={text}>{text}</p>)}<details><summary>分析范围与限制</summary><p>{report.limits}</p></details>
       </div>}
     </section></div>
+    <DocumentsPanel root={root} selected={selectedFiles} onPlan={setIncomingPlan} onDraft={onDraft} />
+    <FileActions root={root} selected={selectedFiles} incoming={incomingPlan} onChanged={() => browse(path)} />
   </div>;
 }

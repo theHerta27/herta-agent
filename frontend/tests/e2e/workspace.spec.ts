@@ -18,7 +18,7 @@ test('readonly workbench persists native grants, previews a draft and reports du
     desktop = await electron.launch({ args: [join(root, 'frontend')], env, cwd: folder });
     const page = await desktop.firstWindow();
     await expect(page.getByRole('status').first()).toHaveText('服务就绪', { timeout: 20000 });
-    expect(await page.evaluate(() => Object.keys(window.herta.workspace))).toEqual(['roots', 'chooseRoot', 'share', 'revoke', 'list', 'search', 'read', 'jobs', 'start', 'cancel']);
+    expect(await page.evaluate(() => Object.keys(window.herta.workspace))).toEqual(['roots', 'chooseRoot', 'share', 'revoke', 'list', 'search', 'read', 'jobs', 'start', 'cancel', 'propose', 'plans', 'confirm', 'fileJobs', 'stopFile', 'undo', 'document', 'indexDocuments', 'knowledge', 'transform', 'bindVault', 'documentSettings', 'note', 'indexedDocuments', 'forgetDocument']);
     await desktop.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, chosen);
     await page.getByRole('button', { name: '文件', exact: true }).click();
     await page.getByRole('button', { name: '选择目录' }).click();
@@ -57,6 +57,42 @@ test('readonly workbench persists native grants, previews a draft and reports du
   } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
 });
 
+test('file operations require native confirmation and can be conditionally undone', async () => {
+  const root = resolve(import.meta.dirname, '../../..');
+  const folder = await mkdtemp(join(tmpdir(), 'Herta 执行界面 '));
+  const chosen = join(folder, 'files'); await mkdir(chosen);
+  await writeFile(join(chosen, 'note.md'), '本机文件操作测试');
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('HERTA_') && !['ELECTRON_RUN_AS_NODE', 'WEB_CONCURRENCY'].includes(key))), HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: join(folder, 'data') } as Record<string, string>;
+  let desktop: ElectronApplication | undefined;
+  try {
+    desktop = await electron.launch({ args: [join(root, 'frontend')], env, cwd: folder });
+    const page = await desktop.firstWindow();
+    await expect(page.getByRole('status').first()).toHaveText('服务就绪', { timeout: 20000 });
+    await desktop.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, chosen);
+    await page.getByRole('button', { name: '文件', exact: true }).click();
+    await page.getByRole('button', { name: '选择目录' }).click();
+    await page.getByRole('checkbox', { name: '选择 note.md' }).check();
+    await page.getByRole('combobox', { name: '文件操作' }).selectOption('copy');
+    await page.getByRole('textbox', { name: '目标文件夹' }).fill('副本');
+    await page.getByRole('button', { name: '生成操作预览' }).click();
+    await expect(page.locator('.file-plan')).toContainText('副本/note.md');
+    await desktop.evaluate(({ dialog }) => { dialog.showMessageBox = async () => ({ response: 0, checkboxChecked: false }); });
+    await page.getByRole('button', { name: '确认此方案' }).click();
+    await expect(page.getByText('已取消确认，文件未执行。')).toBeVisible();
+    expect(await readFile(join(chosen, 'note.md'), 'utf8')).toBe('本机文件操作测试');
+    await desktop.evaluate(({ dialog }) => { dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false }); });
+    await page.getByRole('button', { name: '确认此方案' }).click();
+    await expect(page.locator('.file-execution-history')).toContainText('已完成', { timeout: 15000 });
+    expect(await readFile(join(chosen, '副本/note.md'), 'utf8')).toBe('本机文件操作测试');
+    await page.getByRole('button', { name: '预览撤销' }).first().click();
+    await expect(page.locator('.file-plan')).toContainText('撤销副本');
+    await page.getByRole('button', { name: '确认此方案' }).click();
+    await expect(page.locator('.file-execution-history')).toContainText('已撤销', { timeout: 15000 });
+    expect(await readFile(join(chosen, 'note.md'), 'utf8')).toBe('本机文件操作测试');
+    await page.screenshot({ path: join(root, '.local/file-actions-desktop.png') });
+  } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
+});
+
 test('owned analysis can be stopped and blocks settings restart', async () => {
   const root = resolve(import.meta.dirname, '../../..');
   const folder = await mkdtemp(join(tmpdir(), 'Herta 分析停止 '));
@@ -82,5 +118,40 @@ test('owned analysis can be stopped and blocks settings restart', async () => {
     await expect.poll(() => page.evaluate(async id => (await window.herta.workspace.jobs(id))[0].status, result.root)).toBe('cancelled');
     await page.getByRole('button', { name: '文件', exact: true }).click();
     await expect(page.getByText('已停止', { exact: true })).toBeVisible();
+  } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
+});
+
+test('document reading, local knowledge and an approved Vault note form a complete workflow', async () => {
+  const root = resolve(import.meta.dirname, '../../..');
+  const folder = await mkdtemp(join(tmpdir(), 'Herta 文档界面 '));
+  const chosen = join(folder, '资料'); await mkdir(chosen);
+  await writeFile(join(chosen, '量子笔记.txt'), '量子计算学习\n量子比特描述叠加态。');
+  const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('HERTA_') && !['ELECTRON_RUN_AS_NODE', 'WEB_CONCURRENCY'].includes(key))), HERTA_SERVICE_PROVIDER: 'demo', HERTA_DESKTOP_DATA_DIR: join(folder, 'data') } as Record<string, string>;
+  let desktop: ElectronApplication | undefined;
+  try {
+    desktop = await electron.launch({ args: [join(root, 'frontend')], env, cwd: folder });
+    const page = await desktop.firstWindow();
+    await expect(page.getByRole('status')).toHaveText('服务就绪', { timeout: 20000 });
+    await desktop.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false }); }, chosen);
+    await page.getByRole('button', { name: '文件', exact: true }).click();
+    await page.getByRole('button', { name: '选择目录' }).click();
+    await page.getByRole('checkbox', { name: '选择 量子笔记.txt' }).check();
+    await page.getByRole('button', { name: '阅读选中文档' }).click();
+    await expect(page.locator('.document-preview')).toContainText('量子笔记.txt#行2');
+    await page.getByRole('checkbox', { name: '本地语义检索' }).uncheck();
+    await page.getByRole('button', { name: '建立资料索引' }).click();
+    await expect(page.locator('.documents-panel')).toContainText('1 份资料');
+    await page.getByRole('textbox', { name: '检索个人资料' }).fill('叠加态');
+    await page.getByRole('button', { name: '检索资料', exact: true }).click();
+    await expect(page.locator('.knowledge-results')).toContainText('叠加态');
+    await page.getByRole('button', { name: '绑定此目录为笔记Vault' }).click();
+    await page.getByRole('button', { name: '生成摘录笔记草稿' }).click();
+    await page.getByRole('textbox', { name: '笔记保存位置' }).fill('学习/量子学习.md');
+    await page.getByRole('button', { name: '预览保存笔记' }).click();
+    await expect(page.locator('.file-plan')).toContainText('学习/量子学习.md');
+    await page.getByRole('button', { name: '确认此方案' }).click();
+    await expect(page.locator('.file-execution-history')).toContainText('已完成', { timeout: 15000 });
+    expect(await readFile(join(chosen, '学习/量子学习.md'), 'utf8')).toContain('量子笔记.txt#行2');
+    await page.screenshot({ path: join(root, '.local/documents-desktop.png') });
   } finally { await desktop?.close(); await rm(folder, { recursive: true, force: true }); }
 });

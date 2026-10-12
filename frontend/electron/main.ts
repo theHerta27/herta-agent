@@ -150,6 +150,27 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:workspace-jobs', (event, id) => workspaceAction(event, () => workspaceClient.jobs(id)));
     ipcMain.handle('herta:workspace-start', (event, id, duplicates) => workspaceAction(event, () => workspaceClient.start(id, duplicates)));
     ipcMain.handle('herta:workspace-cancel', (event, id) => workspaceAction(event, () => workspaceClient.cancel(id)));
+    ipcMain.handle('herta:workspace-propose', (event, id, operations) => workspaceAction(event, () => workspaceClient.propose(id, operations)));
+    ipcMain.handle('herta:workspace-plans', (event, id) => workspaceAction(event, () => workspaceClient.plans(id)));
+    ipcMain.handle('herta:workspace-file-jobs', (event, id) => workspaceAction(event, () => workspaceClient.fileJobs(id)));
+    ipcMain.handle('herta:workspace-stop-file', (event, id) => workspaceAction(event, () => workspaceClient.stopFile(id)));
+    ipcMain.handle('herta:workspace-undo', (event, id) => workspaceAction(event, () => workspaceClient.undo(id)));
+    ipcMain.handle('herta:workspace-document', (event, id, path) => workspaceAction(event, () => workspaceClient.document(id, path)));
+    ipcMain.handle('herta:workspace-index-documents', (event, id, paths, semantic) => workspaceAction(event, () => workspaceClient.indexDocuments(id, paths, semantic)));
+    ipcMain.handle('herta:workspace-knowledge', (event, id, query, semantic) => workspaceAction(event, () => workspaceClient.knowledge(id, query, semantic)));
+    ipcMain.handle('herta:workspace-transform', (event, id, request) => workspaceAction(event, () => workspaceClient.transform(id, request)));
+    ipcMain.handle('herta:workspace-vault', (event, id) => workspaceAction(event, () => workspaceClient.bindVault(id)));
+    ipcMain.handle('herta:workspace-document-settings', event => workspaceAction(event, () => workspaceClient.documentSettings()));
+    ipcMain.handle('herta:workspace-note', (event, id, target, text) => workspaceAction(event, () => workspaceClient.note(id, target, text)));
+    ipcMain.handle('herta:workspace-indexed', (event, id) => workspaceAction(event, () => workspaceClient.indexedDocuments(id)));
+    ipcMain.handle('herta:workspace-forget', (event, id, path) => workspaceAction(event, () => workspaceClient.forgetDocument(id, path)));
+    ipcMain.handle('herta:workspace-confirm', (event, id, digest) => workspaceAction(event, async () => {
+      const plan = await workspaceClient.privatePlan(id);
+      if (typeof digest !== 'string' || digest !== plan.digest || plan.conflicts.length) throw new Error('方案冲突或摘要变化，请重新预览。');
+      const detail = [`目录：${plan.root_path}`, `动作数：${plan.operations.length}`, ...plan.operations.map((op, index) => `${index + 1}. ${op.kind}：${op.source ?? '(新增目录)'} → ${op.target}`), '', '逐项执行并保存收据；停止只取消未完成部分。撤销需要另行预览确认，并拒绝已被修改的文件。'].join('\n');
+      const choice = await dialog.showMessageBox(window!, { type: 'question', title: plan.undo_of ? '确认撤销文件操作' : '确认文件操作', message: plan.undo_of ? '执行这份具体撤销方案？' : '执行这份具体文件方案？', detail, buttons: ['取消', '确认执行'], defaultId: 0, cancelId: 0 });
+      return choice.response === 1 ? workspaceClient.confirm(id, plan.digest, randomUUID()) : null;
+    }));
     ipcMain.handle('herta:daily-snapshot', event => { checkSender(event); return daily.snapshot(); });
     ipcMain.handle('herta:daily-action', (event, action) => { checkSender(event); return daily.action(action); });
     ipcMain.handle('herta:voice-status', event => { checkSender(event); return daily.voiceStatus(); });

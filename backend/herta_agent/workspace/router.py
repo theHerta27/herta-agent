@@ -1,9 +1,12 @@
 import secrets
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import Field
 
 from herta_agent.tools.registry import ToolParameters
+
+from .file_plans import FileOperation
 
 
 class Grant(ToolParameters):
@@ -16,6 +19,33 @@ class Sharing(ToolParameters):
 
 class Analysis(ToolParameters):
     duplicates: bool = False
+
+
+class PlanBody(ToolParameters):
+    operations: list[FileOperation] = Field(min_length=1, max_length=100)
+
+
+class Confirmation(ToolParameters):
+    digest: str = Field(min_length=64, max_length=64)
+    request_id: str = Field(min_length=1, max_length=64)
+
+
+class DocumentsBody(ToolParameters):
+    paths: list[str] = Field(min_length=1, max_length=20)
+    semantic: bool = True
+
+
+class TransformBody(ToolParameters):
+    paths: list[str] = Field(min_length=1, max_length=10)
+    kind: Literal["merge", "split", "rotate", "images", "docx_pdf"]
+    target: str = Field(min_length=1, max_length=240)
+    pages: list[int] = Field(default_factory=list, max_length=200)
+    rotation: int = 0
+
+
+class NoteBody(ToolParameters):
+    target: str = Field(min_length=1, max_length=240)
+    text: str = Field(min_length=1, max_length=100000)
 
 
 def workspace_router(settings):
@@ -73,5 +103,93 @@ def workspace_router(settings):
     async def cancel(job_id: str, request: Request):
         request.app.state.workspace.cancel(job_id)
         return {"ok": True}
+
+    @router.post("/roots/{root_id}/plans", status_code=201)
+    async def propose(root_id: str, body: PlanBody, request: Request):
+        service = request.app.state.workspace
+        return await service.io(service.plans.propose, root_id, body.operations)
+
+    @router.get("/roots/{root_id}/plans")
+    async def plans(root_id: str, request: Request):
+        return request.app.state.workspace.plans.history(root_id)
+
+    @router.get("/plans/{plan_id}")
+    async def plan(plan_id: str, request: Request):
+        return request.app.state.workspace.plans.get(plan_id, private=True)
+
+    @router.post("/plans/{plan_id}/confirm", status_code=201)
+    async def confirm(plan_id: str, body: Confirmation, request: Request):
+        return request.app.state.workspace.files.confirm(plan_id, body.digest, body.request_id)
+
+    @router.get("/roots/{root_id}/file-jobs")
+    async def file_jobs(root_id: str, request: Request):
+        return request.app.state.workspace.files.history(root_id)
+
+    @router.post("/file-jobs/{job_id}/cancel")
+    async def stop_file(job_id: str, request: Request):
+        request.app.state.workspace.files.cancel(job_id)
+        return {"ok": True}
+
+    @router.post("/file-jobs/{job_id}/undo")
+    async def undo(job_id: str, request: Request):
+        service = request.app.state.workspace
+        job = service.files.get(job_id)
+
+        def preview(root_id, cancel=None):
+            service.check_cancel(cancel)
+            return service.plans.preview_undo(job_id)
+
+        return await service.io(preview, job["root_id"])
+
+    @router.get("/roots/{root_id}/document")
+    async def document(root_id: str, request: Request, path: str):
+        service = request.app.state.workspace
+        return await service.io(service.documents.read, root_id, path)
+
+    @router.post("/roots/{root_id}/document-index")
+    async def index(root_id: str, body: DocumentsBody, request: Request):
+        service = request.app.state.workspace
+        return await service.io(
+            service.documents.index, root_id, body.paths, semantic=body.semantic
+        )
+
+    @router.get("/roots/{root_id}/knowledge")
+    async def knowledge(root_id: str, request: Request, query: str, semantic: bool = True):
+        service = request.app.state.workspace
+        return await service.io(service.documents.search, root_id, query, semantic=semantic)
+
+    @router.get("/roots/{root_id}/document-index")
+    async def catalog(root_id: str, request: Request):
+        return request.app.state.workspace.documents.catalog(root_id)
+
+    @router.delete("/roots/{root_id}/document-index")
+    async def forget(root_id: str, request: Request, path: str):
+        return request.app.state.workspace.documents.forget(root_id, path)
+
+    @router.post("/roots/{root_id}/transform", status_code=201)
+    async def transform(root_id: str, body: TransformBody, request: Request):
+        service = request.app.state.workspace
+        return await service.io(
+            service.documents.transform,
+            root_id,
+            body.paths,
+            body.kind,
+            body.target,
+            pages=body.pages,
+            rotation=body.rotation,
+        )
+
+    @router.post("/roots/{root_id}/vault")
+    async def vault(root_id: str, request: Request):
+        return request.app.state.workspace.documents.bind_vault(root_id)
+
+    @router.get("/document-settings")
+    async def document_settings(request: Request):
+        return request.app.state.workspace.documents.settings()
+
+    @router.post("/roots/{root_id}/note", status_code=201)
+    async def note(root_id: str, body: NoteBody, request: Request):
+        service = request.app.state.workspace
+        return await service.io(service.documents.note, root_id, body.target, body.text)
 
     return router
