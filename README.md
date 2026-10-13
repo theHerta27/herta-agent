@@ -104,7 +104,7 @@ Key 仅存在于主进程/后端环境，不进入 renderer、公共设置、索
 
 ## 本地验收
 
-V2.2–V2.6本机版已完成文件执行、文档/知识、学习任务、人格/记忆/Skills、大黑塔语音、快捷共享/OCR与多MCP。最新后端341项中340项通过、1项真实GPU用例默认跳过（已单独实际通过）；前端71项单元、24项完整Electron通过。独立审查的重要问题已修复，见[完整交付报告](docs/PRODUCT_COMPLETION_REPORT.md)与[语音修复报告](docs/VOICE_PLAYBACK_FIX.md)。旧SQLite无需清空，原音频文件保留。私人便携目录为`release/Herta-20261012-portable`，默认使用新数据目录；继续原会话请使用项目根目录启动入口。
+V2.2–V2.6已实现文件执行、文档/知识、任务、人格/记忆/Skills、语音及共享等组件，但部分能力仍依赖面板，不能视为从聊天完成任务的完整Agent。当前优先补少量任务闭环，场景清单不再作为必须全部实现的要求，见[能力收敛审查](docs/AGENT_CAPABILITY_AUDIT.md)。既有本地回归仅证明各自覆盖的接口与流程；真实模型任务路由尚未确认。[历史组件报告](docs/PRODUCT_COMPLETION_REPORT.md)与[语音修复报告](docs/VOICE_PLAYBACK_FIX.md)保留原验收边界。旧SQLite与音频保留；私人便携目录为`release/Herta-20261012-portable`，继续原会话请使用项目根目录启动入口。
 
 清理版基线为247项后端、49项前端单元和14项Electron E2E，见[清理验收报告](docs/MUSIC_REMOVAL_ACCEPTANCE.md)。E2E 使用真实 Electron/Python/HTTP/SQLite 和离线模型夹具，不冒充真实回答质量。
 

@@ -167,3 +167,11 @@
 - 仅本地Provider/模型/夹具验收，未进行真实聊天服务或远程Embedding测试。
 
 2026-10-13最终核验：331后端/68前端/24Electron及静态检查GREEN；文件收据四类替换、一次重开与重复稍后提醒、长文档完整草稿预算、暂存过期回收/并发配额/回滚修复完成。真实便携包更新后二次启动/大黑塔WAV/重开通过，worker0。详见docs/PRODUCT_COMPLETION_REPORT.md。
+
+## 2026-10-13 Agent能力收敛审查
+- 基线8d085d9；本轮先审查，不新增功能或重构。用户要求复用顺序为Herta已有实现→成熟库/MCP/具体上游代码→确有差异才自行实现。
+- 文件工具已注册但全部受shared目录开关影响；workspace_report仅消费已有报告，分析启动只在工作台API中。文件方案执行与结果查看也依赖工作台。
+- references/hermes-agent-main是源码快照，git -C会向上找到Herta仓库，不能把返回的8d085d9冒称Hermes版本；需要单独确认来源或记录快照哈希。
+- 当前实际依赖与backend/uv.lock一致：MCP1.30.0、pypdf6.20.0、python-docx1.2.0、Pillow12.3.0。backend/pyproject.toml的MCP范围为>=1.26,<2，没有版本漂移；旧会话摘要不能代替本轮源码核查。
+- 公共GitHub API限流403后，改用git ls-remote固定官方源码提交：Codex f82e36592278a0a782fb0d0fc97e5fa10e832ac2；Filesystem MCP bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c，其源码package.json为1.0.0（不推断npm已发布）。来源/路径/哈希保存.local/capability-audit/sources.json。
+- 本轮现有workspace19、file_plans18、documents17、MCP16项定向测试通过。Provider路由是确定性夹具；外部Filesystem MCP与Codex/Hermes代码未安装运行，不能称已验证替代。
