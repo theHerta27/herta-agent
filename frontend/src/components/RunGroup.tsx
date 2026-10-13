@@ -4,8 +4,10 @@ import { projectTools } from '../state/tool-activity';
 import { AssistantMessage } from './AssistantMessage';
 import { RunActivity } from './RunActivity';
 import { ContextActivity } from './ContextActivity';
+import { NoteTask } from './NoteTask';
+import { noteProposal, type NoteVerified } from '../state/note-task';
 
-export function RunGroup({ records, run, live, diagnostics, diagnosticsError, onRetry }: { records: MessageRecord[]; run?: RunRecord; live?: LiveRun; diagnostics?: RunDiagnostics; diagnosticsError?: string; onRetry?: () => void }) {
+export function RunGroup({ records, run, live, diagnostics, diagnosticsError, onRetry, taskBusy, onNoteVerified }: { records: MessageRecord[]; run?: RunRecord; live?: LiveRun; diagnostics?: RunDiagnostics; diagnosticsError?: string; onRetry?: () => void; taskBusy: boolean; onNoteVerified?: NoteVerified }) {
   const active = live && live.phase !== 'done';
   const tools = new Map(Object.entries(active ? live.tools : {}));
   // Committed results always win over their earlier transient notifications.
@@ -17,6 +19,7 @@ export function RunGroup({ records, run, live, diagnostics, diagnosticsError, on
     {records.filter(r => r.message.role === 'user').map(r => <div key={r.message_id} className="message user-message">{r.message.content}</div>)}
     {active && !records.some(r => r.message.role === 'user') && live.text && <div className="message user-message">{live.text}</div>}
     <RunActivity tools={[...tools.values()]} explanation={explanation} />
+    {[...tools.values()].map(tool => { const proposal = noteProposal(tool); return proposal && <NoteTask key={tool.key} proposal={proposal} sessionId={records[0]?.session_id ?? live?.sessionId ?? ''} taskBusy={taskBusy} onVerified={onNoteVerified} />; })}
     <ContextActivity runId={run?.run_id ?? live?.runId ?? records[0]?.run_id} contexts={active ? live.contexts : diagnostics?.contexts ?? live?.contexts ?? []} diagnostics={diagnostics} error={diagnosticsError} onRetry={onRetry} />
     {records.filter(r => r.message.role === 'assistant' && !r.message.tool_calls.length).map(r => <AssistantMessage key={r.message_id} text={r.message.content ?? ''} />)}
     {active && Object.entries(live.partial).filter(([id]) => !records.some(r => r.message_id === id)).map(([id, text]) => <AssistantMessage key={id} text={text} />)}

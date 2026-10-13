@@ -175,8 +175,9 @@ class DocumentService:
         rows = self.w._rows("SELECT value FROM document_settings WHERE key='vault'")
         return {"vault_root_id": rows[0]["value"] if rows else None}
 
-    def note(self, root_id, target, text, *, cancel=None):
-        if self.settings()["vault_root_id"] != root_id:
+    def note(self, root_id, target, text, *, cancel=None, require_vault=True, shared=False):
+        self.w.root(root_id, shared=shared)
+        if require_vault and self.settings()["vault_root_id"] != root_id:
             raise WorkspaceError("请先将此资料目录绑定为笔记Vault。")
         if (
             Path(target).suffix.lower() != ".md"
@@ -184,7 +185,9 @@ class DocumentService:
             or not 1 <= len(text.strip()) <= 100000
         ):
             raise WorkspaceError("笔记需为Markdown，正文最多100000字符。")
-        return self._publish(root_id, target, text.encode("utf-8"), [], cancel)
+        result = self._publish(root_id, target, text.encode("utf-8"), [], cancel)
+        self.w.root(root_id, shared=shared)
+        return result
 
     def catalog(self, root_id):
         self.w.root(root_id)

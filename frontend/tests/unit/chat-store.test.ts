@@ -2,6 +2,37 @@ import { expect, it, vi } from 'vitest';
 import { ChatStore } from '../../src/state/chat-store';
 import type { DesktopBridge, SessionRecord } from '../../shared/contracts';
 
+it('save continuation uses the original conversation and preserves an unsent draft', async () => {
+  const startRun = vi.fn(async () => {});
+  const store = new ChatStore({ startRun } as unknown as DesktopBridge);
+  store.state.backend = { state: 'ready' }; store.state.selected = 'original';
+  store.view().loaded = true; store.setDraft('保留未发送草稿');
+  await store.send({ sessionId: 'original', text: '[保存后核对] 请查实际结果' });
+  expect(startRun).toHaveBeenCalledWith(expect.objectContaining({ sessionId: 'original', text: '[保存后核对] 请查实际结果' }));
+  expect(store.view().draft).toBe('保留未发送草稿');
+});
+
+it('a continuation does not redirect into a different selected conversation', async () => {
+  const startRun = vi.fn(async () => {});
+  const store = new ChatStore({ startRun } as unknown as DesktopBridge);
+  store.state.backend = { state: 'ready' }; store.state.selected = 'other';
+  store.view().loaded = true; store.setDraft('other draft');
+  await store.send({ sessionId: 'original', text: '[保存后核对]' });
+  expect(startRun).not.toHaveBeenCalled();
+  expect(store.view().draft).toBe('other draft');
+});
+
+it('a rejected continuation leaves an empty draft empty and cannot start while busy', async () => {
+  const startRun = vi.fn(async () => {});
+  const store = new ChatStore({ startRun } as unknown as DesktopBridge);
+  store.state.backend = { state: 'ready' }; store.state.selected = 'original'; store.view().loaded = true;
+  expect(await store.send({ sessionId: 'original', text: '[保存后核对]' })).toBe(true);
+  expect(await store.send({ sessionId: 'original', text: '重复核对' })).toBe(false);
+  expect(startRun).toHaveBeenCalledTimes(1);
+  store.onPacket({ clientRequestId: store.view().request!.id, rejected: 409 });
+  expect(store.view().draft).toBe('');
+});
+
 it('reserves one send before session creation; switching does not redirect the pending send', async () => {
   let created!: (session: SessionRecord) => void;
   const startRun = vi.fn(async () => {});

@@ -29,14 +29,16 @@ export class ChatStore {
   isBusy(view = this.view()) {
     return !!(view.request && view.request.phase !== 'done') || Object.values(view.runs).some(r => ['created', 'running'].includes(r.status));
   }
-  async send() {
+  async send(continuation?: { sessionId: string; text: string }): Promise<boolean> {
     let id = this.state.selected;
+    if (continuation && continuation.sessionId !== id) return false;
     const view = this.view();
-    const text = view.draft.trim();
-    if (!text || text.length > MAX_CHAT_CHARS || view.loading || !view.loaded || this.isBusy(view) || this.state.backend.state !== 'ready') return;
+    const text = (continuation?.text ?? view.draft).trim();
+    if (!text || text.length > MAX_CHAT_CHARS || view.loading || !view.loaded || this.isBusy(view) || this.state.backend.state !== 'ready') return false;
     const selection = this.selectionVersion;
     const request = newRun(crypto.randomUUID(), id ?? 'draft', text, view.messages.at(-1)?.seq ?? 0);
-    view.request = request; view.draft = ''; view.error = undefined; this.emit();
+    request.preserveDraft = !!continuation;
+    view.request = request; if (!continuation) view.draft = ''; view.error = undefined; this.emit();
     try {
       if (!id) {
         const session = await this.bridge.createSession();
@@ -47,12 +49,14 @@ export class ChatStore {
         if (selection === this.selectionVersion) this.state.selected = id;
         this.emit();
       }
-      if (request.phase === 'cancelling') { request.phase = 'done'; view.draft ||= text; this.emit(); return; }
+      if (request.phase === 'cancelling') { request.phase = 'done'; if (!request.preserveDraft) view.draft ||= text; this.emit(); return false; }
       await this.bridge.startRun({ clientRequestId: request.id, sessionId: id, text });
+      return true;
     } catch {
       if (id) { view.error = '发送结果尚未确认，正在核对。'; void this.reconcile(id); }
-      else { request.phase = 'done'; view.draft ||= text; view.error = '创建会话失败，请重试。'; }
+      else { request.phase = 'done'; if (!request.preserveDraft) view.draft ||= text; view.error = '创建会话失败，请重试。'; }
       this.emit();
+      return false;
     }
   }
   async stop() {
@@ -67,7 +71,7 @@ export class ChatStore {
     if (!view?.request || view.request.phase === 'done') return;
     if (packet.rejected) {
       view.request.phase = 'done'; view.request.partial = {};
-      view.draft ||= view.request.text;
+      if (!view.request.preserveDraft) view.draft ||= view.request.text;
       view.error = ({ 409: '此会话正在运行，请等待当前轮结束。', 429: '同时运行数量已满，请稍后重试。', 503: '聊天或存储暂不可用，请检查启动配置。', 422: '消息格式不符合要求。' } as Record<number, string>)[packet.rejected] ?? '本轮请求被拒绝，请重试。';
       this.emit(); return;
     }

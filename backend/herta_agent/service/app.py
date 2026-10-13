@@ -136,14 +136,17 @@ def create_app(settings: ServiceSettings, *, provider=None) -> FastAPI:
                     settings.run,
                     registry=registry,
                     context_builder=CompanionContext(
-                        PersonaContextBuilder(settings.soul_path), app.state.companion
+                        PersonaContextBuilder(settings.soul_path),
+                        app.state.companion,
+                        workspace=app.state.workspace,
                     ),
                     streaming=callable(getattr(selected, "stream", None)),
                     tool_policy=lambda spec: (
                         daily_policy(spec)
                         or task_policy(spec)
                         or any(
-                            spec is trusted and trusted.name == "propose_file_plan"
+                            spec is trusted
+                            and trusted.name in {"propose_file_plan", "propose_workspace_note"}
                             for trusted in workspace_specs
                         )
                     ),

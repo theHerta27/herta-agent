@@ -28,7 +28,7 @@ export class WorkspaceClient {
   revoke = async (id: string) => { await this.request(`/roots/${identifier(id)}`, 'DELETE'); };
   list = async (id: string, path = '') => this.request<FileListing>(`/roots/${identifier(id)}/files?path=${encodeURIComponent(bounded(path, 240))}`);
   search = async (id: string, query: string) => this.request<FileListing>(`/roots/${identifier(id)}/search?query=${encodeURIComponent(bounded(query, 80))}`);
-  read = async (id: string, path: string) => this.request<TextPreview>(`/roots/${identifier(id)}/text?path=${encodeURIComponent(bounded(path, 240))}`);
+  read = async (id: string, path: string, shared = false) => this.request<TextPreview>(`/roots/${identifier(id)}/text?path=${encodeURIComponent(bounded(path, 240))}&shared=${boolean(shared)}`);
   jobs = async (id: string) => this.request<AnalysisJob[]>(`/roots/${identifier(id)}/jobs`);
   start = async (id: string, duplicates: boolean) => this.request<AnalysisJob>(`/roots/${identifier(id)}/jobs`, 'POST', { duplicates: boolean(duplicates) });
   cancel = async (id: string) => { await this.request(`/jobs/${identifier(id)}/cancel`, 'POST', {}); };
@@ -37,6 +37,7 @@ export class WorkspaceClient {
     return this.request<FilePlan>(`/roots/${identifier(id)}/plans`, 'POST', { operations });
   };
   plans = async (id: string) => this.request<FilePlan[]>(`/roots/${identifier(id)}/plans`);
+  planState = async (id: string) => this.request<{ plan: FilePlan; job: FileJob | null }>(`/plans/${identifier(id)}/state`);
   privatePlan = async (id: string) => this.request<FilePlan & { root_path: string }>(`/plans/${identifier(id)}`);
   confirm = async (id: string, digest: string, requestId: string) => {
     if (typeof digest !== 'string' || !/^[a-f0-9]{64}$/.test(digest)) throw new Error('invalid_request');

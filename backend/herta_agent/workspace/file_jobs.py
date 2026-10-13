@@ -41,6 +41,10 @@ class FileJobs:
     def active_count(self):
         return sum(not entry[0].done() for entry in self.tasks.values())
 
+    def by_plan(self, plan_id):
+        rows = self.w._rows("SELECT id FROM file_jobs WHERE plan_id=?", (plan_id,))
+        return self.get(rows[0]["id"]) if rows else None
+
     def get(self, job_id):
         rows = self.w._rows("SELECT * FROM file_jobs WHERE id=?", (job_id,))
         if not rows:

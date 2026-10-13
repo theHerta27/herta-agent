@@ -1,5 +1,6 @@
 import asyncio
 import codecs
+import hashlib
 import itertools
 import json
 import os
@@ -288,6 +289,7 @@ class WorkspaceService:
             "text": preview,
             "start_line": 1,
             "truncated": len(data) > 65536 or preview != text,
+            "source_hash": hashlib.sha256(data).hexdigest() if len(data) <= 65536 else None,
         }
 
     @property

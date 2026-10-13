@@ -27,3 +27,11 @@ test('local server error remains a readable workbench failure', async () => {
   const client = new WorkspaceClient(() => 'http://127.0.0.1:8765', 'private-token');
   await expect(client.read('root', '.env')).rejects.toThrow('此路径受保护');
 });
+
+test('chat result reads require the shared scope at the backend', async () => {
+  const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ text: 'note' }) });
+  vi.stubGlobal('fetch', fetcher);
+  const client = new WorkspaceClient(() => 'http://127.0.0.1:8765', 'private-token');
+  await client.read('root', 'new.md', true);
+  expect(fetcher.mock.calls[0][0]).toContain('shared=true');
+});

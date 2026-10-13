@@ -3,7 +3,7 @@ import { applyToolEvent, type ToolActivity } from './tool-activity';
 export interface LiveRun {
   id: string; sessionId: string; text: string; baseline: number; runId?: string; seq: number;
   phase: 'submitting' | 'running' | 'cancelling' | 'reconciling' | 'unknown' | 'done';
-  partial: Record<string, string>; error?: string; gap?: boolean;
+  partial: Record<string, string>; error?: string; gap?: boolean; preserveDraft?: boolean;
   tools: Record<string, ToolActivity>; contexts: ContextDiagnostic[];
 }
 export function newRun(id: string, sessionId: string, text: string, baseline: number): LiveRun {

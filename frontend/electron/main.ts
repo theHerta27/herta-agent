@@ -164,12 +164,13 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle('herta:workspace-revoke', (event, id) => workspaceAction(event, () => workspaceClient.revoke(id)));
     ipcMain.handle('herta:workspace-list', (event, id, path) => workspaceAction(event, () => workspaceClient.list(id, path)));
     ipcMain.handle('herta:workspace-search', (event, id, query) => workspaceAction(event, () => workspaceClient.search(id, query)));
-    ipcMain.handle('herta:workspace-read', (event, id, path) => workspaceAction(event, () => workspaceClient.read(id, path)));
+    ipcMain.handle('herta:workspace-read', (event, id, path, shared = false) => workspaceAction(event, () => workspaceClient.read(id, path, shared)));
     ipcMain.handle('herta:workspace-jobs', (event, id) => workspaceAction(event, () => workspaceClient.jobs(id)));
     ipcMain.handle('herta:workspace-start', (event, id, duplicates) => workspaceAction(event, () => workspaceClient.start(id, duplicates)));
     ipcMain.handle('herta:workspace-cancel', (event, id) => workspaceAction(event, () => workspaceClient.cancel(id)));
     ipcMain.handle('herta:workspace-propose', (event, id, operations) => workspaceAction(event, () => workspaceClient.propose(id, operations)));
     ipcMain.handle('herta:workspace-plans', (event, id) => workspaceAction(event, () => workspaceClient.plans(id)));
+    ipcMain.handle('herta:workspace-plan-state', (event, id) => workspaceAction(event, () => workspaceClient.planState(id)));
     ipcMain.handle('herta:workspace-file-jobs', (event, id) => workspaceAction(event, () => workspaceClient.fileJobs(id)));
     ipcMain.handle('herta:workspace-stop-file', (event, id) => workspaceAction(event, () => workspaceClient.stopFile(id)));
     ipcMain.handle('herta:workspace-undo', (event, id) => workspaceAction(event, () => workspaceClient.undo(id)));

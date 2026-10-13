@@ -199,10 +199,11 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
             all(
                 s.permission == "read_only"
                 for name, s in specs.items()
-                if name != "propose_file_plan"
+                if name not in {"propose_file_plan", "propose_workspace_note"}
             )
         )
         self.assertEqual(specs["propose_file_plan"].permission, "side_effect")
+        self.assertEqual(specs["propose_workspace_note"].permission, "side_effect")
 
     async def test_revocation_during_tool_read_suppresses_late_result(self):
         import asyncio

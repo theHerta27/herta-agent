@@ -91,9 +91,9 @@ def workspace_router(settings):
         return await service.io(service.search, root_id, query)
 
     @router.get("/roots/{root_id}/text")
-    async def text(root_id: str, request: Request, path: str):
+    async def text(root_id: str, request: Request, path: str, shared: bool = False):
         service = request.app.state.workspace
-        return await service.io(service.read_text, root_id, path)
+        return await service.io(service.read_text, root_id, path, shared=shared)
 
     @router.get("/roots/{root_id}/jobs")
     async def jobs(root_id: str, request: Request):
@@ -120,6 +120,13 @@ def workspace_router(settings):
     @router.get("/plans/{plan_id}")
     async def plan(plan_id: str, request: Request):
         return request.app.state.workspace.plans.get(plan_id, private=True)
+
+    @router.get("/plans/{plan_id}/state")
+    async def plan_state(plan_id: str, request: Request):
+        service = request.app.state.workspace
+        plan = service.plans.get(plan_id)
+        service.root(plan["root_id"], shared=True)
+        return {"plan": plan, "job": service.files.by_plan(plan_id)}
 
     @router.post("/plans/{plan_id}/confirm", status_code=201)
     async def confirm(plan_id: str, body: Confirmation, request: Request):

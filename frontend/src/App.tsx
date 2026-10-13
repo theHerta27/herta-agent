@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { ChatDirectory } from './components/ChatDirectory';
 import type { BackendStatus } from '../shared/contracts';
 import { ChatStore } from './state/chat-store';
 import { ConversationSidebar } from './components/ConversationSidebar';
@@ -108,10 +109,11 @@ export function App() {
         setShowLatest(!following.current); store.saveScroll(state.selected ?? 'draft', el.scrollTop);
       }}>
         {view.loading && <p className="content notice">正在读取会话…</p>}
-        {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} onRetryDiagnostics={() => state.selected && void store.load(state.selected)} />}
+        {!view.loading && view.messages.length === 0 && !busy ? <WelcomeView onExample={text => store.setDraft(text)} /> : <MessageList view={view} taskBusy={busy} onRetryDiagnostics={() => state.selected && void store.load(state.selected)} onNoteVerified={(sessionId, plan) => store.send({ sessionId, text: `[保存后核对]\n我已通过原生确认保存此笔记。请调用工具核对这个方案的真实执行状态和目标内容，向我报告结果，不生成新方案。\n目录 ID：${plan.root_id}\n方案 ID：${plan.id}\n目标：${plan.operations.find(op => op.kind === 'publish')?.target}` })} />}
       </div>
       {showLatest && <button className="latest" onClick={() => { following.current = true; scroll.current!.scrollTop = scroll.current!.scrollHeight; }}>回到最新 ↓</button>}
       <div className="voice-row"><VoiceInput runtime={daily} disabled={filesOpen || learningOpen || personalOpen || sharingOpen || busy || status.state !== 'ready'} sessionKey={state.selected ?? 'draft'} onText={text => { const draft = store.view().draft; store.setDraft(draft ? draft + '\n' + text : text); }} /><AudioControls /></div>
+      <ChatDirectory disabled={status.state !== 'ready' || busy} />
       <Composer value={view.draft} onChange={text => store.setDraft(text)} onSend={() => { void daily.audio.stopVoice(); void store.send(); }} onStop={() => { void daily.audio.stopVoice(); void store.stop(); }} busy={busy} cancelling={view.request?.phase === 'cancelling' || view.request?.phase === 'reconciling'} disabled={status.state !== 'ready' || view.loading || !view.loaded} />
     </main>
     {dailyOpen && <CompanionPanel runtime={daily} onClose={() => setDailyOpen(false)} />}

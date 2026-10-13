@@ -18,7 +18,7 @@ test('readonly workbench persists native grants, previews a draft and reports du
     desktop = await electron.launch({ args: [join(root, 'frontend')], env, cwd: folder });
     const page = await desktop.firstWindow();
     await expect(page.getByRole('status').first()).toHaveText('服务就绪', { timeout: 20000 });
-    expect(await page.evaluate(() => Object.keys(window.herta.workspace))).toEqual(['roots', 'chooseRoot', 'share', 'revoke', 'list', 'search', 'read', 'jobs', 'start', 'cancel', 'propose', 'plans', 'confirm', 'fileJobs', 'stopFile', 'undo', 'document', 'indexDocuments', 'knowledge', 'transform', 'bindVault', 'documentSettings', 'note', 'indexedDocuments', 'forgetDocument']);
+    expect(await page.evaluate(() => Object.keys(window.herta.workspace))).toEqual(['roots', 'chooseRoot', 'share', 'revoke', 'list', 'search', 'read', 'jobs', 'start', 'cancel', 'propose', 'plans', 'plan', 'confirm', 'fileJobs', 'stopFile', 'undo', 'document', 'indexDocuments', 'knowledge', 'transform', 'bindVault', 'documentSettings', 'note', 'indexedDocuments', 'forgetDocument']);
     await desktop.evaluate(({ dialog }, path) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] }); }, chosen);
     await page.getByRole('button', { name: '文件', exact: true }).click();
     await page.getByRole('button', { name: '选择目录' }).click();
