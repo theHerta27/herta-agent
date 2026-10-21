@@ -1,0 +1,552 @@
+diff --git a/backend/herta_agent/cli.py b/backend/herta_agent/cli.py
+--- a/backend/herta_agent/cli.py
++++ b/backend/herta_agent/cli.py
+@@ -9,6 +9,7 @@
+ import httpx
+ from pydantic import ValidationError
+ 
++from herta_agent.cli_events import TerminalEventSink
+ from herta_agent.config import ProviderSettings, RunSettings
+ from herta_agent.llm.demo import DemoProvider, ReadDemoProvider, ToolDemoProvider
+ from herta_agent.llm.openai_compatible import OpenAICompatibleProvider
+@@ -16,6 +17,7 @@
+ from herta_agent.runtime.agent import Agent
+ from herta_agent.runtime.context import StaticContextBuilder
+ from herta_agent.runtime.errors import AgentError
++from herta_agent.runtime.events import EventSink
+ from herta_agent.runtime.messages import RunResult
+ from herta_agent.runtime.session import Session
+ from herta_agent.tools.coding.edit_file import edit_file
+@@ -47,7 +49,9 @@
+     print(f"[context_sha256={result.context_hash}]")
+ 
+ 
+-async def run_turn(agent: Agent, session: Session, text: str) -> RunResult:
++async def run_turn(
++    agent: Agent, session: Session, text: str, *, observer: EventSink | None = None
++) -> RunResult:
+     """Preserve the existing Windows Ctrl+C wake-up and cleanup behavior."""
+     loop = asyncio.get_running_loop()
+ 
+@@ -57,15 +61,21 @@
+ 
+     handle = loop.call_later(0.1, pulse)
+     try:
+-        return await agent.run(session, text)
++        return await agent.run(session, text, observer=observer)
+     finally:
+         handle.cancel()
+ 
+ 
+-def chat(agent: Agent, message: str | None, runner: asyncio.Runner) -> None:
++def chat(
++    agent: Agent,
++    message: str | None,
++    runner: asyncio.Runner,
++    *,
++    observer: EventSink | None = None,
++) -> None:
+     session = Session()
+     if message is not None:
+-        print_result(runner.run(run_turn(agent, session, message)))
++        print_result(runner.run(run_turn(agent, session, message, observer=observer)))
+         return
+ 
+     print("输入 /exit 退出；Ctrl+C 取消当前轮并保留会话。历史仅存在于当前进程。")
+@@ -82,7 +92,7 @@
+         if not text.strip():
+             continue
+         try:
+-            result = runner.run(run_turn(agent, session, text))
++            result = runner.run(run_turn(agent, session, text, observer=observer))
+         except KeyboardInterrupt:
+             print("\n已取消当前轮，会话已保留。", file=sys.stderr)
+         except AgentError as exc:
+@@ -124,6 +134,7 @@
+         max_steps=args.max_steps, request_timeout=args.timeout, tool_timeout=args.tool_timeout
+     )
+     repository = Repository(args.repo)
++    observer = TerminalEventSink() if args.trace else None
+     if args.instructions is not None:
+         print("项目约定文件：" + terminal_text(args.instructions) + "（每轮读取）")
+     if args.provider == "demo":
+@@ -141,7 +152,7 @@
+             demo_tools=args.demo_tools,
+             instructions=args.instructions,
+         )
+-        chat(agent, args.message, runner)
++        chat(agent, args.message, runner, observer=observer)
+         return
+ 
+     provider_settings = ProviderSettings.from_env()
+@@ -159,6 +170,7 @@
+             ),
+             args.message,
+             runner,
++            observer=observer,
+         )
+     finally:
+         runner.run(client.aclose())
+@@ -175,6 +187,9 @@
+         "--instructions", metavar="PATH", help="显式载入项目内的一份UTF-8约定，每轮读取，最多16 KiB"
+     )
+     parser.add_argument("--message", help="发送一条消息后退出；省略则进入交互模式")
++    parser.add_argument(
++        "--trace", action="store_true", help="在stderr显示步骤、工具状态和估算上下文用量"
++    )
+     parser.add_argument("--max-steps", type=int, default=8)
+     parser.add_argument("--timeout", type=float, default=120.0, help="每次模型请求期限（秒）")
+     parser.add_argument("--tool-timeout", type=float, default=10.0, help="每个工具期限（秒）")
+diff --git a/backend/herta_agent/cli_events.py b/backend/herta_agent/cli_events.py
+--- /dev/null
++++ b/backend/herta_agent/cli_events.py
+@@ -0,0 +1,60 @@
++"""Optional one-line progress from existing events; never a second history or execution log."""
++
++import sys
++
++from herta_agent.runtime.events import RuntimeEvent
++from herta_agent.tools.permissions import terminal_text
++
++
++def label(value) -> str:
++    if not isinstance(value, str):
++        return "?"
++    text = terminal_text(value[:80]).replace("\n", "\\n").replace("\t", "\\t")
++    return text + ("…" if len(value) > 80 else "")
++
++
++class TerminalEventSink:
++    def __init__(self, stream=None):
++        self.stream = sys.stderr if stream is None else stream
++        self.disabled = False
++
++    async def emit(self, event: RuntimeEvent) -> None:
++        if self.disabled:
++            return
++        payload = event.payload
++        if event.type == "context.prepared":
++            counts = [
++                value if type(value) is int and value >= 0 else "?"
++                for value in (
++                    payload.get("estimated_input_tokens"),
++                    payload.get("input_budget"),
++                    payload.get("omitted_message_count"),
++                )
++            ]
++            text = f"上下文：估算输入 {counts[0]}/{counts[1]} Token，省略 {counts[2]} 条历史消息"
++        elif event.type == "llm.started":
++            text = "请求 Provider"
++        elif event.type == "tool.started":
++            text = "开始工具 " + label(payload.get("name"))
++        elif event.type in ("tool.completed", "tool.failed"):
++            name = payload.get("name")
++            result = payload.get("result")
++            result = result if isinstance(result, dict) else {}
++            text = "工具 " + label(name)
++            if event.type == "tool.failed":
++                error = result.get("error")
++                code = error.get("code") if isinstance(error, dict) else None
++                text += " 未完成（" + label(code) + "）"
++            else:
++                text += " 调用完成"
++                if name == "run_tests":
++                    data = result.get("data")
++                    status = data.get("status") if isinstance(data, dict) else None
++                    text += "；测试状态=" + label(status)
++        else:
++            return  # Never render model text/deltas, arguments or tool result bodies.
++        try:
++            print(f"[步骤{event.step}] {text}", file=self.stream, flush=True)
++        except (OSError, ValueError):
++            # A closed progress stream must not abort an otherwise valid tool operation.
++            self.disabled = True
+diff --git a/backend/tests/test_cli_trace.py b/backend/tests/test_cli_trace.py
+--- /dev/null
++++ b/backend/tests/test_cli_trace.py
+@@ -0,0 +1,238 @@
++"""Trace real loop/tool events without treating fixture responses as model intelligence."""
++
++import asyncio
++import io
++import json
++import os
++import subprocess
++import sys
++import tempfile
++import unittest
++from pathlib import Path
++
++from herta_agent.cli import create_agent, run_turn
++from herta_agent.config import RunSettings
++from herta_agent.runtime.agent import Agent
++from herta_agent.runtime.errors import ToolExecutionError
++from herta_agent.runtime.messages import Message, ModelReply, ToolCall
++from herta_agent.runtime.session import Session
++from herta_agent.tools.coding.paths import Repository
++from herta_agent.tools.registry import ToolParameters, ToolRegistry, ToolSpec
++
++
++class ScriptedProvider:
++    def __init__(self, calls):
++        self.calls = calls
++
++    async def complete(self, messages, *, tools=()):
++        if messages[-1].role == "user":
++            return ModelReply(message=Message(role="assistant", tool_calls=self.calls))
++        return ModelReply(message=Message(role="assistant", content=messages[-1].content))
++
++
++def read_provider():
++    return ScriptedProvider(
++        (ToolCall(id="read", name="read_file", arguments='{"path":"note.md"}'),)
++    )
++
++
++def trace(stream):
++    from herta_agent.cli_events import TerminalEventSink
++
++    return TerminalEventSink(stream)
++
++
++class CLITraceTests(unittest.TestCase):
++    def invoke(self, root, *extra, input_text=None):
++        env = {
++            key: value
++            for key, value in os.environ.items()
++            if not key.startswith("HERTA_") and key != "DEEPSEEK_API_KEY"
++        }
++        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
++        return subprocess.run(
++            [sys.executable, "-B", "-X", "utf8", "-m", "herta_agent", "--repo", str(root), *extra],
++            cwd=root,
++            env=env,
++            input=input_text,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++            timeout=10,
++        )
++
++    def test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            (root / "note.md").write_text("FILE_BODY_FIXTURE", encoding="utf-8")
++            args = ("--demo-read-file", "note.md", "--message", "USER_INPUT_FIXTURE")
++            plain = self.invoke(root, *args)
++            observed = self.invoke(root, *args, "--trace")
++        self.assertEqual(plain.returncode, 0, plain.stderr)
++        self.assertEqual(plain.stderr, "")
++        self.assertEqual(observed.returncode, 0, observed.stderr)
++        self.assertIn("[steps=2]", observed.stdout)
++        self.assertIn("FILE_BODY_FIXTURE", observed.stdout)
++        self.assertNotIn("FILE_BODY_FIXTURE", observed.stderr)
++        self.assertNotIn("USER_INPUT_FIXTURE", observed.stderr)
++        expected = [
++            "[步骤1] 上下文",
++            "[步骤1] 请求 Provider",
++            "[步骤1] 开始工具 read_file",
++            "[步骤1] 工具 read_file 调用完成",
++            "[步骤2] 上下文",
++            "[步骤2] 请求 Provider",
++        ]
++        positions = [observed.stderr.index(part) for part in expected]
++        self.assertEqual(positions, sorted(positions))
++        self.assertIn("估算", observed.stderr)
++
++    def test_interactive_trace_restarts_step_numbers_for_each_user_turn(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            result = self.invoke(Path(temporary), "--trace", input_text="第一轮\n第二轮\n/exit\n")
++        self.assertEqual(result.returncode, 0, result.stderr)
++        self.assertEqual(result.stderr.count("[步骤1] 请求 Provider"), 2)
++        self.assertNotIn("[步骤2]", result.stderr)
++        self.assertIn("第 2 轮", result.stdout)
++
++
++class TraceIntegrationTests(unittest.IsolatedAsyncioTestCase):
++    def setUp(self):
++        self.temporary = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temporary.cleanup)
++        self.root = Path(self.temporary.name)
++        (self.root / "note.md").write_text("FILE_BODY_FIXTURE", encoding="utf-8")
++        self.repo = Repository(self.root)
++
++    async def test_observer_does_not_change_reply_or_add_events_to_session_history(self):
++        plain, observed = Session(), Session()
++        plain_result = await run_turn(
++            create_agent(read_provider(), RunSettings(), self.repo), plain, "读"
++        )
++        stream = io.StringIO()
++        traced_result = await run_turn(
++            create_agent(read_provider(), RunSettings(), self.repo),
++            observed,
++            "读",
++            observer=trace(stream),
++        )
++        self.assertEqual(traced_result.reply, plain_result.reply)
++        self.assertEqual(traced_result.context_hash, plain_result.context_hash)
++        self.assertEqual(observed.history, plain.history)
++        self.assertEqual(len(observed.history), 4)
++        self.assertNotIn("FILE_BODY_FIXTURE", stream.getvalue())
++
++    async def test_rejected_calls_never_claim_to_have_started_or_completed(self):
++        calls = (
++            ToolCall(id="invalid", name="read_file", arguments='{"path":"note.md","start_line":0}'),
++            ToolCall(id="unknown", name="missing_tool", arguments="{}"),
++            ToolCall(id="denied", name="edit_file", arguments="{}"),
++        )
++        stream = io.StringIO()
++        result = await run_turn(
++            create_agent(ScriptedProvider(calls), RunSettings(), self.repo),
++            Session(),
++            "go",
++            observer=trace(stream),
++        )
++        output = stream.getvalue()
++        for code in ("invalid_arguments", "unknown_tool", "permission_denied"):
++            self.assertIn(code, output)
++        self.assertNotIn("开始工具", output)
++        self.assertNotIn("调用完成", output)
++        self.assertFalse(json.loads(result.reply)["ok"])
++        self.assertEqual((self.root / "note.md").read_text(encoding="utf-8"), "FILE_BODY_FIXTURE")
++
++    async def test_real_tool_error_has_a_failed_event_and_single_line_escaped_code(self):
++        async def fail(parameters):
++            raise ToolExecutionError("bad\x1b[31m\n\t\u202e" + "x" * 1000, "ERROR_BODY_FIXTURE")
++
++        registry = ToolRegistry()
++        registry.register(ToolSpec("fail", "fixture", ToolParameters, fail))
++        agent = Agent(
++            ScriptedProvider((ToolCall(id="fail", name="fail", arguments="{}"),)), registry=registry
++        )
++        stream = io.StringIO()
++        await run_turn(agent, Session(), "USER_INPUT_FIXTURE", observer=trace(stream))
++        output = stream.getvalue()
++        lines = [line for line in output.splitlines() if "工具 fail" in line]
++        self.assertEqual(len(lines), 2)
++        self.assertIn("未完成", lines[-1])
++        self.assertNotIn("\x1b", output)
++        self.assertNotIn("\u202e", output)
++        self.assertNotIn("\t", output)
++        self.assertLess(len(lines[-1]), 1000)
++        self.assertNotIn("ERROR_BODY_FIXTURE", output)
++        self.assertNotIn("调用完成", output)
++
++    async def test_broken_trace_stream_does_not_abort_real_tool_or_answer(self):
++        class BrokenStream:
++            def write(self, text):
++                raise BrokenPipeError("closed trace output")
++
++            def flush(self):
++                pass
++
++        result = await run_turn(
++            create_agent(read_provider(), RunSettings(), self.repo),
++            Session(),
++            "读",
++            observer=trace(BrokenStream()),
++        )
++        self.assertTrue(json.loads(result.reply)["ok"])
++        self.assertEqual(result.steps, 2)
++
++    @unittest.skipUnless(sys.platform == "win32", "run_tests is Windows-only")
++    async def test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status(self):
++        (self.root / "tests").mkdir()
++        (self.root / "tests/test_demo.py").write_text(
++            "import unittest\nclass Demo(unittest.TestCase):\n"
++            "    def test_failure(self):\n        self.assertEqual(3, 2)\n",
++            encoding="utf-8",
++        )
++
++        async def allow_this_fixture(spec, parameters):
++            return True
++
++        provider = ScriptedProvider((ToolCall(id="test", name="run_tests", arguments="{}"),))
++        stream = io.StringIO()
++        result = await run_turn(
++            create_agent(provider, RunSettings(), self.repo, authorize=allow_this_fixture),
++            Session(),
++            "测试",
++            observer=trace(stream),
++        )
++        feedback = json.loads(result.reply)
++        self.assertTrue(feedback["ok"])
++        self.assertEqual(feedback["data"]["status"], "failed")
++        self.assertIn("工具 run_tests 调用完成；测试状态=failed", stream.getvalue())
++        self.assertNotIn("3 != 2", stream.getvalue())
++
++    async def test_cancellation_does_not_print_a_tool_completion(self):
++        started = asyncio.Event()
++
++        async def wait(parameters):
++            started.set()
++            await asyncio.sleep(30)
++
++        registry = ToolRegistry()
++        registry.register(ToolSpec("wait", "fixture", ToolParameters, wait))
++        agent = Agent(
++            ScriptedProvider((ToolCall(id="wait", name="wait", arguments="{}"),)), registry=registry
++        )
++        stream, session = io.StringIO(), Session()
++        task = asyncio.create_task(run_turn(agent, session, "等待", observer=trace(stream)))
++        try:
++            await asyncio.wait_for(started.wait(), 1)
++            task.cancel()
++            with self.assertRaises(asyncio.CancelledError):
++                await task
++        finally:
++            task.cancel()
++            await asyncio.gather(task, return_exceptions=True)
++        self.assertNotIn("调用完成", stream.getvalue())
++        self.assertIn('"cancelled"', session.history[-1].content)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# 当前教学分支：Python CLI 单元05
++# 当前教学分支：Python CLI 单元06
+ 
+ 当前目标是理解并构建一个独立的 Python CLI Coding Agent。当前可读取、字面搜索、确认后替换一处唯一文本，并经确认在Windows运行Python unittest，复用同一个Agent Loop。尚无通用Shell、Docker或操作系统沙箱。下面原有桌面版章节保留为历史说明，不代表当前教学分支的产品入口。
+ 
+@@ -44,6 +44,14 @@
+ ```
+ 
+ 两轮分别显示实际收到的原约定和新约定，均`steps=1`，上下文指纹变化；不能据此宣称真实模型遵循约定。完整命令与说明见[单元05](docs/learning/unit-05-project-instructions.md)。
++
++单元06新增可选`--trace`，将现有RuntimeEvent在stderr显示为简短进度：步骤、估算上下文用量、Provider请求及工具开始/完成/错误代码。不会额外打印系统文本、用户输入、工具参数或结果正文，不写入Session历史；默认关闭。演示仍用原Read夹具，无须输入yes：
++
++```powershell
++python -m herta_agent --repo examples/cli-read --demo-read-file notes/demo.md --message '请读取演示笔记' --trace
++```
++
++预期先出现步骤1的工具开始/完成，再出现步骤2的Provider请求，最后回答正文和`steps=2`。不同终端可能给stderr不同颜色，进度行的颜色不表示工具失败。`run_tests`会另外显示业务测试状态，调用完成也可能是`failed`。详见[单元06](docs/learning/unit-06-execution-trace.md)。
+ 
+ ---
+ 
+diff --git a/docs/learning/project-map.md b/docs/learning/project-map.md
+--- a/docs/learning/project-map.md
++++ b/docs/learning/project-map.md
+@@ -1,6 +1,6 @@
+ # Herta 项目地图
+ 
+-地图建立日期：2026-10-19，单元05更新于2026-10-21。单元01～03已以`e765b48059379ae79e0b62744d98dd6b3563688a`推送至现有私密仓库的`learning/unit-01-cli-read`，未合并主线；单元04～05在同一隔离目录继续本地开发。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)分别对应单元01～05。
++地图建立日期：2026-10-19，单元06更新于2026-10-21。单元01～03已以`e765b48059379ae79e0b62744d98dd6b3563688a`推送至现有私密仓库的`learning/unit-01-cli-read`，未合并主线；单元04～06在同一隔离目录继续本地开发。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)分别对应单元01～06。
+ 
+ ## 先建立直觉
+ 
+@@ -41,6 +41,7 @@
+ | 模块 | 真实文件/关键符号 | 要理解的核心 |
+ |---|---|---|
+ | CLI组装 | [cli.py](../../backend/herta_agent/cli.py)，`main/run_cli/create_agent/chat/run_turn` | 入口负责组装；循环、上下文和执行仍使用已有核心 |
++| 执行进度 | [cli_events.py](../../backend/herta_agent/cli_events.py)，`TerminalEventSink.emit`；原`runtime/events.py` | 可选--trace将现有事件的有限元数据写stderr；不增加对话历史或权限，默认无轨迹 |
+ | 只读文本 | [tools/coding/read_file.py](../../backend/herta_agent/tools/coding/read_file.py)，`ReadParameters/read_file/_read_file`；[paths.py](../../backend/herta_agent/tools/coding/paths.py)，`Repository.path` | Executor校验参数后，handler在线程中进行路径检查和有界读取；超过1MiB拒绝，结果分页保持完整行；目录限制不是操作系统沙箱 |
+ | 字面搜索 | [grep_code.py](../../backend/herta_agent/tools/coding/grep_code.py)，`GrepParameters/grep_code/_search`；`Repository.files` | 搜索普通UTF-8文件，返回路径与行号供后续Read；不跟随链接/特殊文件，明确预算和跳过。与Read共用`read_bounded_bytes/decode_utf8`，没有第二套文件服务 |
+ | 确认编辑 | [edit_file.py](../../backend/herta_agent/tools/coding/edit_file.py)，`EditParameters/prepare_edit/commit_edit`；[permissions.py](../../backend/herta_agent/tools/permissions.py)，`TerminalApproval` | Read新增全文件字节指纹；仅唯一文本替换。Executor先校验再请求一次确认；内容变化则拒绝，临时文件替换单个目标，再沿原Loop回读 |
+@@ -79,7 +80,7 @@
+ - Context Engine 是可替换的词面 Token 估算与历史节录；不等于供应商精确计费，也不等于 Claude Code 的完整自动压缩。当前单轮必需内容过大时会拒绝，不能保证长 Coding 任务连续完成。
+ - Executor保留旧`tool_policy(spec)`兼容原服务，CLI改选`authorize(spec, parameters)`，二者互斥，不叠加两套审批。编辑与Windows unittest分别逐次确认；不支持通用Shell、pytest或自动安装依赖。执行的测试拥有当前用户权限，起始目录检查不限制Python代码后续访问，不是操作系统沙箱。
+ - 旧陪伴 Skills 在 `companion/personalization.py:208` 的 `context_skills` 中作为已审核文字进入 `CompanionContext.snapshot`；不是 CLI 的目录发现与按需加载。
+-- `RuntimeEvent/EventSink` 可以观察运行，不是完整 Hooks 系统；多个 Session 也不等于已实现子 Agent。
++- `RuntimeEvent/EventSink` 已通过CLI的--trace呈现执行进度，不是完整Hooks系统；多个Session也不等于已实现子Agent。
+ - 用户级 `$guided-development` Skill 管理 **Codex 和用户的教学协作**，适用于不同项目；Herta 的专属约定保留在根目录 `AGENTS.md`。这不表示 Herta 产品已经具备同名 Skill 运行能力。
+ 
+ ## 阅读顺序
+diff --git a/docs/learning/unit-06-execution-trace.md b/docs/learning/unit-06-execution-trace.md
+--- /dev/null
++++ b/docs/learning/unit-06-execution-trace.md
+@@ -0,0 +1,69 @@
++# 单元06：在终端看见Agent的执行进度
++
++## 背景问题
++
++当前CLI主要显示最后回答，用户难以跟上工具执行和多次Provider请求。单元06把已有RuntimeEvent接到终端，用一项`--trace`完成可观察的工具闭环；不增加面板、工具或日志存储。用户已明确要求继续，本单元完成后暂停。
++
++核对Session/SQLite后确认，持久化适配仍关联服务RunManager与恢复/并发管理；本轮不把这个较大的改造夹带进进度显示，也不新写JSON会话存储。存储源码已读，本轮没有把它接入CLI或访问已有数据库。
++
++## 核心原理
++
++像施工现场的进度提示，告诉用户“准备开始、已经完成、哪一步没完成”。Agent原本就在关键位置发出事件；observer接收这些通知，终端呈现器只决定怎样展示。
++
++`EventSink`是接收事件的接口，`TerminalEventSink`是它的一个实现，`emit`表示接收并处理一条通知。`observer`由CLI传给原Loop；省略`--trace`时仍使用原NullSink。事件不会成为对话消息，不占模型历史，也不代替工具回填。
++
++`tool.started`在参数校验与批准后、handler前发出。参数错误、未知工具或审批拒绝可能直接产生`tool.failed`，所以显示“未完成”而不虚构“已经开始”。`tool.completed`只说明工具调用完成；`run_tests`还须看`data.status`。取消时没有完成事件就不打印完成；原CLI继续负责取消提示。
++
++## 真实源码和调用链
++
++| 文件 / 函数 | 实际职责 |
++|---|---|
++| [cli.py](../../backend/herta_agent/cli.py) `main/run_cli/chat/run_turn` | 解析trace；组装终端sink；单条和交互两条路径均将observer传给Agent.run |
++| [cli_events.py](../../backend/herta_agent/cli_events.py) `TerminalEventSink.emit` | 选择有限元数据写入stderr；分别处理上下文、Provider开始、工具开始/完成/失败 |
++| 同上 `label` | 复用原terminal_text，额外转义换行/制表符并限制标签长度，保持一条事件一行 |
++| [runtime/agent.py](../../backend/herta_agent/runtime/agent.py) `Agent.run` | 未修改；已有事件发出位置、工具顺序、提交与取消规则继续生效 |
++| [runtime/events.py](../../backend/herta_agent/runtime/events.py) `RuntimeEvent/EventSink/NullSink` | 未修改；事件契约与默认无输出实现 |
++| [tools/executor.py](../../backend/herta_agent/tools/executor.py) `execute` | 未修改；真正决定是否调用on_started与handler，不由trace决定权限 |
++
++真实输入为读取公开演示笔记：
++
++```powershell
++Set-Location -LiteralPath 'D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read'
++$env:PYTHONPATH = (Join-Path (Get-Location) 'backend')
++& 'D:\Desktop\herta-agent\.venv\Scripts\python.exe' -B -X utf8 -m herta_agent --repo examples/cli-read --demo-read-file notes/demo.md --message '请读取演示笔记' --trace
++```
++
++实际链路是`main → run_cli创建TerminalEventSink → chat → run_turn → Agent.run(observer=...) → emit`。ReadDemoProvider在第1次请求提出read_file；Executor批准其只读调用，发出started，实际读取后沿TurnIO/Session提交结果，再发出completed；第2次请求接到工具结果后返回正文。
++
++本轮真实输出的轨迹为：
++
++```text
++[步骤1] 上下文：估算输入 1948/30464 Token，省略 0 条历史消息
++[步骤1] 请求 Provider
++[步骤1] 开始工具 read_file
++[步骤1] 工具 read_file 调用完成
++[步骤2] 上下文：估算输入 2393/30464 Token，省略 0 条历史消息
++[步骤2] 请求 Provider
++```
++
++随后回答显示演示笔记的真实行号/正文及`steps=2`。第二步估算输入增加，是因为回填了工具调用与结果；数字来自本机估算，不是账单用量，后续代码/文本变化也会改变它。一次Step表示一次Provider请求，不是一个工具；本演示沿用固定Provider，不证明真实模型会选择Read。无须输入yes，无API Key或模型调用。
++
++## 关键设计取舍
++
++- **直接接已有通知**：只新建一个小呈现器，不改Loop、Executor、事件类型、权限、Provider或持久化；不增加依赖和第二套事件历史。
++- **输出分工**：轨迹写stderr，原回答和CLI提示继续写stdout。部分PowerShell会给stderr不同颜色，颜色不等于失败。需要看状态和最终退出结果；两种流被外部合并时，显示顺序也可能受终端影响。
++- **有限元数据**：只取步骤、工具名、错误代码、测试状态和数值型上下文用量；不打印事件中的系统文本、参数、用户消息、模型文本或工具正文。错误标签转义并有长度上限。原工具/最终回答的显示行为保持不变，这不是全进程的日志脱敏机制。
++- **可观察性不干扰工作**：进度流发生OSError/ValueError（例如被关闭）时停用该sink，不因可选进度输出失败中断实际工具。未吞掉其他EventSink或原Runtime的异常。
++- **结果语义**：真实失败测试产生`工具 run_tests 调用完成；测试状态=failed`；未知工具等产生“未完成（错误代码）”。未完成不能一概推断从未发生副作用，需看真实工具收据/结果。
++
++## 测试验证
++
++本轮相关基线30项通过；新增8项先失败后通过，最终相关38项通过。完整后端417项中414通过、3项旧语音检查跳过（136.213秒）；规则及本轮3个Python文件格式检查通过。独立静态审查未发现P0–P2实质问题。真实Provider分支的observer接线仅静态核对，运行验证使用离线Provider。
++
++具体命令、实际结果和关键Diff见[执行记录](verification/unit-06/verification.md)及[本单元差异](verification/unit-06/key-diff.patch)。测试走原CLI/Loop/Session/Executor和新建临时文件，覆盖默认关闭、单条及交互接线、实际读取顺序、拒绝前不显示开始、原对话结果保持、错误码单行转义及长度、坏输出流、真实unittest断言失败、取消后不显示完成。
++
++本轮不调用真实模型，不读取私人资料、旧数据库；旧桌面语音和前端未做新的效果验收。当前CLI依然没有会话持久化。单元04～06的本地改动未提交或推送，私密GitHub仍是01～03检查点。
++
++## 动手练习
++
++可选5分钟：先运行上面的演示，再去掉`--trace`运行一次。观察笔记正文和`steps=2`仍存在，而进度提示消失。再把`notes/demo.md`改成`notes/missing.md`：预期显示`path_missing`，最终回答给出工具错误，不会声称读到了正文。只改命令参数，无须改源码或删除任何文件。
+diff --git a/task_plan.md b/task_plan.md
+--- a/task_plan.md
++++ b/task_plan.md
+@@ -219,3 +219,18 @@
+ 边界：仍只做本地离线测试，不访问私人资料或旧数据库，不调用真实模型。规则文字不能授予工具权限；无自动扫描、递归导入、Skills执行或自动学习。本单元未提交、未推送；GitHub仍是先前01～03检查点。
+ 
+ 结果：最终完整后端409项中406通过、3项旧语音检查跳过，128.489秒；新增9项通过；规则与4文件格式检查通过。学习总结docs/learning/unit-05-project-instructions.md，命令/来源/差异/关键日志在docs/learning/verification/unit-05。单元05结束，等待下一次明确指派。
++
++
++## 2026-10-21 教学单元06：终端执行轨迹
++
++用户明确继续。先核对会话和SQLite接线，确认其仍依赖服务管理，不把持久化改造扩入本单元；选择复用已有RuntimeEvent/EventSink，让CLI可见真实执行进度。已先讲解观察者、步骤和工具结果含义。
++
++- [x] 沿用原隔离目录，保存单元05工作区快照；相关基线30项通过（13.867秒）。
++- [x] 新增测试先观察--trace未知与终端sink缺失，8项中2失败6错误，随后接入原observer链路。
++- [x] 新增TerminalEventSink及--trace，元数据写stderr，默认关闭，不改Loop/Executor/权限/Session历史或依赖。
++- [x] 原Read演示实际跑通；相关38项通过（16.033秒），规则与3文件格式通过；独立静态审查无重要问题。
++- [x] 完整回归、最终差异/来源与学习记录，结束暂停，不进入07。
++
++边界：离线Provider、新建临时测试文件/进程与已有公开演示笔记；未读取私人资料/旧数据库，不调用真实模型，不接CLI持久化。04～06改动仍未提交推送，私密仓库保持01～03检查点。
++
++结果：完整后端417项中414通过、3项旧语音检查跳过，136.213秒；相关38项通过，规则与3文件格式通过。学习总结docs/learning/unit-06-execution-trace.md，实际命令、来源、差异与关键记录在verification/unit-06。单元06结束，等待下一次明确指派。

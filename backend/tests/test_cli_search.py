@@ -265,7 +265,7 @@ class SearchReadCLITests(unittest.TestCase):
             self.assertEqual(len(bodies), 3)
             self.assertEqual(
                 [tool["function"]["name"] for tool in bodies[0]["tools"]],
-                ["read_file", "grep_code", "edit_file"],
+                ["read_file", "grep_code", "edit_file", "create_file", "run_tests"],
             )
             self.assertEqual(
                 [message["role"] for message in bodies[-1]["messages"]],

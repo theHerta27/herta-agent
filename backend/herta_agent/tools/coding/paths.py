@@ -38,7 +38,7 @@ class Repository:
         if not self.root.is_dir():
             raise AgentError("--repo 必须指定存在的项目目录。")
 
-    def path(self, raw: str) -> Path:
+    def path(self, raw: str, *, allow_missing: bool = False) -> Path:
         candidate = Path(raw)
         parts = candidate.parts[1:] if candidate.anchor else candidate.parts
         if not raw or any(
@@ -54,7 +54,7 @@ class Repository:
             raise ToolExecutionError("path_denied", "路径不在允许的源码范围内。")
         if any(excluded(part) for part in target.relative_to(self.root).parts):
             raise ToolExecutionError("path_denied", "不允许访问内部或排除目录。")
-        if not target.exists():
+        if not allow_missing and not target.exists():
             raise ToolExecutionError("path_missing", "路径不存在。")
         return target
 

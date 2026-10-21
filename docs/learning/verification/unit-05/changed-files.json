@@ -1,0 +1,78 @@
+{
+  "baseline": "unit04 actual uncommitted working tree; .local/unit-05/before-files.json",
+  "uploaded_head": "e765b48059379ae79e0b62744d98dd6b3563688a",
+  "files": [
+    {
+      "path": "backend/herta_agent/cli.py",
+      "status": "modified",
+      "before_sha256": "589241c3dd1fcecfb7b4d10dd34abe1dca8b669a0ab963e7ad5b7c3ab1c2d6eb",
+      "after_sha256": "d2368f038227c9cde2a022b36129dedf8a7f625646d249f3f331932fa5921457",
+      "added_lines": 33,
+      "removed_lines": 5
+    },
+    {
+      "path": "backend/herta_agent/project_context.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "6887f9808218e0983b2c9c5748485c2fb48690be4afece07ec793b374bfc1bab",
+      "added_lines": 58,
+      "removed_lines": 0
+    },
+    {
+      "path": "backend/tests/test_project_context.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "ababf26a3b7adb0bd764f41c24f4af64446164a94b11cbb528c606b2d52f876f",
+      "added_lines": 264,
+      "removed_lines": 0
+    },
+    {
+      "path": "examples/cli-instructions/demo.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "426eca13ae86fc39d9d792bdc69b1c5c209ec3d34e38be683f2e1a8939e1752a",
+      "added_lines": 52,
+      "removed_lines": 0
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "before_sha256": "3bd0f4d325121ba20e910c0d0a0762993e4f2b03862b2c5d71e50dfe57b6ff12",
+      "after_sha256": "990e0aa1eb25d0efa0065e829d861e796e5fab993f7d53828e9cef914eb47517",
+      "added_lines": 9,
+      "removed_lines": 1
+    },
+    {
+      "path": "docs/learning/project-map.md",
+      "status": "modified",
+      "before_sha256": "115ce3972457f378f1f1c10ad81e2ece56bed6687aec55542ee49596257cf988",
+      "after_sha256": "7788e614de8ab78fbc0828a0c520e25c07fde7f167ce0d9a46c710cae8c8ddb1",
+      "added_lines": 2,
+      "removed_lines": 1
+    },
+    {
+      "path": "docs/learning/unit-04-test-and-verify.md",
+      "status": "modified",
+      "before_sha256": "c292b67aa26aaac6b53900ecd2d4c8b55d98f94309ed29d89444a4817b0c2923",
+      "after_sha256": "5f6237c1c6559873817f25c60c8ff241669dd61bd8d73b9d0380a0912f19596c",
+      "added_lines": 4,
+      "removed_lines": 0
+    },
+    {
+      "path": "docs/learning/unit-05-project-instructions.md",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "da9ec0dd9ed4f45ac1ab181ee4b9fe5ade999b3a039e46e6e0ae3c02402cde2b",
+      "added_lines": 58,
+      "removed_lines": 0
+    },
+    {
+      "path": "task_plan.md",
+      "status": "modified",
+      "before_sha256": "6236bffa4e7d7c9e3f705064020ea542b25b9b41d31fee636b8f740cac641623",
+      "after_sha256": "6dacefceb6ebca318a2d21e7089ee1c9ec9f1822b03c67c8fcd5dd6393c04432",
+      "added_lines": 14,
+      "removed_lines": 0
+    }
+  ]
+}

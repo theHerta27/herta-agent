@@ -1,0 +1,56 @@
+E501 Line too long (102 > 100)
+   --> backend\herta_agent\cli.py:138:101
+    |
+136 |             provider = DemoProvider()
+137 |         agent = create_agent(
+138 |             provider, settings, repository, demo_tools=args.demo_tools, instructions=args.instructions
+    |                                                                                                     ^^
+139 |         )
+140 |         chat(agent, args.message, runner)
+    |
+
+E501 Line too long (102 > 100)
+   --> backend\tests\test_project_context.py:136:101
+    |
+134 |                             role="assistant",
+135 |                             tool_calls=(
+136 |                                 ToolCall(id="read", name="read_file", arguments='{"path":"note.md"}'),
+    |                                                                                                     ^^
+137 |                             ),
+138 |                         )
+    |
+
+E501 Line too long (105 > 100)
+   --> backend\tests\test_project_context.py:150:101
+    |
+148 | …                     name="edit_file",
+149 | …                     arguments=json.dumps({
+150 | …                         "path": "note.md", "old_text": "original", "new_text": "changed",
+    |                                                                                       ^^^^^
+151 | …                         "expected_sha256": feedback["data"]["sha256"],
+152 | …                     }),
+    |
+
+E501 Line too long (103 > 100)
+   --> backend\tests\test_project_context.py:157:101
+    |
+155 |                         )
+156 |                     )
+157 |                 return ModelReply(message=Message(role="assistant", content=feedback["error"]["code"]))
+    |                                                                                                     ^^^
+158 |
+159 |         result = await self.agent(EditProvider(), instructions="AGENTS.md").run(Session(), "修改")
+    |
+
+E501 Line too long (104 > 100)
+   --> backend\tests\test_project_context.py:212:101
+    |
+210 |             self.assertEqual(present.returncode, 0, present.stderr)
+211 |             def fingerprint(output):
+212 |                 return next(line for line in output.splitlines() if line.startswith("[context_sha256="))
+    |                                                                                                     ^^^^
+213 |             self.assertNotEqual(fingerprint(absent.stdout), fingerprint(present.stdout))
+214 |             self.assertIn("AGENTS.md", present.stdout)
+    |
+
+Found 5 errors.

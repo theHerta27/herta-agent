@@ -1,0 +1,12 @@
+test_cli_explicit_flag_changes_context_and_missing_file_is_an_error (test_project_context.ProjectContextCLITests.test_cli_explicit_flag_changes_context_and_missing_file_is_an_error) ... ok
+test_instructions_cannot_authorize_an_edit (test_project_context.ProjectContextTests.test_instructions_cannot_authorize_an_edit) ... ok
+test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) ... ok
+test_link_to_outside_is_rejected (test_project_context.ProjectContextTests.test_link_to_outside_is_rejected) ... ok
+test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules (test_project_context.ProjectContextTests.test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules) ... ok
+test_only_explicit_selection_reaches_provider_as_one_system_message (test_project_context.ProjectContextTests.test_only_explicit_selection_reaches_provider_as_one_system_message) ... ok
+test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion (test_project_context.ProjectContextTests.test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.814s
+
+OK

@@ -1,0 +1,145 @@
+test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content (test_cli_trace.CLITraceTests.test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content) ... FAIL
+test_interactive_trace_restarts_step_numbers_for_each_user_turn (test_cli_trace.CLITraceTests.test_interactive_trace_restarts_step_numbers_for_each_user_turn) ... FAIL
+test_broken_trace_stream_does_not_abort_real_tool_or_answer (test_cli_trace.TraceIntegrationTests.test_broken_trace_stream_does_not_abort_real_tool_or_answer) ... ERROR
+test_cancellation_does_not_print_a_tool_completion (test_cli_trace.TraceIntegrationTests.test_cancellation_does_not_print_a_tool_completion) ... ERROR
+test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status (test_cli_trace.TraceIntegrationTests.test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status) ... ERROR
+test_observer_does_not_change_reply_or_add_events_to_session_history (test_cli_trace.TraceIntegrationTests.test_observer_does_not_change_reply_or_add_events_to_session_history) ... ERROR
+test_real_tool_error_has_a_failed_event_and_single_line_escaped_code (test_cli_trace.TraceIntegrationTests.test_real_tool_error_has_a_failed_event_and_single_line_escaped_code) ... ERROR
+test_rejected_calls_never_claim_to_have_started_or_completed (test_cli_trace.TraceIntegrationTests.test_rejected_calls_never_claim_to_have_started_or_completed) ... ERROR
+
+======================================================================
+ERROR: test_broken_trace_stream_does_not_abort_real_tool_or_answer (test_cli_trace.TraceIntegrationTests.test_broken_trace_stream_does_not_abort_real_tool_or_answer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 155, in test_broken_trace_stream_does_not_abort_real_tool_or_answer
+    observer=trace(BrokenStream()),
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+ERROR: test_cancellation_does_not_print_a_tool_completion (test_cli_trace.TraceIntegrationTests.test_cancellation_does_not_print_a_tool_completion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 192, in test_cancellation_does_not_print_a_tool_completion
+    task = asyncio.create_task(run_turn(agent, session, "等待", observer=trace(stream)))
+                                                                         ^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+ERROR: test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status (test_cli_trace.TraceIntegrationTests.test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 174, in test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status
+    Session(), "测试", observer=trace(stream),
+                                ^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+ERROR: test_observer_does_not_change_reply_or_add_events_to_session_history (test_cli_trace.TraceIntegrationTests.test_observer_does_not_change_reply_or_add_events_to_session_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 98, in test_observer_does_not_change_reply_or_add_events_to_session_history
+    create_agent(read_provider(), RunSettings(), self.repo), observed, "读", observer=trace(stream)
+                                                                                      ^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+ERROR: test_real_tool_error_has_a_failed_event_and_single_line_escaped_code (test_cli_trace.TraceIntegrationTests.test_real_tool_error_has_a_failed_event_and_single_line_escaped_code)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 133, in test_real_tool_error_has_a_failed_event_and_single_line_escaped_code
+    await run_turn(agent, Session(), "USER_INPUT_FIXTURE", observer=trace(stream))
+                                                                    ^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+ERROR: test_rejected_calls_never_claim_to_have_started_or_completed (test_cli_trace.TraceIntegrationTests.test_rejected_calls_never_claim_to_have_started_or_completed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 115, in test_rejected_calls_never_claim_to_have_started_or_completed
+    observer=trace(stream),
+             ^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 38, in trace
+    from herta_agent.cli_events import TerminalEventSink
+ModuleNotFoundError: No module named 'herta_agent.cli_events'
+
+======================================================================
+FAIL: test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content (test_cli_trace.CLITraceTests.test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 65, in test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content
+    self.assertEqual(observed.returncode, 0, observed.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE]
+                   [--max-steps MAX_STEPS] [--timeout TIMEOUT]
+                   [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --trace
+
+
+======================================================================
+FAIL: test_interactive_trace_restarts_step_numbers_for_each_user_turn (test_cli_trace.CLITraceTests.test_interactive_trace_restarts_step_numbers_for_each_user_turn)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_trace.py", line 79, in test_interactive_trace_restarts_step_numbers_for_each_user_turn
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE]
+                   [--max-steps MAX_STEPS] [--timeout TIMEOUT]
+                   [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --trace
+
+
+----------------------------------------------------------------------
+Ran 8 tests in 1.954s
+
+FAILED (failures=2, errors=6)

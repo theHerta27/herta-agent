@@ -1,0 +1,390 @@
+test_cancelled_preparation_never_performs_a_late_create (test_cli_create.CreateTests.test_cancelled_preparation_never_performs_a_late_create) ... ERROR
+test_cleanup_error_is_honest_about_an_already_created_target (test_cli_create.CreateTests.test_cleanup_error_is_honest_about_an_already_created_target) ... ERROR
+test_collision_at_publish_is_preserved_and_staging_file_is_removed (test_cli_create.CreateTests.test_collision_at_publish_is_preserved_and_staging_file_is_removed) ... ERROR
+test_default_denial_creates_nothing (test_cli_create.CreateTests.test_default_denial_creates_nothing) ... FAIL
+test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) ... 
+  test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) (path='empty.py') ... FAIL
+  test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) (path='笔记.md') ... FAIL
+test_existing_file_or_directory_is_never_overwritten (test_cli_create.CreateTests.test_existing_file_or_directory_is_never_overwritten) ... FAIL
+test_file_appearing_during_confirmation_is_preserved (test_cli_create.CreateTests.test_file_appearing_during_confirmation_is_preserved) ... FAIL
+test_links_dangling_links_and_cycles_are_rejected (test_cli_create.CreateTests.test_links_dangling_links_and_cycles_are_rejected) ... FAIL
+test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint (test_cli_create.CreateTests.test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint) ... FAIL
+test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) ... 
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'../escape.py'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'C:\\\\Users\\\\ADMINI~1\\\\AppData\\\\Local\\\\Temp\\\\tmpzeyq0dd_\\\\repo\\\\absolute.py'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'.env'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'.git/new.py'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'CON.py'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py:stream'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py.'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new\\n.py'", code='path_denied') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'missing/new.py'", code='parent_missing') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='create_too_large') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='invalid_arguments') ... FAIL
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='invalid_arguments') ... FAIL
+test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) ... 
+  test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) (answer='no') ... FAIL
+  test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) (answer='yes') ... FAIL
+test_unsupported_publish_fails_without_a_fallback_write (test_cli_create.CreateTests.test_unsupported_publish_fails_without_a_fallback_write) ... ERROR
+
+======================================================================
+ERROR: test_cancelled_preparation_never_performs_a_late_create (test_cli_create.CreateTests.test_cancelled_preparation_never_performs_a_late_create)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 192, in test_cancelled_preparation_never_performs_a_late_create
+    module = importlib.import_module("herta_agent.tools.coding.create_file")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\importlib\__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'herta_agent.tools.coding.create_file'
+
+======================================================================
+ERROR: test_cleanup_error_is_honest_about_an_already_created_target (test_cli_create.CreateTests.test_cleanup_error_is_honest_about_an_already_created_target)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 137, in test_cleanup_error_is_honest_about_an_already_created_target
+    module = importlib.import_module("herta_agent.tools.coding.create_file")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\importlib\__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'herta_agent.tools.coding.create_file'
+
+======================================================================
+ERROR: test_collision_at_publish_is_preserved_and_staging_file_is_removed (test_cli_create.CreateTests.test_collision_at_publish_is_preserved_and_staging_file_is_removed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 115, in test_collision_at_publish_is_preserved_and_staging_file_is_removed
+    module = importlib.import_module("herta_agent.tools.coding.create_file")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\importlib\__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'herta_agent.tools.coding.create_file'
+
+======================================================================
+ERROR: test_unsupported_publish_fails_without_a_fallback_write (test_cli_create.CreateTests.test_unsupported_publish_fails_without_a_fallback_write)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 130, in test_unsupported_publish_fails_without_a_fallback_write
+    module = importlib.import_module("herta_agent.tools.coding.create_file")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\importlib\__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'herta_agent.tools.coding.create_file'
+
+======================================================================
+FAIL: test_default_denial_creates_nothing (test_cli_create.CreateTests.test_default_denial_creates_nothing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 49, in test_default_denial_creates_nothing
+    self.assertEqual(result.error.code, "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) (path='empty.py')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 81, in test_empty_and_crlf_unicode_content_are_exact_and_readable
+    self.assertTrue(result.ok, result.error)
+AssertionError: False is not true : code='unknown_tool' message='没有注册此工具，请使用提供的工具名称。'
+
+======================================================================
+FAIL: test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) (path='笔记.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 81, in test_empty_and_crlf_unicode_content_are_exact_and_readable
+    self.assertTrue(result.ok, result.error)
+AssertionError: False is not true : code='unknown_tool' message='没有注册此工具，请使用提供的工具名称。'
+
+======================================================================
+FAIL: test_existing_file_or_directory_is_never_overwritten (test_cli_create.CreateTests.test_existing_file_or_directory_is_never_overwritten)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 95, in test_existing_file_or_directory_is_never_overwritten
+    self.assertEqual(result.error.code, "create_conflict")
+AssertionError: 'unknown_tool' != 'create_conflict'
+- unknown_tool
++ create_conflict
+
+
+======================================================================
+FAIL: test_file_appearing_during_confirmation_is_preserved (test_cli_create.CreateTests.test_file_appearing_during_confirmation_is_preserved)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 110, in test_file_appearing_during_confirmation_is_preserved
+    self.assertEqual(result.error.code, "create_conflict")
+AssertionError: 'unknown_tool' != 'create_conflict'
+- unknown_tool
++ create_conflict
+
+
+======================================================================
+FAIL: test_links_dangling_links_and_cycles_are_rejected (test_cli_create.CreateTests.test_links_dangling_links_and_cycles_are_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 188, in test_links_dangling_links_and_cycles_are_rejected
+    self.assertEqual(result.error.code, "path_denied")
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint (test_cli_create.CreateTests.test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 237, in test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint
+    self.assertEqual(result.steps, 3)
+AssertionError: 2 != 3
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'../escape.py'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'C:\\\\Users\\\\ADMINI~1\\\\AppData\\\\Local\\\\Temp\\\\tmpzeyq0dd_\\\\repo\\\\absolute.py'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'.env'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'.git/new.py'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'CON.py'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py:stream'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py.'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new\\n.py'", code='path_denied')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'path_denied'
+- unknown_tool
++ path_denied
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'missing/new.py'", code='parent_missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'parent_missing'
+- unknown_tool
++ parent_missing
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'not_text'
+- unknown_tool
++ not_text
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'not_text'
+- unknown_tool
++ not_text
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='create_too_large')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'create_too_large'
+- unknown_tool
++ create_too_large
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='invalid_arguments')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'invalid_arguments'
+- unknown_tool
++ invalid_arguments
+
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='invalid_arguments')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'unknown_tool' != 'invalid_arguments'
+- unknown_tool
++ invalid_arguments
+
+
+======================================================================
+FAIL: test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) (answer='no')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 73, in test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged
+    self.assertEqual(result.error.code, "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) (answer='yes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 68, in test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged
+    self.assertEqual(result.ok, answer == "yes")
+AssertionError: False != True
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.209s
+
+FAILED (failures=23, errors=4)

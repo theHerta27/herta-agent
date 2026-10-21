@@ -1,0 +1,37 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "exists": true,
+    "sha256": "d2368f038227c9cde2a022b36129dedf8a7f625646d249f3f331932fa5921457"
+  },
+  {
+    "path": "backend/herta_agent/cli_events.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "backend/tests/test_cli_trace.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "README.md",
+    "exists": true,
+    "sha256": "990e0aa1eb25d0efa0065e829d861e796e5fab993f7d53828e9cef914eb47517"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "exists": true,
+    "sha256": "7788e614de8ab78fbc0828a0c520e25c07fde7f167ce0d9a46c710cae8c8ddb1"
+  },
+  {
+    "path": "docs/learning/unit-06-execution-trace.md",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "task_plan.md",
+    "exists": true,
+    "sha256": "6dacefceb6ebca318a2d21e7089ee1c9ec9f1822b03c67c8fcd5dd6393c04432"
+  }
+]

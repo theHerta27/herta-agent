@@ -1,0 +1,233 @@
+test_cli_explicit_flag_changes_context_and_missing_file_is_an_error (test_project_context.ProjectContextCLITests.test_cli_explicit_flag_changes_context_and_missing_file_is_an_error) ... FAIL
+test_instructions_cannot_authorize_an_edit (test_project_context.ProjectContextTests.test_instructions_cannot_authorize_an_edit) ... ERROR
+test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) ... 
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='missing.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='empty.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='large.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='binary.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='invalid.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='.env') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='folder') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='../outside.md') ... ERROR
+  test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpans0yu73\\repo\\absolute.md') ... ERROR
+test_link_to_outside_is_rejected (test_project_context.ProjectContextTests.test_link_to_outside_is_rejected) ... ERROR
+test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules (test_project_context.ProjectContextTests.test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules) ... ERROR
+test_only_explicit_selection_reaches_provider_as_one_system_message (test_project_context.ProjectContextTests.test_only_explicit_selection_reaches_provider_as_one_system_message) ... ERROR
+test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion (test_project_context.ProjectContextTests.test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion) ... ERROR
+
+======================================================================
+ERROR: test_instructions_cannot_authorize_an_edit (test_project_context.ProjectContextTests.test_instructions_cannot_authorize_an_edit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 160, in test_instructions_cannot_authorize_an_edit
+    result = await self.agent(EditProvider(), instructions="AGENTS.md").run(Session(), "修改")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='missing.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='empty.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='large.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='binary.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='invalid.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='.env')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='folder')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='../outside.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session (test_project_context.ProjectContextTests.test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session) (path='C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpans0yu73\\repo\\absolute.md')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 104, in test_invalid_explicit_file_stops_before_provider_and_does_not_stick_session
+    agent = self.agent(provider, instructions=name)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_link_to_outside_is_rejected (test_project_context.ProjectContextTests.test_link_to_outside_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 173, in test_link_to_outside_is_rejected
+    await self.agent(provider, instructions="AGENTS.md").run(Session(), "hello")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules (test_project_context.ProjectContextTests.test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 69, in test_one_run_keeps_its_snapshot_and_next_run_reads_changed_rules
+    agent = self.agent(provider, instructions="AGENTS.md")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_only_explicit_selection_reaches_provider_as_one_system_message (test_project_context.ProjectContextTests.test_only_explicit_selection_reaches_provider_as_one_system_message)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 59, in test_only_explicit_selection_reaches_provider_as_one_system_message
+    result = await self.agent(selected, instructions="AGENTS.md").run(Session(), "你好")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+ERROR: test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion (test_project_context.ProjectContextTests.test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 119, in test_utf8_bom_and_exact_size_limit_are_accepted_without_import_expansion
+    await self.agent(provider, instructions="AGENTS.md").run(Session(), "你好")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 50, in agent
+    return create_agent(provider, RunSettings(), self.repo, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: create_agent() got an unexpected keyword argument 'instructions'
+
+======================================================================
+FAIL: test_cli_explicit_flag_changes_context_and_missing_file_is_an_error (test_project_context.ProjectContextCLITests.test_cli_explicit_flag_changes_context_and_missing_file_is_an_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 195, in test_cli_explicit_flag_changes_context_and_missing_file_is_an_error
+    self.assertEqual(present.returncode, 0, present.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--message MESSAGE] [--max-steps MAX_STEPS]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --instructions AGENTS.md
+
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.138s
+
+FAILED (failures=1, errors=14)

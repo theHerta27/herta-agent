@@ -182,7 +182,7 @@ class CLIReadTests(unittest.TestCase):
             self.assertEqual(len(requests), 2)
             self.assertEqual(
                 [tool["function"]["name"] for tool in requests[0]["tools"]],
-                ["read_file", "grep_code", "edit_file"],
+                ["read_file", "grep_code", "edit_file", "create_file", "run_tests"],
             )
             self.assertEqual(
                 [message["role"] for message in requests[1]["messages"]],

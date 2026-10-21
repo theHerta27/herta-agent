@@ -1,6 +1,6 @@
 # Herta 项目地图
 
-地图建立日期：2026-10-19，单元03更新于2026-10-21；基线 `phase-6-ui@9ab9796d819216a64c783eeba75f7ac804441a23`。教学继续复用隔离分支 `learning/unit-01-cli-read`，尚未提交或合并回主线。原始只读结论见单元00；CLI读取见[单元01](unit-01-cli-read.md)，搜索与工具组合见[单元02](unit-02-search-read.md)，确认编辑见[单元03](unit-03-confirmed-edit.md)。
+地图建立日期：2026-10-19，单元07更新于2026-10-21。当前已完成单元01～07，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；本次按用户要求提交04～07进度。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)分别对应单元01～07。
 
 ## 先建立直觉
 
@@ -12,7 +12,7 @@
 
 | 入口 | 真实位置 | 当前行为 |
 |---|---|---|
-| Python CLI | [backend/herta_agent/__main__.py](../../backend/herta_agent/__main__.py) 转发到 [cli.py](../../backend/herta_agent/cli.py)，`main → run_cli → create_agent → chat → run_turn`；沿用 `herta-agent` 脚本 | 默认离线回显；注册Read、字面Search和需逐次确认的Edit，不强制人格/RAG；只有进程内Session。examples/cli-search与cli-edit是固定Provider夹具，调用同一组装入口与Loop |
+| Python CLI | [backend/herta_agent/__main__.py](../../backend/herta_agent/__main__.py) 转发到 [cli.py](../../backend/herta_agent/cli.py)，`main → run_cli → create_agent → chat → run_turn`；沿用 `herta-agent` 脚本 | 默认离线回显；注册Read、Search、确认Edit/Create/Test，不强制人格/RAG；只有进程内Session。examples中的搜索、编辑、新建、测试演示是固定Provider夹具，调用同一组装入口与Loop |
 | 桌面启动 | `启动Herta.cmd → scripts/Start-Herta.ps1 → Electron`；Python 服务入口 [service/__main__.py](../../backend/herta_agent/service/__main__.py) | 启动本机 HTTP 服务及桌面生命周期 |
 | 服务组装 | [service/app.py](../../backend/herta_agent/service/app.py) 的 `create_app`/`lifespan` | 创建人格、RAG、陪伴、语音、工作台和工具；这里是主要业务耦合点 |
 
@@ -41,14 +41,18 @@ SQLite 虚线是适配器可选行为，**不是** `Agent.run` 直接写数据�
 | 模块 | 真实文件/关键符号 | 要理解的核心 |
 |---|---|---|
 | CLI组装 | [cli.py](../../backend/herta_agent/cli.py)，`main/run_cli/create_agent/chat/run_turn` | 入口负责组装；循环、上下文和执行仍使用已有核心 |
+| 执行进度 | [cli_events.py](../../backend/herta_agent/cli_events.py)，`TerminalEventSink.emit`；原`runtime/events.py` | 可选--trace将现有事件的有限元数据写stderr；不增加对话历史或权限，默认无轨迹 |
 | 只读文本 | [tools/coding/read_file.py](../../backend/herta_agent/tools/coding/read_file.py)，`ReadParameters/read_file/_read_file`；[paths.py](../../backend/herta_agent/tools/coding/paths.py)，`Repository.path` | Executor校验参数后，handler在线程中进行路径检查和有界读取；超过1MiB拒绝，结果分页保持完整行；目录限制不是操作系统沙箱 |
 | 字面搜索 | [grep_code.py](../../backend/herta_agent/tools/coding/grep_code.py)，`GrepParameters/grep_code/_search`；`Repository.files` | 搜索普通UTF-8文件，返回路径与行号供后续Read；不跟随链接/特殊文件，明确预算和跳过。与Read共用`read_bounded_bytes/decode_utf8`，没有第二套文件服务 |
 | 确认编辑 | [edit_file.py](../../backend/herta_agent/tools/coding/edit_file.py)，`EditParameters/prepare_edit/commit_edit`；[permissions.py](../../backend/herta_agent/tools/permissions.py)，`TerminalApproval` | Read新增全文件字节指纹；仅唯一文本替换。Executor先校验再请求一次确认；内容变化则拒绝，临时文件替换单个目标，再沿原Loop回读 |
+| 确认新建 | [create_file.py](../../backend/herta_agent/tools/coding/create_file.py)，`CreateParameters/prepare_create/commit_create` | 同一审批与Loop；已有父目录里的单文件新建，暂存后os.link拒绝覆盖式发布；收据指纹供Read核对，不自动建目录或执行代码 |
+| 确认测试 | [run_tests.py](../../backend/herta_agent/tools/coding/run_tests.py)，`run_tests/run_owned`；[test_worker.py](../../backend/herta_agent/tools/coding/test_worker.py)，`main` | Windows当前Python执行unittest，复用原确认器、进程Job与恢复助手；结构报告区分工具完成与测试结果，取消/超时收尾自己启动的进程树，不提供通用Shell |
 | Loop | [runtime/agent.py](../../backend/herta_agent/runtime/agent.py)，`Agent.run:104`、`_request:70` | 每步问一次模型；有工具调用就执行并回填，无调用则返回；限制步数，取消时收尾；单元03只调整构造参数转发 |
 | 工具说明与查找 | [tools/registry.py](../../backend/herta_agent/tools/registry.py)，`ToolSpec:17`、`ToolRegistry:44` | 名称、参数模型、handler、权限元数据放在一起；`definitions` 生成模型看到的 JSON Schema |
 | 工具执行 | [tools/executor.py](../../backend/herta_agent/tools/executor.py)，`ToolExecutor.execute:67` | 查找、权限判断、参数校验、当前调用确认、期限、执行和结构化结果；工具错误可回到模型继续处理 |
 | 上下文 | [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py)，`prepare:206`、`_turn_groups:117` | 保留完整用户轮次和工具配对；估算输入预算，必要时节录旧历史 |
 | 系统文本 | [runtime/context.py](../../backend/herta_agent/runtime/context.py)，`ContextSnapshot`、`StaticContextBuilder` | Loop 可以使用普通系统文本，不强制加载大黑塔人格 |
+| 项目约定 | [project_context.py](../../backend/herta_agent/project_context.py)，`ProjectContextBuilder.snapshot`；`cli.create_agent` | 显式`--instructions`选入一份项目内UTF-8文件，每Run取一次快照；不自动扫描或导入，不增加权限，未传参数沿用StaticContextBuilder |
 | 会话 | [runtime/session.py](../../backend/herta_agent/runtime/session.py)，`Session.restore/begin_turn/record_calls/record_result` | 维护历史、忙碌状态和未完成工具 ID；阻止错配的结果进入历史 |
 | 每轮写入边界 | [runtime/turn.py](../../backend/herta_agent/runtime/turn.py)，`TurnIO`、`MemoryTurn` | 同一 Loop 能换内存或持久化适配器，不再造一套循环 |
 | 持久化 | [storage/sqlite.py](../../backend/herta_agent/storage/sqlite.py)，`SQLiteSessionStore:149`、`admit_run:412`、`finish_run:498`、`recover_interrupted:586` | 事务保存消息与运行状态，恢复中断状态；数据库线程归单独 worker 所有 |
@@ -75,9 +79,9 @@ SQLite 虚线是适配器可选行为，**不是** `Agent.run` 直接写数据�
 ## 当前能力边界
 
 - Context Engine 是可替换的词面 Token 估算与历史节录；不等于供应商精确计费，也不等于 Claude Code 的完整自动压缩。当前单轮必需内容过大时会拒绝，不能保证长 Coding 任务连续完成。
-- Executor保留旧`tool_policy(spec)`兼容原服务，CLI改选`authorize(spec, parameters)`，二者互斥，不叠加两套审批。编辑按本次参数和文件指纹展示差异、逐次确认；未实现命令审批或Shell。目录检查和工具确认不是操作系统沙箱。
+- Executor保留旧`tool_policy(spec)`兼容原服务，CLI改选`authorize(spec, parameters)`，二者互斥，不叠加两套审批。编辑与Windows unittest分别逐次确认；不支持通用Shell、pytest或自动安装依赖。执行的测试拥有当前用户权限，起始目录检查不限制Python代码后续访问，不是操作系统沙箱。
 - 旧陪伴 Skills 在 `companion/personalization.py:208` 的 `context_skills` 中作为已审核文字进入 `CompanionContext.snapshot`；不是 CLI 的目录发现与按需加载。
-- `RuntimeEvent/EventSink` 可以观察运行，不是完整 Hooks 系统；多个 Session 也不等于已实现子 Agent。
+- `RuntimeEvent/EventSink` 已通过CLI的--trace呈现执行进度，不是完整Hooks系统；多个Session也不等于已实现子Agent。
 - 用户级 `$guided-development` Skill 管理 **Codex 和用户的教学协作**，适用于不同项目；Herta 的专属约定保留在根目录 `AGENTS.md`。这不表示 Herta 产品已经具备同名 Skill 运行能力。
 
 ## 阅读顺序

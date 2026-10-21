@@ -1,0 +1,21 @@
+test_already_cancelled_worker_does_not_launch_a_process (test_cli_run_tests.CLITestExecutionTests.test_already_cancelled_worker_does_not_launch_a_process) ... FAIL
+
+======================================================================
+FAIL: test_already_cancelled_worker_does_not_launch_a_process (test_cli_run_tests.CLITestExecutionTests.test_already_cancelled_worker_does_not_launch_a_process)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_run_tests.py", line 102, in test_already_cancelled_worker_does_not_launch_a_process
+    self.assertEqual(started, [])
+AssertionError: Lists differ: [True] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+True
+
+- [True]
++ []
+
+----------------------------------------------------------------------
+Ran 1 test in 0.079s
+
+FAILED (failures=1)

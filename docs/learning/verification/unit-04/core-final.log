@@ -1,0 +1,33 @@
+test_all_subtests_skipped_are_not_reported_passed (test_cli_run_tests.CLITestExecutionTests.test_all_subtests_skipped_are_not_reported_passed) ... ok
+test_already_cancelled_worker_does_not_launch_a_process (test_cli_run_tests.CLITestExecutionTests.test_already_cancelled_worker_does_not_launch_a_process) ... ok
+test_class_setup_skip_is_skipped_even_when_no_methods_ran (test_cli_run_tests.CLITestExecutionTests.test_class_setup_skip_is_skipped_even_when_no_methods_ran) ... ok
+test_denied_confirmation_never_executes_test_imports (test_cli_run_tests.CLITestExecutionTests.test_denied_confirmation_never_executes_test_imports) ... ok
+test_initialization_failure_is_failed_even_when_no_methods_ran (test_cli_run_tests.CLITestExecutionTests.test_initialization_failure_is_failed_even_when_no_methods_ran) ... ok
+test_invalid_scope_and_patterns_are_rejected (test_cli_run_tests.CLITestExecutionTests.test_invalid_scope_and_patterns_are_rejected) ... ok
+test_no_authority_denies_before_running_project_code (test_cli_run_tests.CLITestExecutionTests.test_no_authority_denies_before_running_project_code) ... ok
+test_non_windows_execution_is_explicitly_unsupported (test_cli_run_tests.CLITestExecutionTests.test_non_windows_execution_is_explicitly_unsupported) ... ok
+test_output_limit_and_abrupt_exit_are_not_passing (test_cli_run_tests.CLITestExecutionTests.test_output_limit_and_abrupt_exit_are_not_passing) ... ok
+test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache (test_cli_run_tests.CLITestExecutionTests.test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache) ... ok
+test_success_is_based_on_actual_unittest_report (test_cli_run_tests.CLITestExecutionTests.test_success_is_based_on_actual_unittest_report) ... ok
+test_timeout_and_repeated_cancel_reap_child_tree_before_return (test_cli_run_tests.CLITestExecutionTests.test_timeout_and_repeated_cancel_reap_child_tree_before_return) ... 
+  test_timeout_and_repeated_cancel_reap_child_tree_before_return (test_cli_run_tests.CLITestExecutionTests.test_timeout_and_repeated_cancel_reap_child_tree_before_return) (cancel=False) ... FAIL
+test_tool_completion_is_different_from_test_failure (test_cli_run_tests.CLITestExecutionTests.test_tool_completion_is_different_from_test_failure) ... ok
+test_zero_tests_and_all_skipped_are_not_reported_passed (test_cli_run_tests.CLITestExecutionTests.test_zero_tests_and_all_skipped_are_not_reported_passed) ... ok
+test_actual_demo_fails_edits_and_passes_in_the_original_loop (test_cli_run_tests.TestEditLoopTests.test_actual_demo_fails_edits_and_passes_in_the_original_loop) ... ok
+
+======================================================================
+FAIL: test_timeout_and_repeated_cancel_reap_child_tree_before_return (test_cli_run_tests.CLITestExecutionTests.test_timeout_and_repeated_cancel_reap_child_tree_before_return) (cancel=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_run_tests.py", line 226, in test_timeout_and_repeated_cancel_reap_child_tree_before_return
+    self.assertTrue(heartbeat.exists(), "timeout fixture must run before cancellation")
+AssertionError: False is not true : timeout fixture must run before cancellation
+
+----------------------------------------------------------------------
+Ran 15 tests in 12.117s
+
+FAILED (failures=1)
+本次测试工作目录：C:\Users\Administrator\AppData\Local\Temp\tmpoicddo_e
+实际程序及参数（报告路径执行时由程序临时创建）：
+D:\Desktop\herta-agent\.venv\Scripts\python.exe -I -B -X utf8 -X pycache_prefix=pycache D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\tools\coding\test_worker.py C:\Users\Administrator\AppData\Local\Temp\tmpoicddo_e C:\Users\Administrator\AppData\Local\Temp\tmpoicddo_e\tests test*.py <owned-temporary-report>
+将执行该项目的Python代码，具有当前账号权限；这不是沙箱。

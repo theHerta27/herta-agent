@@ -1,0 +1,51 @@
+test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache (test_cli_run_tests.CLITestExecutionTests.test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache) ... FAIL
+
+======================================================================
+FAIL: test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache (test_cli_run_tests.CLITestExecutionTests.test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_run_tests.py", line 86, in test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache
+    self.assertEqual(result.data["status"], "passed", result.data["output"])
+AssertionError: 'failed' != 'passed'
+- failed
++ passed
+ : test_latest (test_sample.Sample.test_latest) ... FAIL
+
+
+
+======================================================================
+
+FAIL: test_latest (test_sample.Sample.test_latest)
+
+----------------------------------------------------------------------
+
+Traceback (most recent call last):
+
+  File "C:\Users\Administrator\AppData\Local\Temp\tmpiexle2ae\tests\test_sample.py", line 4, in test_latest
+
+    self.assertEqual(calculation.value, 2)
+
+AssertionError: 1 != 2
+
+
+
+----------------------------------------------------------------------
+
+Ran 1 test in 0.001s
+
+
+
+FAILED (failures=1)
+
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.428s
+
+FAILED (failures=1)

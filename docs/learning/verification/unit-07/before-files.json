@@ -1,0 +1,62 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "exists": true,
+    "sha256": "2644fe3722423267ce2467bebf91c2708c55b06dc61253ed06bc842ea062a5b7"
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/paths.py",
+    "exists": true,
+    "sha256": "a5afc52f93b249a2f72443e2babcff329b30c5263ed0f277b495d42213b54e40"
+  },
+  {
+    "path": "backend/herta_agent/tools/permissions.py",
+    "exists": true,
+    "sha256": "29b2b910858c67ebbd4fc37c010429dda793fa397a86c35e9a543a238b97d61f"
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/create_file.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "backend/tests/test_cli_create.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "backend/tests/test_cli_read.py",
+    "exists": true,
+    "sha256": "d8bc6f8b488d7481c61bdbf9d72096c36f9d9440747ffbb7afd0e65289886a2a"
+  },
+  {
+    "path": "backend/tests/test_cli_search.py",
+    "exists": true,
+    "sha256": "708b4656ea9cf32de0687c2fd92feb7ae064c41dd60c921b60bc8c8d389e4565"
+  },
+  {
+    "path": "examples/cli-create/demo.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "README.md",
+    "exists": true,
+    "sha256": "80784210c15bafc8f7cd2075867ba62156ae8f74bc3ff73a6057459f1765922e"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "exists": true,
+    "sha256": "1edec60707ab12c2721127eb85daab47ab0b4abd8493dc9f9abcb8527ce5c0cd"
+  },
+  {
+    "path": "docs/learning/unit-07-confirmed-create.md",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "task_plan.md",
+    "exists": true,
+    "sha256": "ee8c20bc65511d16b4d751c46baedb53889f5bef654ee7a59a2c2590b0665e77"
+  }
+]

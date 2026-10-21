@@ -1,0 +1,43 @@
+test_cyclic_links_are_a_context_error_before_provider (test_project_context.ProjectContextTests.test_cyclic_links_are_a_context_error_before_provider) ... ERROR
+
+======================================================================
+ERROR: test_cyclic_links_are_a_context_error_before_provider (test_project_context.ProjectContextTests.test_cyclic_links_are_a_context_error_before_provider)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 1250, in resolve
+    p.stat()
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 840, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [WinError 1921] 系统无法辨识文件名。: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\tmpt5alogss\\repo\\AGENTS.md'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_project_context.py", line 207, in test_cyclic_links_are_a_context_error_before_provider
+    await self.agent(provider, instructions="AGENTS.md").run(Session(), "hello")
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\runtime\agent.py", line 119, in run
+    context = self.context_builder.snapshot()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\project_context.py", line 27, in snapshot
+    path = self.repository.path(raw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\tools\coding\paths.py", line 52, in path
+    target = (self.root / candidate).resolve()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 1252, in resolve
+    check_eloop(e)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\pathlib.py", line 1237, in check_eloop
+    raise RuntimeError("Symlink loop from %r" % e.filename)
+RuntimeError: Symlink loop from 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\tmpt5alogss\\repo\\AGENTS.md'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.040s
+
+FAILED (errors=1)

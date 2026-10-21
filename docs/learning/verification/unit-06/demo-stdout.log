@@ -1,0 +1,4 @@
+模式：离线演示（固定脚本，不调用 LLM，不读取 API Key）
+Assistant: [离线读文件演示] 工具结果：{"ok": true, "data": {"path": "notes/demo.md", "sha256": "df01c8dfea6ef65b94258ff99e98d3e13da0508a38617044db5b4c0b285881d6", "lines": [{"line": 1, "text": "# 单元01演示"}, {"line": 2, "text": "这是新建的非私人演示文件。"}, {"line": 3, "text": "目标：让工具读取真实内容，再交回 Agent Loop。"}], "truncated": false, "next_line": null}, "error": null}
+[steps=2]
+[context_sha256=20435f44342acab462148f0abdf5873c17816764b0baeffb8e360ce23b8a14c6]

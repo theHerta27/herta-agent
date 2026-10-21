@@ -1,6 +1,6 @@
-# 当前教学分支：Python CLI 单元03
+# 当前教学分支：Python CLI 单元07
 
-当前目标是理解并构建一个独立的 Python CLI Coding Agent。当前可读取、字面搜索，并在逐次确认差异后替换已有文件中的一处唯一文本，复用同一个Agent Loop；尚不能运行命令。下面原有桌面版章节保留为历史说明，不代表当前教学分支的产品入口。
+当前目标是理解并构建一个独立的 Python CLI Coding Agent。当前可读取、字面搜索、确认后修改已有文件或新建单个文本文件，并经确认在Windows运行Python unittest，复用同一个Agent Loop。尚无通用Shell、Docker或操作系统沙箱。下面原有桌面版章节保留为历史说明，不代表当前教学分支的产品入口。
 
 在本分支的仓库根目录，使用已有 Python 环境运行：
 
@@ -9,7 +9,7 @@ $env:PYTHONPATH = (Join-Path (Get-Location) 'backend')
 python -m herta_agent --repo examples/cli-read --demo-read-file notes/demo.md --message '请读取这份笔记，展示内容。'
 ```
 
-`--demo-read-file` 是固定工具调用演示：不调用模型、不读取 API Key；实际文件读取、校验和结果回填仍由真实 Harness 执行。省略 `--message` 进入交互模式，`/exit` 退出。会话仅存于当前进程。`--provider openai` 注册`read_file`、`grep_code`和`edit_file`，CLI对每次编辑显示完整差异，只有输入`yes`才确认。模型适配器可以替换；目前只通过本地模拟 HTTP 验证，真实模型选工具和回答质量未确认。
+`--demo-read-file` 是固定工具调用演示：不调用模型、不读取 API Key；实际文件读取、校验和结果回填仍由真实 Harness 执行。省略 `--message` 进入交互模式，`/exit` 退出。会话仅存于当前进程。`--provider openai` 注册`read_file`、`grep_code`、`edit_file`、`create_file`和`run_tests`，CLI对每次编辑、新建、测试执行分别展示范围并确认，只有输入`yes`才批准本次操作。模型适配器可以替换；目前只通过本地模拟 HTTP 验证，真实模型选工具和回答质量未确认。
 
 搜索→读取的本地学习夹具：
 
@@ -27,7 +27,39 @@ python examples/cli-edit/demo.py
 
 只操作本次创建的临时文件。输入`yes`后实际修改并回读，显示`steps=4`；输入`no`、直接回车、EOF或确认时Ctrl+C会拒绝此次编辑。每次运行均重建演示文件，不触及已有资料。实际修改限已有普通UTF-8文件中的一处唯一文本；内容指纹过期、重复匹配、链接、硬链接或只读文件均拒绝，不提供文件创建/删除或多文件补丁。详见[单元03](docs/learning/unit-03-confirmed-edit.md)。
 
+测试失败→读取→确认修复→再测通过的Windows离线演示：
+
+```powershell
+python examples/cli-test/demo.py
+```
+
+演示只执行本次新建的临时测试代码，三次操作分别确认，最后`steps=5`。`run_tests`正常完成不等于测试通过：看`status`区分`passed/failed/no_tests/skipped`，输出过大、超时或报告无效不会判通过。测试执行具有当前账号的文件和网络权限；目录校验只是限制起始位置，不是沙箱。只在Windows启用；当前Python环境需要已具备目标项目的依赖，本轮没有自动安装机制。详见[单元04](docs/learning/unit-04-test-and-verify.md)。
+
 路径检查约束 `read_file` 对选定项目目录的访问，排除 `.env`、`.git` 等内部路径，不是操作系统沙箱。仅接受不超过1 MiB的UTF-8文本，每次最多400行，并按结果字节数保守截断；更大的文件明确报错，不返回不完整行。具体限制、真实调用链、验证与练习见 [单元01学习总结](docs/learning/unit-01-cli-read.md)。旧桌面启动脚本不是这个 CLI 的入口。
+
+单元05可通过`--instructions AGENTS.md`明确选择项目内的一份UTF-8约定文件，最多16 KiB，每个用户轮次开始重新读取；不传参数就不加载。无效文件会报错，不静默忽略。只提供上下文，不授予工具权限；不扫描用户目录、不递归导入或自动学习。离线观察夹具如下（创建自己的临时项目，无须输入yes）：
+
+```powershell
+python examples/cli-instructions/demo.py
+```
+
+两轮分别显示实际收到的原约定和新约定，均`steps=1`，上下文指纹变化；不能据此宣称真实模型遵循约定。完整命令与说明见[单元05](docs/learning/unit-05-project-instructions.md)。
+
+单元06新增可选`--trace`，将现有RuntimeEvent在stderr显示为简短进度：步骤、估算上下文用量、Provider请求及工具开始/完成/错误代码。不会额外打印系统文本、用户输入、工具参数或结果正文，不写入Session历史；默认关闭。演示仍用原Read夹具，无须输入yes：
+
+```powershell
+python -m herta_agent --repo examples/cli-read --demo-read-file notes/demo.md --message '请读取演示笔记' --trace
+```
+
+预期先出现步骤1的工具开始/完成，再出现步骤2的Provider请求，最后回答正文和`steps=2`。不同终端可能给stderr不同颜色，进度行的颜色不表示工具失败。`run_tests`会另外显示业务测试状态，调用完成也可能是`failed`。详见[单元06](docs/learning/unit-06-execution-trace.md)。
+
+单元07新增`create_file`：在已有目录里创建一个新UTF-8文件，可为空，先完整预览再逐次确认；不自动建目录，不覆盖同名目标。新建结果带文件指纹，供Read回读核对。本地离线夹具只操作自己的临时项目，不执行创建的Python代码：
+
+```powershell
+python examples/cli-create/demo.py
+```
+
+输入`yes`后创建并回读，`steps=3`；输入`no`则拒绝且无目标文件，`steps=2`。文件系统不支持不覆盖式发布时明确失败，不退回覆盖写入。详见[单元07](docs/learning/unit-07-confirmed-create.md)。
 
 ---
 

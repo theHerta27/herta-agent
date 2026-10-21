@@ -1,0 +1,69 @@
+Windows离线固定脚本：测试失败→读取→确认编辑→再测通过；不调用模型。
+只执行本次创建的临时演示代码，共需确认三次；任意一次拒绝就结束。
+本次测试工作目录：C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b
+实际程序及参数（报告路径执行时由程序临时创建）：
+D:\Desktop\herta-agent\.venv\Scripts\python.exe -I -B -X utf8 D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\tools\coding\test_worker.py C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b\tests test*.py <owned-temporary-report>
+将执行该项目的Python代码，具有当前账号权限；这不是沙箱。
+输入 yes 仅确认本次操作；其他输入或直接回车拒绝：真实测试结果：ok=True，status=failed，tests_run=1
+test_add_one (test_calculation.CalculationTests.test_add_one) ... FAIL
+
+
+
+======================================================================
+
+FAIL: test_add_one (test_calculation.CalculationTests.test_add_one)
+
+----------------------------------------------------------------------
+
+Traceback (most recent call last):
+
+  File "C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b\tests\test_calculation.py", line 5, in test_add_one
+
+    self.assertEqual(add_one(1), 2)
+
+AssertionError: 3 != 2
+
+
+
+----------------------------------------------------------------------
+
+Ran 1 test in 0.000s
+
+
+
+FAILED (failures=1)
+
+
+本次编辑差异（未写入；终端控制字符已转义）：
+--- a/calculation.py
++++ b/calculation.py
+@@ -1,2 +1,2 @@
+ def add_one(value):\r
+-    return value + 2\r
++    return value + 1\r
+
+输入 yes 仅确认本次操作；其他输入或直接回车拒绝：本次测试工作目录：C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b
+实际程序及参数（报告路径执行时由程序临时创建）：
+D:\Desktop\herta-agent\.venv\Scripts\python.exe -I -B -X utf8 D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\tools\coding\test_worker.py C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b C:\Users\Administrator\AppData\Local\Temp\herta-test-demo-7i6xru1b\tests test*.py <owned-temporary-report>
+将执行该项目的Python代码，具有当前账号权限；这不是沙箱。
+输入 yes 仅确认本次操作；其他输入或直接回车拒绝：真实测试结果：ok=True，status=passed，tests_run=1
+test_add_one (test_calculation.CalculationTests.test_add_one) ... ok
+
+
+
+----------------------------------------------------------------------
+
+Ran 1 test in 0.000s
+
+
+
+OK
+
+
+Assistant: 固定脚本结束；最终真实测试状态：passed
+[steps=5]
+[context_sha256=20435f44342acab462148f0abdf5873c17816764b0baeffb8e360ce23b8a14c6]
+结束时实际源码：
+def add_one(value):
+    return value + 1
+

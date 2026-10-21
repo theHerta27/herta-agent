@@ -1,0 +1,2 @@
+nul: accepted parameters; handler checks text
+unpaired_surrogate: rejected by parameter validation: ['json_invalid']

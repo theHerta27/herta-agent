@@ -1,0 +1,101 @@
+{
+  "baseline": "Actual unit06 uncommitted working state; not HEAD alone",
+  "files": [
+    {
+      "path": "backend/herta_agent/cli.py",
+      "status": "modified",
+      "before_sha256": "2644fe3722423267ce2467bebf91c2708c55b06dc61253ed06bc842ea062a5b7",
+      "after_sha256": "58d86891a413635a7b7fccf27d3e92cbbfeb272d676be323f1c9136d98c8eef8",
+      "added_lines": 5,
+      "removed_lines": 1
+    },
+    {
+      "path": "backend/herta_agent/tools/coding/paths.py",
+      "status": "modified",
+      "before_sha256": "a5afc52f93b249a2f72443e2babcff329b30c5263ed0f277b495d42213b54e40",
+      "after_sha256": "f629545ecedda7175d98a3d1a6c11b81707edf6a2b59599110c3793b6964eb36",
+      "added_lines": 2,
+      "removed_lines": 2
+    },
+    {
+      "path": "backend/herta_agent/tools/permissions.py",
+      "status": "modified",
+      "before_sha256": "29b2b910858c67ebbd4fc37c010429dda793fa397a86c35e9a543a238b97d61f",
+      "after_sha256": "2d9f31788f228453e5d639d9b7a9d3fc1f611c34162ccb107b2c96809e64b6cf",
+      "added_lines": 5,
+      "removed_lines": 0
+    },
+    {
+      "path": "backend/herta_agent/tools/coding/create_file.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "b0bfb5997992bbbea9076001412b2d91f257e24964ae317ae75b104acd48ea4e",
+      "added_lines": 132,
+      "removed_lines": 0
+    },
+    {
+      "path": "backend/tests/test_cli_create.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "91046957ae902d9a439527b540114eb2763f5341e75cabdcf3b6f5a747f55933",
+      "added_lines": 258,
+      "removed_lines": 0
+    },
+    {
+      "path": "backend/tests/test_cli_read.py",
+      "status": "modified",
+      "before_sha256": "d8bc6f8b488d7481c61bdbf9d72096c36f9d9440747ffbb7afd0e65289886a2a",
+      "after_sha256": "e946f41ce1cc483f7c5aa7fb188fa438187075cd061ed461e5f973f110c7598c",
+      "added_lines": 1,
+      "removed_lines": 1
+    },
+    {
+      "path": "backend/tests/test_cli_search.py",
+      "status": "modified",
+      "before_sha256": "708b4656ea9cf32de0687c2fd92feb7ae064c41dd60c921b60bc8c8d389e4565",
+      "after_sha256": "fbab76d828a48199e5d680eb637e1ba745f799b39b9a33c51535237bdeaa381b",
+      "added_lines": 1,
+      "removed_lines": 1
+    },
+    {
+      "path": "examples/cli-create/demo.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "8ae4edfaf8956ff63d459f7231d26ae18fb93ef6f82adf7ee8930379e42d7c3d",
+      "added_lines": 72,
+      "removed_lines": 0
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "before_sha256": "80784210c15bafc8f7cd2075867ba62156ae8f74bc3ff73a6057459f1765922e",
+      "after_sha256": "5456594e98fe86bc93805f9c42c2d70b3b9b8c77bb64ddde7da295bdbb7823ca",
+      "added_lines": 12,
+      "removed_lines": 4
+    },
+    {
+      "path": "docs/learning/project-map.md",
+      "status": "modified",
+      "before_sha256": "1edec60707ab12c2721127eb85daab47ab0b4abd8493dc9f9abcb8527ce5c0cd",
+      "after_sha256": "30ca97b43e1b9c097c2fc6f066c8e9e003c509e791800d7197114f3492cc530d",
+      "added_lines": 3,
+      "removed_lines": 2
+    },
+    {
+      "path": "docs/learning/unit-07-confirmed-create.md",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "908e89eb92e1cc66278826b0f9d9dbbf76440824eaa0f9926f8ab2f6eee9a1ac",
+      "added_lines": 61,
+      "removed_lines": 0
+    },
+    {
+      "path": "task_plan.md",
+      "status": "modified",
+      "before_sha256": "ee8c20bc65511d16b4d751c46baedb53889f5bef654ee7a59a2c2590b0665e77",
+      "after_sha256": "b9b1e4b72ecd1f515c30055a43748a41997428638f75061bc2a61c6aff68aeec",
+      "added_lines": 15,
+      "removed_lines": 0
+    }
+  ]
+}

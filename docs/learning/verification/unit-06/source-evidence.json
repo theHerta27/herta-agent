@@ -1,0 +1,88 @@
+{
+  "unit": "06",
+  "uploaded_head": "e765b48059379ae79e0b62744d98dd6b3563688a",
+  "baseline": "Actual uncommitted unit05 worktree, preserved under .local/unit-06/before.",
+  "versions": {
+    "python": "3.12.13",
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "existing_helpers": [
+    {
+      "path": "backend/herta_agent/runtime/events.py",
+      "sha256": "dff8d56a9cbc548784eec59ff93d1c5ad9cdd33ad805bc46e9dcb2a486e074d0",
+      "symbols": [
+        {
+          "name": "RuntimeEvent",
+          "line": 8
+        },
+        {
+          "name": "EventSink",
+          "line": 25
+        },
+        {
+          "name": "NullSink",
+          "line": 29
+        }
+      ],
+      "use": "Direct reuse; no source copied or altered in unit06."
+    },
+    {
+      "path": "backend/herta_agent/runtime/agent.py",
+      "sha256": "0204e2ba388661db43d0da24f2fb09498d5937fff59cb8a1f16b6133440ceecb",
+      "symbols": [
+        {
+          "name": "run",
+          "line": 104
+        }
+      ],
+      "use": "Direct reuse; no source copied or altered in unit06."
+    },
+    {
+      "path": "backend/herta_agent/runtime/context_engine.py",
+      "sha256": "8c2c241f179ea4a820e2b914c8f7b8179b7b3ee7102ea5da189af00decbbb727",
+      "symbols": [
+        {
+          "name": "diagnostic",
+          "line": 100
+        }
+      ],
+      "use": "Direct reuse; no source copied or altered in unit06."
+    },
+    {
+      "path": "backend/herta_agent/tools/permissions.py",
+      "sha256": "29b2b910858c67ebbd4fc37c010429dda793fa397a86c35e9a543a238b97d61f",
+      "symbols": [
+        {
+          "name": "terminal_text",
+          "line": 14
+        }
+      ],
+      "use": "Direct reuse; no source copied or altered in unit06."
+    },
+    {
+      "path": "backend/herta_agent/tools/executor.py",
+      "sha256": "7e0a5929a7108098826a6de55f5317d0b6e2497238e3b3350350f81436c22779",
+      "symbols": [
+        {
+          "name": "execute",
+          "line": 67
+        }
+      ],
+      "use": "Direct reuse; no source copied or altered in unit06."
+    }
+  ],
+  "new_dependencies": [],
+  "upstream_code_copied": false,
+  "reviewed_but_deferred": [
+    "storage/sqlite.py and service/turn.py: CLI persistence requires service-manager/concurrency/recovery adaptation; no second store added."
+  ],
+  "review": "Independent static review of exact unit06 diff: no P0-P2 issues; no test, network or data access by reviewer.",
+  "unverified": [
+    "Real model routing/response quality",
+    "Real model branch trace wiring inspected statically only",
+    "External terminal rendering",
+    "CLI persistence remains unimplemented"
+  ]
+}

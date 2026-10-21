@@ -1,0 +1,13 @@
+test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content (test_cli_trace.CLITraceTests.test_explicit_trace_shows_read_progress_on_stderr_without_dumping_content) ... ok
+test_interactive_trace_restarts_step_numbers_for_each_user_turn (test_cli_trace.CLITraceTests.test_interactive_trace_restarts_step_numbers_for_each_user_turn) ... ok
+test_broken_trace_stream_does_not_abort_real_tool_or_answer (test_cli_trace.TraceIntegrationTests.test_broken_trace_stream_does_not_abort_real_tool_or_answer) ... ok
+test_cancellation_does_not_print_a_tool_completion (test_cli_trace.TraceIntegrationTests.test_cancellation_does_not_print_a_tool_completion) ... ok
+test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status (test_cli_trace.TraceIntegrationTests.test_failed_test_suite_is_displayed_as_a_completed_call_with_failed_status) ... ok
+test_observer_does_not_change_reply_or_add_events_to_session_history (test_cli_trace.TraceIntegrationTests.test_observer_does_not_change_reply_or_add_events_to_session_history) ... ok
+test_real_tool_error_has_a_failed_event_and_single_line_escaped_code (test_cli_trace.TraceIntegrationTests.test_real_tool_error_has_a_failed_event_and_single_line_escaped_code) ... ok
+test_rejected_calls_never_claim_to_have_started_or_completed (test_cli_trace.TraceIntegrationTests.test_rejected_calls_never_claim_to_have_started_or_completed) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 2.149s
+
+OK

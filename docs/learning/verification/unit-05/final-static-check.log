@@ -1,0 +1,11 @@
+Unit05 final static checks (2026-10-21)
+
+PASS: 9 changed source/doc files match current hashes; baseline snapshots match their saved hashes; 4 Python files parse.
+PASS: 72 relative Markdown links resolve.
+PASS: Runtime, storage, registry, executor, Provider, config, dependencies, frontend and scripts unchanged from e765b48.
+PASS: 7 unit04 code files outside CLI keep their unit04 hashes.
+PASS: primary checkout backend/frontend/scripts retain existing business code.
+PASS: source/doc diff whitespace plus all 4 Python files; raw patch/log archives explicitly excluded.
+PASS: archived records byte-match local originals.
+CONFIRMED: actual full 409/3 skipped, focused 9, lint and 4-file format logs; not reruns of this static check.
+PASS: HEAD unchanged; no commit, push, merge or unit06 work performed.

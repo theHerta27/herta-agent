@@ -1,0 +1,11 @@
+Unit04 final static checks (2026-10-21)
+
+PASS: all 12 current source/doc hashes match the manifest.
+PASS: 72 local Markdown links resolve in README, project map and units03/04.
+PASS: protected core, existing process helpers, frontend, scripts and pyproject have no diff from e765b48.
+PASS: primary phase-6-ui backend/frontend/scripts have no uncommitted business code changes.
+PASS: tracked source/doc diff whitespace and all 8 Python file lines; raw evidence patch/logs excluded explicitly.
+PASS: HEAD and locally recorded upstream remain e765b48; unit04 has not been committed or pushed.
+PASS: archived final logs are byte-identical to local originals.
+CONFIRMED: final full run 400/3 skipped and focused run 68; these are the recorded real runs, not reruns of this static check.
+Private GitHub visibility and remote SHA were verified during the authorized upload; this static check makes no network request.

@@ -1,0 +1,117 @@
+{
+  "unit": "07",
+  "uploaded_head": "e765b48059379ae79e0b62744d98dd6b3563688a",
+  "baseline": "Actual uncommitted unit06 worktree, stored in .local/unit-07/before; diff excludes other units.",
+  "runtime_versions": {
+    "python": "3.12.13",
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "existing_helpers": [
+    {
+      "path": "backend/herta_agent/tools/coding/read_file.py",
+      "sha256": "5c5570875e1a09d7d2a9b1404b34404d5b222db628b68d0e3d917f557cccb7b6",
+      "symbols": [
+        {
+          "name": "read_bounded_bytes",
+          "line": 17
+        },
+        {
+          "name": "decode_utf8",
+          "line": 26
+        },
+        {
+          "name": "read_file",
+          "line": 76
+        }
+      ],
+      "reuse": "Direct existing implementation; permissions adds a create preview branch; Repository.path adds default-False allow_missing. No copied alternate service."
+    },
+    {
+      "path": "backend/herta_agent/tools/permissions.py",
+      "sha256": "2d9f31788f228453e5d639d9b7a9d3fc1f611c34162ccb107b2c96809e64b6cf",
+      "symbols": [
+        {
+          "name": "terminal_text",
+          "line": 15
+        },
+        {
+          "name": "TerminalApproval",
+          "line": 23
+        },
+        {
+          "name": "confirm_once",
+          "line": 47
+        }
+      ],
+      "reuse": "Direct existing implementation; permissions adds a create preview branch; Repository.path adds default-False allow_missing. No copied alternate service."
+    },
+    {
+      "path": "backend/herta_agent/tools/coding/paths.py",
+      "sha256": "f629545ecedda7175d98a3d1a6c11b81707edf6a2b59599110c3793b6964eb36",
+      "symbols": [
+        {
+          "name": "Repository",
+          "line": 35
+        }
+      ],
+      "reuse": "Direct existing implementation; permissions adds a create preview branch; Repository.path adds default-False allow_missing. No copied alternate service."
+    },
+    {
+      "path": "backend/herta_agent/tools/executor.py",
+      "sha256": "7e0a5929a7108098826a6de55f5317d0b6e2497238e3b3350350f81436c22779",
+      "symbols": [
+        {
+          "name": "execute",
+          "line": 67
+        }
+      ],
+      "reuse": "Direct existing implementation; permissions adds a create preview branch; Repository.path adds default-False allow_missing. No copied alternate service."
+    },
+    {
+      "path": "backend/herta_agent/runtime/agent.py",
+      "sha256": "0204e2ba388661db43d0da24f2fb09498d5937fff59cb8a1f16b6133440ceecb",
+      "symbols": [
+        {
+          "name": "run",
+          "line": 104
+        }
+      ],
+      "reuse": "Direct existing implementation; permissions adds a create preview branch; Repository.path adds default-False allow_missing. No copied alternate service."
+    }
+  ],
+  "approval_confirm_and_terminal_text_unchanged": true,
+  "new_dependencies": [],
+  "upstream_code_copied": false,
+  "stdlib_reuse": [
+    "tempfile.mkstemp",
+    "os.fdopen",
+    "os.link",
+    "os.unlink",
+    "difflib.unified_diff",
+    "hashlib.sha256",
+    "asyncio.to_thread"
+  ],
+  "official_references": [
+    {
+      "url": "https://docs.python.org/3.12/library/os.html#os.link",
+      "read_date": "2026-10-21",
+      "scope": "Python3.12 standard library interface; installed interpreter3.12.13. No source copied."
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createhardlinkw",
+      "read_date": "2026-10-21",
+      "scope": "Windows file-link API and same-volume/filesystem constraints; no direct ctypes implementation copied."
+    }
+  ],
+  "reuse_decision": "Existing Edit uses replacement; keep it unchanged. New-only publication uses stdlib hard-link create with no overwrite fallback, not a second file service or permission policy.",
+  "review": "Independent exact-diff static review found no P0-P2 issues; reviewer ran no tests, network or user-data access.",
+  "verified_boundary": "Local Windows ordinary file operations, real link/collision tests and offline Provider. Filesystem unsupported errors fail closed without replacement fallback.",
+  "unverified": [
+    "Other filesystems/platforms",
+    "Hostile concurrent directory or staging-file replacement",
+    "Power-loss durability",
+    "Real model tool selection and response quality"
+  ]
+}

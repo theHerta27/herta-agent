@@ -1,0 +1,482 @@
+{
+  "base_commit": "e765b48059379ae79e0b62744d98dd6b3563688a",
+  "runtime_versions": {
+    "python": "3.12.13",
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "new_dependencies": [],
+  "existing_helpers": [
+    {
+      "path": "backend/herta_agent/documents/process.py",
+      "symbol": "attach_job",
+      "line": 14,
+      "sha256": "ac0117220e495e8be83251fc575b5968e5983a92e6ff795e79dd80f2631e53c1",
+      "unchanged_from_base": true,
+      "use": "direct lazy import; no code copied; no dependency added",
+      "git_blob_sha256": "efe4360ea2aba6f930dad56dfb8d294ec94d2b69e41d428e2a930c358b2a3fd2",
+      "comparison": "Git blob LF versus working-tree CRLF normalized; sha256 retains each actual byte representation"
+    },
+    {
+      "path": "backend/herta_agent/companion/worker_process.py",
+      "symbol": "resume_process",
+      "line": 7,
+      "sha256": "923a4687e27ca1a585665d1efa4d4a42e764cd3a21871b6e06b98d4126475997",
+      "unchanged_from_base": true,
+      "use": "direct lazy import; no code copied; no dependency added",
+      "git_blob_sha256": "814f455534cd583bee9165c368a6ac80be442ead6e3c5f8f4a3cd066b56ef99f",
+      "comparison": "Git blob LF versus working-tree CRLF normalized; sha256 retains each actual byte representation"
+    }
+  ],
+  "reviewed_candidate": {
+    "commit": "e121d8207f74af98e22f2c100348b05160a0560b",
+    "path": "backend/herta_agent/tools/coding/run_tests.py",
+    "sha256": "3ae5054a48fdadd697f9bfe3919be73cd822d6eeca4748e398f51a681e444a3e",
+    "decision": "Not ported: tied to Docker and pytest. Current tool uses stdlib unittest."
+  },
+  "current_symbols": {
+    "backend/herta_agent/cli.py": [
+      {
+        "name": "print_result",
+        "line": 44,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_turn",
+        "line": 49,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "chat",
+        "line": 64,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "create_agent",
+        "line": 93,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_cli",
+        "line": 111,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "main",
+        "line": 142,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "pulse",
+        "line": 53,
+        "kind": "FunctionDef"
+      }
+    ],
+    "backend/herta_agent/tools/permissions.py": [
+      {
+        "name": "terminal_text",
+        "line": 14,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "TerminalApproval",
+        "line": 22,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "confirm_once",
+        "line": 42,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__init__",
+        "line": 23,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "__call__",
+        "line": 26,
+        "kind": "AsyncFunctionDef"
+      }
+    ],
+    "backend/herta_agent/tools/coding/run_tests.py": [
+      {
+        "name": "TestParameters",
+        "line": 19,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "TestReport",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "test_directory",
+        "line": 36,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_command",
+        "line": 51,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_owned",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run_tests",
+        "line": 148,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "run",
+        "line": 149,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "drain",
+        "line": 101,
+        "kind": "FunctionDef"
+      }
+    ],
+    "backend/herta_agent/tools/coding/test_worker.py": [
+      {
+        "name": "CountingResult",
+        "line": 9,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "main",
+        "line": 17,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "addSuccess",
+        "line": 12,
+        "kind": "FunctionDef"
+      }
+    ],
+    "backend/tests/test_cli_run_tests.py": [
+      {
+        "name": "CLITestExecutionTests",
+        "line": 27,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "TestEditLoopTests",
+        "line": 249,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 28,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "approve",
+        "line": 36,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "source",
+        "line": 39,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 42,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_success_is_based_on_actual_unittest_report",
+        "line": 49,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_all_subtests_skipped_are_not_reported_passed",
+        "line": 61,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_initialization_failure_is_failed_even_when_no_methods_ran",
+        "line": 70,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_class_setup_skip_is_skipped_even_when_no_methods_ran",
+        "line": 89,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_tool_completion_is_different_from_test_failure",
+        "line": 100,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_rerun_reads_edited_source_instead_of_an_old_bytecode_cache",
+        "line": 112,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_zero_tests_and_all_skipped_are_not_reported_passed",
+        "line": 127,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_no_authority_denies_before_running_project_code",
+        "line": 138,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_already_cancelled_worker_does_not_launch_a_process",
+        "line": 144,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_non_windows_execution_is_explicitly_unsupported",
+        "line": 161,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_denied_confirmation_never_executes_test_imports",
+        "line": 169,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_output_limit_and_abrupt_exit_are_not_passing",
+        "line": 178,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_invalid_scope_and_patterns_are_rejected",
+        "line": 186,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_timeout_and_repeated_cancel_reap_child_tree_before_return",
+        "line": 198,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_actual_demo_fails_edits_and_passes_in_the_original_loop",
+        "line": 250,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "launch",
+        "line": 151,
+        "kind": "FunctionDef"
+      }
+    ],
+    "backend/tests/test_cli_read.py": [
+      {
+        "name": "CLIReadTests",
+        "line": 28,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "ReadBoundaryTests",
+        "line": 201,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "invoke",
+        "line": 29,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "feedback",
+        "line": 60,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_module_reads_real_utf8_markdown_and_returns_numbered_lines",
+        "line": 67,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_missing_excluded_outside_and_binary_paths_return_tool_errors",
+        "line": 95,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_multibyte_file_is_paginated_before_executor_result_limit",
+        "line": 119,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "test_openai_adapter_sends_read_results_and_schema_without_legacy_services",
+        "line": 132,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "setUp",
+        "line": 202,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "execute",
+        "line": 213,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_invalid_utf8_is_rejected_and_oversized_file_is_not_a_partial_success",
+        "line": 218,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_strict_argument_validation_happens_before_disk_lookup",
+        "line": 228,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_zero_start_line_is_rejected_before_disk_lookup",
+        "line": 234,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_reversed_range_and_oversized_line_are_explicit_errors",
+        "line": 241,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_resolved_outside_link_and_windows_aliases_are_rejected",
+        "line": 249,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_real_handler_can_cancel_its_wait_and_eventual_worker_closes",
+        "line": 261,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_next_line_continues_without_skipping_any_complete_line",
+        "line": 286,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "respond",
+        "line": 135,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delayed_read",
+        "line": 267,
+        "kind": "FunctionDef"
+      }
+    ],
+    "backend/tests/test_cli_search.py": [
+      {
+        "name": "SearchToolTests",
+        "line": 24,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "SearchReadCLITests",
+        "line": 185,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "setUp",
+        "line": 25,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "search",
+        "line": 35,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_search_returns_real_paths_lines_and_literal_case_sensitive_matches",
+        "line": 40,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_result_limit_and_multibyte_preview_budget_are_explicit",
+        "line": 58,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_internal_paths_are_excluded_and_unreadable_text_is_counted",
+        "line": 73,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_missing_outside_paths_and_bad_arguments_do_not_search",
+        "line": 90,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_total_read_budget_returns_incomplete_instead_of_false_no_match",
+        "line": 103,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_outside_links_are_not_traversed_or_read",
+        "line": 111,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_nonregular_directory_entries_are_not_opened",
+        "line": 126,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_cancelled_search_stops_between_files_and_worker_finishes",
+        "line": 147,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "test_cli_search_results_select_the_read_path_in_the_same_loop",
+        "line": 186,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "file_type",
+        "line": 134,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "delayed_read",
+        "line": 156,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "tracked_search",
+        "line": 162,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "respond",
+        "line": 189,
+        "kind": "FunctionDef"
+      }
+    ],
+    "examples/cli-test/demo.py": [
+      {
+        "name": "TestEditFixture",
+        "line": 15,
+        "kind": "ClassDef"
+      },
+      {
+        "name": "complete",
+        "line": 16,
+        "kind": "AsyncFunctionDef"
+      },
+      {
+        "name": "call",
+        "line": 49,
+        "kind": "FunctionDef"
+      },
+      {
+        "name": "answer",
+        "line": 60,
+        "kind": "FunctionDef"
+      }
+    ]
+  },
+  "execution_boundary": "Windows only, current-user privileges. Job object owns ordinary descendants; not filesystem or network isolation."
+}

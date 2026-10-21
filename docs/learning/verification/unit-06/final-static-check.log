@@ -1,0 +1,12 @@
+Unit06 final static checks (2026-10-21)
+
+PASS: 7 changed source/doc files match current hashes; baseline snapshot hashes verified; 3 Python files parse.
+PASS: 67 relative links resolve in current README/map/unit06 document.
+PASS: core loop/events/context/history, storage, Provider, registry/executor, config/dependencies, frontend/scripts unchanged from uploaded e765b48.
+PASS: all 7 unit04 Python files outside CLI retain prior hashes.
+PASS: all 3 unit05 Python files outside CLI retain prior hashes.
+PASS: primary checkout business source unchanged; only existing progress record appended there.
+PASS: tracked source/doc whitespace plus all 3 Python files; raw patch/log archives explicitly excluded.
+PASS: archived evidence byte-matches local originals.
+CONFIRMED: actual full 417/3 skipped, related 38, lint and 3-file format logs; not reruns of this static check.
+PASS: HEAD remains e765b48; unit04-06 not committed/pushed; no unit07 implementation.

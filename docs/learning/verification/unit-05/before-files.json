@@ -1,0 +1,47 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "exists": true,
+    "sha256": "589241c3dd1fcecfb7b4d10dd34abe1dca8b669a0ab963e7ad5b7c3ab1c2d6eb"
+  },
+  {
+    "path": "backend/herta_agent/project_context.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "backend/tests/test_project_context.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "examples/cli-instructions/demo.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "README.md",
+    "exists": true,
+    "sha256": "3bd0f4d325121ba20e910c0d0a0762993e4f2b03862b2c5d71e50dfe57b6ff12"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "exists": true,
+    "sha256": "115ce3972457f378f1f1c10ad81e2ece56bed6687aec55542ee49596257cf988"
+  },
+  {
+    "path": "docs/learning/unit-04-test-and-verify.md",
+    "exists": true,
+    "sha256": "c292b67aa26aaac6b53900ecd2d4c8b55d98f94309ed29d89444a4817b0c2923"
+  },
+  {
+    "path": "docs/learning/unit-05-project-instructions.md",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "task_plan.md",
+    "exists": true,
+    "sha256": "6236bffa4e7d7c9e3f705064020ea542b25b9b41d31fee636b8f740cac641623"
+  }
+]

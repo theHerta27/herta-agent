@@ -1,0 +1,152 @@
+E501 Line too long (105 > 100)
+  --> backend\herta_agent\tools\coding\create_file.py:44:79
+   |
+42 |                 raise ValueError
+43 |     except (OSError, ValueError, RuntimeError):
+44 |         raise ToolExecutionError("path_denied", "新建路径须在项目内，不能包含链接或特殊路径。") from None
+   |                                                                                                     ^^^^^
+45 |     if target.exists():
+46 |         raise ToolExecutionError("create_conflict", "目标已存在，未覆盖；请先读取或换用新文件名。")
+   |
+
+E501 Line too long (101 > 100)
+  --> backend\herta_agent\tools\coding\create_file.py:89:83
+   |
+87 |         os.link(temporary, target)  # Same directory/volume; refuses an existing destination.
+88 |     except FileExistsError:
+89 |         raise ToolExecutionError("create_conflict", "目标已存在，未覆盖；请重新核对文件。") from None
+   |                                                                                                     ^
+90 |     except OSError:
+91 |         raise ToolExecutionError("create_write_failed", "新建失败或文件系统不支持；请核对目标。") from None
+   |
+
+E501 Line too long (107 > 100)
+  --> backend\herta_agent\tools\coding\create_file.py:91:82
+   |
+89 |         raise ToolExecutionError("create_conflict", "目标已存在，未覆盖；请重新核对文件。") from None
+90 |     except OSError:
+91 |         raise ToolExecutionError("create_write_failed", "新建失败或文件系统不支持；请核对目标。") from None
+   |                                                                                                     ^^^^^^^
+92 |     finally:
+93 |         if temporary is not None:
+   |
+
+E501 Line too long (101 > 100)
+   --> backend\herta_agent\tools\coding\create_file.py:100:74
+    |
+ 98 |             except OSError:
+ 99 |                 raise ToolExecutionError(
+100 |                     "create_cleanup_failed", "目标可能已创建，但临时文件清理失败；请回读目标并核查。"
+    |                                                                                                     ^
+101 |                 ) from None
+102 |     return {
+    |
+
+B023 Function definition does not bind loop variable `target`
+  --> backend\tests\test_cli_create.py:59:38
+   |
+58 |                 def confirm(prompt):
+59 |                     self.assertFalse(target.exists())
+   |                                      ^^^^^^
+60 |                     self.assertIn("--- /dev/null", stream.getvalue())
+61 |                     self.assertIn("+answer = 42", stream.getvalue())
+   |
+
+B023 Function definition does not bind loop variable `stream`
+  --> backend\tests\test_cli_create.py:60:52
+   |
+58 |                 def confirm(prompt):
+59 |                     self.assertFalse(target.exists())
+60 |                     self.assertIn("--- /dev/null", stream.getvalue())
+   |                                                    ^^^^^^
+61 |                     self.assertIn("+answer = 42", stream.getvalue())
+62 |                     return answer
+   |
+
+B023 Function definition does not bind loop variable `stream`
+  --> backend\tests\test_cli_create.py:61:51
+   |
+59 |                     self.assertFalse(target.exists())
+60 |                     self.assertIn("--- /dev/null", stream.getvalue())
+61 |                     self.assertIn("+answer = 42", stream.getvalue())
+   |                                                   ^^^^^^
+62 |                     return answer
+   |
+
+B023 Function definition does not bind loop variable `answer`
+  --> backend\tests\test_cli_create.py:62:28
+   |
+60 |                     self.assertIn("--- /dev/null", stream.getvalue())
+61 |                     self.assertIn("+answer = 42", stream.getvalue())
+62 |                     return answer
+   |                            ^^^^^^
+63 |
+64 |                 with contextlib.redirect_stdout(stream), patch("builtins.input", side_effect=confirm):
+   |
+
+E501 Line too long (102 > 100)
+  --> backend\tests\test_cli_create.py:64:101
+   |
+62 |                     return answer
+63 |
+64 |                 with contextlib.redirect_stdout(stream), patch("builtins.input", side_effect=confirm):
+   |                                                                                                     ^^
+65 |                     result = await self.execute(
+66 |                         authorize=TerminalApproval(self.repo), path=target.name, content="answer = 42\n"
+   |
+
+E501 Line too long (104 > 100)
+  --> backend\tests\test_cli_create.py:66:101
+   |
+64 |                 with contextlib.redirect_stdout(stream), patch("builtins.input", side_effect=confirm):
+65 |                     result = await self.execute(
+66 |                         authorize=TerminalApproval(self.repo), path=target.name, content="answer = 42\n"
+   |                                                                                                     ^^^^
+67 |                     )
+68 |                 self.assertEqual(result.ok, answer == "yes")
+   |
+
+E501 Line too long (108 > 100)
+   --> backend\tests\test_cli_create.py:106:101
+    |
+104 |             return "yes"
+105 |
+106 |         with contextlib.redirect_stdout(io.StringIO()), patch("builtins.input", side_effect=another_writer):
+    |                                                                                                     ^^^^^^^^
+107 |             result = await self.execute(
+108 |                 authorize=TerminalApproval(self.repo), path="new.py", content="ours"
+    |
+
+E501 Line too long (111 > 100)
+   --> backend\tests\test_cli_create.py:226:101
+    |
+224 |                     feedback = json.loads(messages[-1].content)
+225 |                     if not feedback["ok"]:
+226 |                         return ModelReply(message=Message(role="assistant", content=feedback["error"]["code"]))
+    |                                                                                                     ^^^^^^^^^^^
+227 |                     if messages[-1].tool_call_id == "create_file":
+228 |                         self.receipt = feedback["data"]
+    |
+
+E501 Line too long (114 > 100)
+   --> backend\tests\test_cli_create.py:231:101
+    |
+229 | …             name, arguments = "read_file", {"path": "new.py"}
+230 | …         else:
+231 | …             return ModelReply(message=Message(role="assistant", content=json.dumps(feedback["data"])))
+    |                                                                                           ^^^^^^^^^^^^^^
+232 | …     return ModelReply(message=Message(role="assistant", tool_calls=(ToolCall(id=name, name=name, arguments=json.dumps(arguments)),)…
+    |
+
+E501 Line too long (145 > 100)
+   --> backend\tests\test_cli_create.py:232:101
+    |
+230 | …
+231 | …(role="assistant", content=json.dumps(feedback["data"])))
+232 | …ssistant", tool_calls=(ToolCall(id=name, name=name, arguments=json.dumps(arguments)),)))
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+233 | …
+234 | …
+    |
+
+Found 14 errors.

@@ -1,0 +1,63 @@
+E501 Line too long (106 > 100)
+   --> backend\herta_agent\cli.py:190:85
+    |
+188 |     )
+189 |     parser.add_argument("--message", help="发送一条消息后退出；省略则进入交互模式")
+190 |     parser.add_argument("--trace", action="store_true", help="在stderr显示步骤、工具状态和估算上下文用量")
+    |                                                                                                     ^^^^^^
+191 |     parser.add_argument("--max-steps", type=int, default=8)
+192 |     parser.add_argument("--timeout", type=float, default=120.0, help="每次模型请求期限（秒）")
+    |
+
+E501 Line too long (101 > 100)
+  --> backend\tests\test_cli_trace.py:34:101
+   |
+33 | def read_provider():
+34 |     return ScriptedProvider((ToolCall(id="read", name="read_file", arguments='{"path":"note.md"}'),))
+   |                                                                                                     ^
+
+E501 Line too long (107 > 100)
+  --> backend\tests\test_cli_trace.py:95:101
+   |
+93 |     async def test_observer_does_not_change_reply_or_add_events_to_session_history(self):
+94 |         plain, observed = Session(), Session()
+95 |         plain_result = await run_turn(create_agent(read_provider(), RunSettings(), self.repo), plain, "读")
+   |                                                                                                     ^^^^^^^
+96 |         stream = io.StringIO()
+97 |         traced_result = await run_turn(
+   |
+
+E501 Line too long (107 > 100)
+   --> backend\tests\test_cli_trace.py:98:100
+    |
+ 96 |         stream = io.StringIO()
+ 97 |         traced_result = await run_turn(
+ 98 |             create_agent(read_provider(), RunSettings(), self.repo), observed, "读", observer=trace(stream)
+    |                                                                                                     ^^^^^^^
+ 99 |         )
+100 |         self.assertEqual(traced_result.reply, plain_result.reply)
+    |
+
+E501 Line too long (111 > 100)
+   --> backend\tests\test_cli_trace.py:131:101
+    |
+129 |         registry = ToolRegistry()
+130 |         registry.register(ToolSpec("fail", "fixture", ToolParameters, fail))
+131 |         agent = Agent(ScriptedProvider((ToolCall(id="fail", name="fail", arguments="{}"),)), registry=registry)
+    |                                                                                                     ^^^^^^^^^^^
+132 |         stream = io.StringIO()
+133 |         await run_turn(agent, Session(), "USER_INPUT_FIXTURE", observer=trace(stream))
+    |
+
+E501 Line too long (111 > 100)
+   --> backend\tests\test_cli_trace.py:190:101
+    |
+188 |         registry = ToolRegistry()
+189 |         registry.register(ToolSpec("wait", "fixture", ToolParameters, wait))
+190 |         agent = Agent(ScriptedProvider((ToolCall(id="wait", name="wait", arguments="{}"),)), registry=registry)
+    |                                                                                                     ^^^^^^^^^^^
+191 |         stream, session = io.StringIO(), Session()
+192 |         task = asyncio.create_task(run_turn(agent, session, "等待", observer=trace(stream)))
+    |
+
+Found 6 errors.

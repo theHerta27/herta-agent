@@ -1,0 +1,81 @@
+{
+  "unit": "05",
+  "uploaded_head": "e765b48059379ae79e0b62744d98dd6b3563688a",
+  "baseline": "Actual unit04 uncommitted working state, preserved under .local/unit-05/before; not HEAD alone.",
+  "versions": {
+    "python": "3.12.13",
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "new_dependencies": [],
+  "existing_helpers": [
+    {
+      "path": "backend/herta_agent/tools/coding/paths.py",
+      "sha256": "a5afc52f93b249a2f72443e2babcff329b30c5263ed0f277b495d42213b54e40",
+      "unchanged_from_uploaded_base_normalized": true,
+      "symbols": [
+        {
+          "name": "Repository",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "path": "backend/herta_agent/tools/coding/read_file.py",
+      "sha256": "5c5570875e1a09d7d2a9b1404b34404d5b222db628b68d0e3d917f557cccb7b6",
+      "unchanged_from_uploaded_base_normalized": true,
+      "symbols": [
+        {
+          "name": "read_bounded_bytes",
+          "line": 17
+        },
+        {
+          "name": "decode_utf8",
+          "line": 26
+        }
+      ]
+    },
+    {
+      "path": "backend/herta_agent/runtime/context.py",
+      "sha256": "0d554bc63b3d8329b7c432d0d042895a72076681e05e273ac17acafd8c56bf81",
+      "unchanged_from_uploaded_base_normalized": true,
+      "symbols": [
+        {
+          "name": "ContextSnapshot",
+          "line": 14
+        },
+        {
+          "name": "StaticContextBuilder",
+          "line": 40
+        }
+      ]
+    },
+    {
+      "path": "backend/herta_agent/runtime/agent.py",
+      "sha256": "0204e2ba388661db43d0da24f2fb09498d5937fff59cb8a1f16b6133440ceecb",
+      "unchanged_from_uploaded_base_normalized": true,
+      "symbols": [
+        {
+          "name": "run",
+          "line": 104
+        }
+      ]
+    }
+  ],
+  "official_reference": {
+    "url": "https://code.claude.com/docs/en/memory",
+    "read_date": "2026-10-21",
+    "use": "Conceptual distinction between project instructions as context and enforced configuration; no upstream code copied.",
+    "difference": "Herta: explicitly selected single file, no hierarchy/imports/auto memory, refreshed once per Run."
+  },
+  "review": {
+    "important_issue": "Python 3.12 Path.resolve raises RuntimeError for cyclic symbolic links.",
+    "resolution": "Actual temporary-link RED regression, explicit ContextError translation, 9 GREEN tests; independent static recheck closed issue."
+  },
+  "unverified": [
+    "Real model obedience and instruction conflict handling",
+    "OS isolation against concurrent filesystem replacement",
+    "Private files and existing databases"
+  ]
+}

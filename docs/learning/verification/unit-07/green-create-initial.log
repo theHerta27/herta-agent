@@ -1,0 +1,29 @@
+test_cancelled_preparation_never_performs_a_late_create (test_cli_create.CreateTests.test_cancelled_preparation_never_performs_a_late_create) ... ok
+test_cleanup_error_is_honest_about_an_already_created_target (test_cli_create.CreateTests.test_cleanup_error_is_honest_about_an_already_created_target) ... ok
+test_collision_at_publish_is_preserved_and_staging_file_is_removed (test_cli_create.CreateTests.test_collision_at_publish_is_preserved_and_staging_file_is_removed) ... ok
+test_default_denial_creates_nothing (test_cli_create.CreateTests.test_default_denial_creates_nothing) ... ok
+test_empty_and_crlf_unicode_content_are_exact_and_readable (test_cli_create.CreateTests.test_empty_and_crlf_unicode_content_are_exact_and_readable) ... ok
+test_existing_file_or_directory_is_never_overwritten (test_cli_create.CreateTests.test_existing_file_or_directory_is_never_overwritten) ... ok
+test_file_appearing_during_confirmation_is_preserved (test_cli_create.CreateTests.test_file_appearing_during_confirmation_is_preserved) ... ok
+test_links_dangling_links_and_cycles_are_rejected (test_cli_create.CreateTests.test_links_dangling_links_and_cycles_are_rejected) ... ok
+test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint (test_cli_create.CreateTests.test_original_loop_creates_then_reads_the_same_bytes_and_fingerprint) ... ok
+test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) ... 
+  test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text') ... FAIL
+test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged (test_cli_create.CreateTests.test_terminal_preview_precedes_yes_and_no_keeps_directory_unchanged) ... ok
+test_unsupported_publish_fails_without_a_fallback_write (test_cli_create.CreateTests.test_unsupported_publish_fails_without_a_fallback_write) ... ok
+
+======================================================================
+FAIL: test_path_content_and_preview_boundaries_do_not_create_files (test_cli_create.CreateTests.test_path_content_and_preview_boundaries_do_not_create_files) (path="'new.py'", code='not_text')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_create.py", line 172, in test_path_content_and_preview_boundaries_do_not_create_files
+    self.assertEqual(result.error.code, code)
+AssertionError: 'invalid_arguments' != 'not_text'
+- invalid_arguments
++ not_text
+
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.424s
+
+FAILED (failures=1)

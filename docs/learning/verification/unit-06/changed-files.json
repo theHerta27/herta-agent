@@ -1,0 +1,61 @@
+{
+  "baseline": "Actual unit05 uncommitted worktree snapshot, not HEAD alone",
+  "files": [
+    {
+      "path": "backend/herta_agent/cli.py",
+      "status": "modified",
+      "before_sha256": "d2368f038227c9cde2a022b36129dedf8a7f625646d249f3f331932fa5921457",
+      "after_sha256": "2644fe3722423267ce2467bebf91c2708c55b06dc61253ed06bc842ea062a5b7",
+      "added_lines": 21,
+      "removed_lines": 6
+    },
+    {
+      "path": "backend/herta_agent/cli_events.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "877c03e8fca141e5ad191b397a3976f6b0b78d34669c31d016207ecddced231a",
+      "added_lines": 60,
+      "removed_lines": 0
+    },
+    {
+      "path": "backend/tests/test_cli_trace.py",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "10a2b4257205c27816bcecca2462ed855a67b9598a60ec22332833ec8455a1bc",
+      "added_lines": 238,
+      "removed_lines": 0
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "before_sha256": "990e0aa1eb25d0efa0065e829d861e796e5fab993f7d53828e9cef914eb47517",
+      "after_sha256": "80784210c15bafc8f7cd2075867ba62156ae8f74bc3ff73a6057459f1765922e",
+      "added_lines": 9,
+      "removed_lines": 1
+    },
+    {
+      "path": "docs/learning/project-map.md",
+      "status": "modified",
+      "before_sha256": "7788e614de8ab78fbc0828a0c520e25c07fde7f167ce0d9a46c710cae8c8ddb1",
+      "after_sha256": "1edec60707ab12c2721127eb85daab47ab0b4abd8493dc9f9abcb8527ce5c0cd",
+      "added_lines": 3,
+      "removed_lines": 2
+    },
+    {
+      "path": "docs/learning/unit-06-execution-trace.md",
+      "status": "added",
+      "before_sha256": null,
+      "after_sha256": "75f3eade07f0667ba27dda6e7ce85ea7f157cfd39f47af7fc1cce1afceffb2eb",
+      "added_lines": 69,
+      "removed_lines": 0
+    },
+    {
+      "path": "task_plan.md",
+      "status": "modified",
+      "before_sha256": "6dacefceb6ebca318a2d21e7089ee1c9ec9f1822b03c67c8fcd5dd6393c04432",
+      "after_sha256": "ee8c20bc65511d16b4d751c46baedb53889f5bef654ee7a59a2c2590b0665e77",
+      "added_lines": 15,
+      "removed_lines": 0
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+test_non_windows_execution_is_explicitly_unsupported (test_cli_run_tests.CLITestExecutionTests.test_non_windows_execution_is_explicitly_unsupported) ... FAIL
+
+======================================================================
+FAIL: test_non_windows_execution_is_explicitly_unsupported (test_cli_run_tests.CLITestExecutionTests.test_non_windows_execution_is_explicitly_unsupported)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_run_tests.py", line 125, in test_non_windows_execution_is_explicitly_unsupported
+    with self.assertRaises(ToolExecutionError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ToolExecutionError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.536s
+
+FAILED (failures=1)
