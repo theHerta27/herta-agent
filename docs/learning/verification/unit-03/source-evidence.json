@@ -1,0 +1,175 @@
+{
+  "unit": "03",
+  "date": "2026-10-21",
+  "head": "9ab9796d819216a64c783eeba75f7ac804441a23",
+  "reuse": {
+    "kept": "Same Agent.run, Registry, Session, Context; shared Repository and bounded UTF-8 reading",
+    "extended": "Executor: mutually exclusive per-call authorizer; Agent constructor only forwards it; Read returns byte fingerprint",
+    "inspected_not_ported": {
+      "own_branch_commit": "e121d8207f74af98e22f2c100348b05160a0560b",
+      "path": "backend/herta_agent/tools/coding/apply_patch.py",
+      "sha256": "223caadd8d8ca7db43f92a81920303110dbdc11f9c797046d6906302c0ec98ce",
+      "reason": "Multi-file unified diff parser/rollback exceeds this single exact replacement unit"
+    },
+    "new_small_glue": "Exact replacement uses built-in string operations; difflib preview, hashlib fingerprint, tempfile/os.replace from stdlib. No patch parser.",
+    "not_run": "git apply; upstream restored Claude Code sources; real model provider"
+  },
+  "official_reference_snapshots": {
+    "tools-reference.md": {
+      "read_on": "2026-10-19 audit; reused local snapshot on 2026-10-21",
+      "sha256": "320420019ef6584aa61d1b3e30c91f07885c9dc90b5a184f68f1f0ca13c59b50"
+    },
+    "permissions.md": {
+      "read_on": "2026-10-19 audit; reused local snapshot on 2026-10-21",
+      "sha256": "22f01bc144964cc7cf2ea3b2b71ba5a75d160adf6dbd9b954f6fbf5f707b0b56"
+    }
+  },
+  "package_versions": {
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "python": "3.12.13",
+  "new_dependencies": [],
+  "symbol_lines": {
+    "backend/herta_agent/cli.py": {
+      "print_result": 41,
+      "run_turn": 46,
+      "chat": 61,
+      "create_agent": 90,
+      "run_cli": 107,
+      "main": 138,
+      "pulse": 50
+    },
+    "backend/herta_agent/runtime/agent.py": {
+      "Agent": 39,
+      "__init__": 40,
+      "_request": 70,
+      "run": 104
+    },
+    "backend/herta_agent/tools/executor.py": {
+      "ToolError": 17,
+      "ToolResult": 23,
+      "ToolExecutor": 37,
+      "failure": 30,
+      "to_json": 33,
+      "__init__": 38,
+      "_permitted": 62,
+      "execute": 67
+    },
+    "backend/herta_agent/tools/permissions.py": {
+      "terminal_text": 11,
+      "TerminalApproval": 19,
+      "__init__": 20,
+      "__call__": 23
+    },
+    "backend/herta_agent/tools/coding/edit_file.py": {
+      "EditParameters": 20,
+      "PreparedEdit": 28,
+      "editable_path": 35,
+      "prepare_edit": 53,
+      "commit_edit": 83,
+      "edit_file": 115,
+      "edit": 116
+    },
+    "backend/herta_agent/tools/coding/read_file.py": {
+      "read_bounded_bytes": 17,
+      "decode_utf8": 26,
+      "ReadParameters": 37,
+      "_read_file": 43,
+      "read_file": 76,
+      "read": 77
+    },
+    "backend/tests/test_cli_edit.py": {
+      "CLIEditTests": 28,
+      "EditBoundaryTests": 201,
+      "test_one_sigint_during_confirmation_refuses_without_stalled_input": 29,
+      "test_read_returns_fingerprint_of_actual_bytes": 47,
+      "test_edit_is_denied_without_an_authorizer": 61,
+      "run_edit_cli": 87,
+      "test_cli_confirmation_writes_then_reads_real_result_in_same_loop": 180,
+      "test_cli_denial_blank_and_eof_leave_file_unchanged": 191,
+      "setUp": 202,
+      "approve": 213,
+      "execute": 216,
+      "test_stale_missing_duplicate_and_overlapping_matches_do_not_write": 228,
+      "test_unsafe_targets_are_not_written_even_with_test_authority": 247,
+      "test_internal_symlinks_and_hardlinks_are_not_editable": 263,
+      "test_changes_made_while_user_reviews_are_preserved": 277,
+      "test_failed_replace_keeps_original_and_removes_temporary_file": 294,
+      "test_change_during_temporary_write_is_not_overwritten": 302,
+      "test_cancelled_prepare_never_writes_later": 316,
+      "test_invalid_text_and_unshowable_diff_are_rejected": 342,
+      "test_terminal_preview_escapes_controls_and_marks_missing_newline": 352,
+      "test_newline_only_edit_does_not_hide_carriage_return_in_preview": 365,
+      "test_readonly_target_is_rejected_without_leaving_readonly_temporary": 376,
+      "respond": 90,
+      "confirm_after_external_edit": 280,
+      "external_change": 306,
+      "delayed_prepare": 321
+    },
+    "backend/tests/cli_edit_interrupt_probe.py": {
+      "waiting_input": 21,
+      "run": 35
+    },
+    "backend/tests/test_tool_permissions.py": {
+      "ToolPermissionTests": 9,
+      "test_call_authorization_uses_validated_arguments_and_only_approves_once": 10,
+      "test_authorization_errors_and_non_boolean_answers_fail_closed": 39,
+      "test_side_effect_is_denied_before_started_or_handler": 66,
+      "test_large_output_is_rejected_without_partial_success": 87,
+      "test_permission_and_result_limit_are_validated": 100,
+      "handler": 101,
+      "authorize": 17,
+      "broken": 46,
+      "truthy": 49,
+      "started": 73
+    },
+    "backend/tests/test_cli_read.py": {
+      "CLIReadTests": 28,
+      "ReadBoundaryTests": 201,
+      "invoke": 29,
+      "feedback": 60,
+      "test_module_reads_real_utf8_markdown_and_returns_numbered_lines": 67,
+      "test_missing_excluded_outside_and_binary_paths_return_tool_errors": 95,
+      "test_multibyte_file_is_paginated_before_executor_result_limit": 119,
+      "test_openai_adapter_sends_read_results_and_schema_without_legacy_services": 132,
+      "setUp": 202,
+      "execute": 213,
+      "test_invalid_utf8_is_rejected_and_oversized_file_is_not_a_partial_success": 218,
+      "test_strict_argument_validation_happens_before_disk_lookup": 228,
+      "test_zero_start_line_is_rejected_before_disk_lookup": 234,
+      "test_reversed_range_and_oversized_line_are_explicit_errors": 241,
+      "test_resolved_outside_link_and_windows_aliases_are_rejected": 249,
+      "test_real_handler_can_cancel_its_wait_and_eventual_worker_closes": 261,
+      "test_next_line_continues_without_skipping_any_complete_line": 286,
+      "respond": 135,
+      "delayed_read": 267
+    },
+    "backend/tests/test_cli_search.py": {
+      "SearchToolTests": 24,
+      "SearchReadCLITests": 185,
+      "setUp": 25,
+      "search": 35,
+      "test_search_returns_real_paths_lines_and_literal_case_sensitive_matches": 40,
+      "test_result_limit_and_multibyte_preview_budget_are_explicit": 58,
+      "test_internal_paths_are_excluded_and_unreadable_text_is_counted": 73,
+      "test_missing_outside_paths_and_bad_arguments_do_not_search": 90,
+      "test_total_read_budget_returns_incomplete_instead_of_false_no_match": 103,
+      "test_outside_links_are_not_traversed_or_read": 111,
+      "test_nonregular_directory_entries_are_not_opened": 126,
+      "test_cancelled_search_stops_between_files_and_worker_finishes": 147,
+      "test_cli_search_results_select_the_read_path_in_the_same_loop": 186,
+      "file_type": 134,
+      "delayed_read": 156,
+      "tracked_search": 162,
+      "respond": 189
+    },
+    "examples/cli-edit/demo.py": {
+      "EditFixture": 18,
+      "complete": 19,
+      "call": 47,
+      "answer": 58
+    }
+  }
+}

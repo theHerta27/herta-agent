@@ -95,7 +95,9 @@ def main():
     app.router.lifespan_context = lifespan
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
-        (root / "port.txt").write_text(str(sock.getsockname()[1]))
+        ready = root / "port.tmp"
+        ready.write_text(str(sock.getsockname()[1]), encoding="ascii")
+        ready.replace(root / "port.txt")
         uvicorn.Server(
             uvicorn.Config(app, host="127.0.0.1", access_log=False, log_level="warning")
         ).run(sockets=[sock])

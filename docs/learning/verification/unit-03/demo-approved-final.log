@@ -1,0 +1,21 @@
+离线固定脚本：Read→确认Edit→Read，不调用模型、不读取API Key。
+只修改本次创建的临时演示文件；结束时自动清理。
+本次编辑差异（未写入；终端控制字符已转义）：
+--- a/note.py
++++ b/note.py
+@@ -1,2 +1,2 @@
+-value = 1
++value = 2
+ untouched = True
+
+输入 yes 仅确认本次修改；其他输入或直接回车拒绝：实际写入收据：{"written": true, "path": "note.py", "before_sha256": "07bc484d7747d8a24618b8531bfce61c926c379d6213a4213ec7c1c6b0900be2", "after_sha256": "e4fde8aeae3b48e2fcd15c6d237af8a1c6a4ebf406e601a5475a15241f629808"}
+Assistant: 固定脚本收到回读正文：
+1: value = 2
+2: untouched = True
+sha256=e4fde8aeae3b48e2fcd15c6d237af8a1c6a4ebf406e601a5475a15241f629808
+[steps=4]
+[context_sha256=0848071800e42bedec24baed42a58ab73901a252ab3ae583e7427754977300e7]
+演示结束时的实际文件：
+value = 2
+untouched = True
+

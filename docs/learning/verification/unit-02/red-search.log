@@ -1,0 +1,78 @@
+test_search_returns_real_paths_lines_and_literal_case_sensitive_matches (test_cli_search.SearchToolTests.test_search_returns_real_paths_lines_and_literal_case_sensitive_matches) ... FAIL
+test_cli_search_results_select_the_read_path_in_the_same_loop (test_cli_search.SearchReadCLITests.test_cli_search_results_select_the_read_path_in_the_same_loop) ... ERROR
+
+======================================================================
+ERROR: test_cli_search_results_select_the_read_path_in_the_same_loop (test_cli_search.SearchReadCLITests.test_cli_search_results_select_the_read_path_in_the_same_loop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_search.py", line 199, in test_cli_search_results_select_the_read_path_in_the_same_loop
+    main(["--provider", "openai", "--repo", str(root), "--message", "找到并读取add_tax"])
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\cli.py", line 145, in main
+    run_cli(args, runner)
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\cli.py", line 118, in run_cli
+    chat(create_agent(provider, settings, repository), args.message, runner)
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\cli.py", line 56, in chat
+    print_result(runner.run(run_turn(agent, session, message)))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\cli.py", line 48, in run_turn
+    return await agent.run(session, text)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\runtime\agent.py", line 137, in run
+    response = await self._request(messages, sink, step, message_id, tools)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\runtime\agent.py", line 68, in _request
+    return await self.provider.complete(messages, tools=tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\llm\openai_compatible.py", line 90, in complete
+    response = await self.client.post(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1859, in post
+    return await self.request(
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1540, in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1629, in send
+    response = await self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1657, in _send_handling_auth
+    response = await self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1694, in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_client.py", line 1730, in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.venv\Lib\site-packages\httpx\_transports\mock.py", line 34, in handle_async_request
+    response = self.handler(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_search.py", line 168, in respond
+    hit = json.loads(body["messages"][-1]["content"])["data"]["matches"][0]
+          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+
+======================================================================
+FAIL: test_search_returns_real_paths_lines_and_literal_case_sensitive_matches (test_cli_search.SearchToolTests.test_search_returns_real_paths_lines_and_literal_case_sensitive_matches)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_search.py", line 44, in test_search_returns_real_paths_lines_and_literal_case_sensitive_matches
+    self.assertTrue(found.ok)
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.055s
+
+FAILED (failures=1, errors=1)

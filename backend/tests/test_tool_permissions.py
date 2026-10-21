@@ -7,6 +7,62 @@ from herta_agent.tools.registry import ToolRegistry, ToolSpec
 
 
 class ToolPermissionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_call_authorization_uses_validated_arguments_and_only_approves_once(self):
+        effects, approvals = [], []
+
+        async def handler(parameters):
+            effects.append(parameters.text)
+            return {"written": parameters.text}
+
+        async def authorize(spec, parameters):
+            approvals.append(parameters.text)
+            parameters.text = "authority copy mutation"
+            return True
+
+        registry = ToolRegistry()
+        registry.register(
+            ToolSpec("write", "Write", EchoParameters, handler, permission="side_effect")
+        )
+        executor = ToolExecutor(registry, authorize=authorize)
+        invalid = await executor.execute(
+            ToolCall(id="bad", name="write", arguments='{"text":false}')
+        )
+        self.assertEqual(invalid.error.code, "invalid_arguments")
+        self.assertEqual(approvals, [])
+        result = await executor.execute(
+            ToolCall(id="ok", name="write", arguments='{"text":"original"}')
+        )
+        self.assertEqual(result.data, {"written": "original"})
+        self.assertEqual(approvals, ["original"])
+        self.assertEqual(effects, ["original"])
+
+    async def test_authorization_errors_and_non_boolean_answers_fail_closed(self):
+        effects = []
+
+        async def handler(parameters):
+            effects.append(parameters.text)
+            return {}
+
+        async def broken(spec, parameters):
+            raise RuntimeError("private fixture detail")
+
+        async def truthy(spec, parameters):
+            return "yes"
+
+        registry = ToolRegistry()
+        registry.register(
+            ToolSpec("write", "Write", EchoParameters, handler, permission="side_effect")
+        )
+        for authority, code in ((broken, "approval_failed"), (truthy, "permission_denied")):
+            result = await ToolExecutor(registry, authorize=authority).execute(
+                ToolCall(id="x", name="write", arguments='{"text":"x"}')
+            )
+            self.assertEqual(result.error.code, code)
+            self.assertNotIn("private fixture detail", result.to_json())
+        self.assertEqual(effects, [])
+        with self.assertRaises(ValueError):
+            ToolExecutor(registry, tool_policy=lambda spec: True, authorize=broken)
+
     async def test_side_effect_is_denied_before_started_or_handler(self):
         signals = []
 

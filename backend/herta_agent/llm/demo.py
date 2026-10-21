@@ -43,3 +43,32 @@ class ToolDemoProvider:
                 tool_calls=(ToolCall(id=f"demo_{uuid4().hex}", name="echo", arguments=arguments),),
             )
         )
+
+
+class ReadDemoProvider:
+    """Fixed read_file call, then display real feedback; no natural-language routing."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+
+    async def complete(
+        self, messages: tuple[Message, ...], *, tools: tuple[dict, ...] = ()
+    ) -> ModelReply:
+        if messages[-1].role == "tool":
+            return ModelReply(
+                message=Message(
+                    role="assistant", content=f"[离线读文件演示] 工具结果：{messages[-1].content}"
+                )
+            )
+        return ModelReply(
+            message=Message(
+                role="assistant",
+                tool_calls=(
+                    ToolCall(
+                        id=f"read_{uuid4().hex}",
+                        name="read_file",
+                        arguments=json.dumps({"path": self.path}, ensure_ascii=False),
+                    ),
+                ),
+            )
+        )

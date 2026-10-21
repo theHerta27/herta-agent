@@ -1,4 +1,37 @@
-# Herta Agent
+# 当前教学分支：Python CLI 单元03
+
+当前目标是理解并构建一个独立的 Python CLI Coding Agent。当前可读取、字面搜索，并在逐次确认差异后替换已有文件中的一处唯一文本，复用同一个Agent Loop；尚不能运行命令。下面原有桌面版章节保留为历史说明，不代表当前教学分支的产品入口。
+
+在本分支的仓库根目录，使用已有 Python 环境运行：
+
+```powershell
+$env:PYTHONPATH = (Join-Path (Get-Location) 'backend')
+python -m herta_agent --repo examples/cli-read --demo-read-file notes/demo.md --message '请读取这份笔记，展示内容。'
+```
+
+`--demo-read-file` 是固定工具调用演示：不调用模型、不读取 API Key；实际文件读取、校验和结果回填仍由真实 Harness 执行。省略 `--message` 进入交互模式，`/exit` 退出。会话仅存于当前进程。`--provider openai` 注册`read_file`、`grep_code`和`edit_file`，CLI对每次编辑显示完整差异，只有输入`yes`才确认。模型适配器可以替换；目前只通过本地模拟 HTTP 验证，真实模型选工具和回答质量未确认。
+
+搜索→读取的本地学习夹具：
+
+```powershell
+python examples/cli-search/demo.py
+```
+
+该夹具使用相同`create_agent/chat/Agent.run`，固定搜索`def add_tax`，将真实命中的路径交给Read，显示`steps=3`；不增加生产CLI参数或第二套Loop。搜索区分大小写、按字面匹配，返回路径、行号与预览；遇到预算截断或无法读取的文件，会通过`truncated/skipped_files`说明。详见[单元02](docs/learning/unit-02-search-read.md)。
+
+读取→确认编辑→回读的本地学习夹具：
+
+```powershell
+python examples/cli-edit/demo.py
+```
+
+只操作本次创建的临时文件。输入`yes`后实际修改并回读，显示`steps=4`；输入`no`、直接回车、EOF或确认时Ctrl+C会拒绝此次编辑。每次运行均重建演示文件，不触及已有资料。实际修改限已有普通UTF-8文件中的一处唯一文本；内容指纹过期、重复匹配、链接、硬链接或只读文件均拒绝，不提供文件创建/删除或多文件补丁。详见[单元03](docs/learning/unit-03-confirmed-edit.md)。
+
+路径检查约束 `read_file` 对选定项目目录的访问，排除 `.env`、`.git` 等内部路径，不是操作系统沙箱。仅接受不超过1 MiB的UTF-8文本，每次最多400行，并按结果字节数保守截断；更大的文件明确报错，不返回不完整行。具体限制、真实调用链、验证与练习见 [单元01学习总结](docs/learning/unit-01-cli-read.md)。旧桌面启动脚本不是这个 CLI 的入口。
+
+---
+
+# 旧版桌面说明（历史）
 
 Windows 个人 AI 桌面助手，保留大黑塔人格、持续会话与知识检索，提供语音、提醒、可管理记忆和受控文件工作台。Electron 管理本机 Python 服务；Agent Loop、工具执行、上下文预算与 SQLite 历史均由 Herta 自己实现。工程机制主要参考项目中的 Hermes 源码，Cyrene 用于产品功能思路。
 

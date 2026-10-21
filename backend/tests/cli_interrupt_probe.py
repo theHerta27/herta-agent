@@ -7,7 +7,7 @@ import sys
 import threading
 from unittest.mock import patch
 
-from herta_agent.__main__ import chat, main
+from herta_agent.cli import chat, main
 from herta_agent.runtime.agent import Agent
 from herta_agent.runtime.messages import Message, ModelReply, ToolCall
 from herta_agent.tools.echo import EchoParameters, echo_registry
@@ -47,7 +47,7 @@ async def wait(parameters):
 
 if "--single" in sys.argv:
     with (
-        patch("herta_agent.__main__.DemoProvider", return_value=Provider()),
+        patch("herta_agent.cli.DemoProvider", return_value=Provider()),
         patch("sys.argv", ["herta_agent", "--message", "one"]),
     ):
         main()

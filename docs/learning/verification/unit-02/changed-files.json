@@ -1,0 +1,106 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "a3f5303a576725a6ee4df8fca93b8d8aabd00206f49ffd767dd7adad24ea0d35",
+    "after_sha256": "584578137af1054ada3c9a759e0b5615fadd633f330d73ce09aed38c0c3ce880",
+    "added_lines": 7,
+    "removed_lines": 3
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/paths.py",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "6b1da5b962870c888e28e9c545616566e788bffb918dd4a6e22da9db2ce8a1af",
+    "after_sha256": "a5afc52f93b249a2f72443e2babcff329b30c5263ed0f277b495d42213b54e40",
+    "added_lines": 31,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/read_file.py",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "0951e50d79960c24c50418cc32d4c7e34cb16c6c022b33f2cadd04d11a1c3c00",
+    "after_sha256": "9a77f9f05bb5ea27336ad8a490020f2d15ce726dca0ad20d3b99de3ea20ef2b6",
+    "added_lines": 24,
+    "removed_lines": 12
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/grep_code.py",
+    "change": "new in unit02",
+    "before_sha256": null,
+    "after_sha256": "913b335fe8f517da3327b99f9e3032d8eb72eb672c40ab5b8cb2fe32b7c47a96",
+    "added_lines": 83,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/tests/test_cli_read.py",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "76ca343dce5d853a624e56dd763b5894d83190d6888d0bf93afa8edadc185b70",
+    "after_sha256": "496fd4d264a39a3cc2ae53287c25c7176833b7244d1eb3c5e5ab3a4bfe26fe14",
+    "added_lines": 9,
+    "removed_lines": 1
+  },
+  {
+    "path": "backend/tests/test_cli_search.py",
+    "change": "new in unit02",
+    "before_sha256": null,
+    "after_sha256": "ec3068cd78fb605c397169d942f049ac4bb1fb1d7f6a91ae99a9b18bec023d79",
+    "added_lines": 282,
+    "removed_lines": 0
+  },
+  {
+    "path": "examples/cli-search/demo.py",
+    "change": "new in unit02",
+    "before_sha256": null,
+    "after_sha256": "696c894bfc2feb0bad8111abb7a23c176bd9714bc3c19dfadd30a54882cdbaaf",
+    "added_lines": 72,
+    "removed_lines": 0
+  },
+  {
+    "path": "examples/cli-search/shop/billing.py",
+    "change": "new in unit02",
+    "before_sha256": null,
+    "after_sha256": "6daab10e06231866582f0a7bb580d8659287dd4c89aba27575b5d4ee47500895",
+    "added_lines": 6,
+    "removed_lines": 0
+  },
+  {
+    "path": "README.md",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "53579731a652f95c588b3cd44fb4e79d89ca784826b6c830b2c44b59ea6f50ee",
+    "after_sha256": "497ea9e9d01033a1b4a569db5d9ae78d50030200558bd0b6c36ebf5c136d1576",
+    "added_lines": 11,
+    "removed_lines": 3
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "f67b50f3b66f1b67f6c14b513a3f5d672dd43b6e53df4da08f2b43dafe087d2e",
+    "after_sha256": "d8c8c223d5993aaedfb0af77de318ffa0a512f08587276f963e72126682eff69",
+    "added_lines": 3,
+    "removed_lines": 2
+  },
+  {
+    "path": "docs/learning/unit-01-cli-read.md",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "c090db4ca6010ce52c8e3bff3320a4bd7cbf0e0c49b2a099607b44279fcf86dd",
+    "after_sha256": "93b77a4e3b923da51ddecc6791f95496f6d485c3d75048861844de5c83a9275f",
+    "added_lines": 4,
+    "removed_lines": 2
+  },
+  {
+    "path": "docs/learning/unit-02-search-read.md",
+    "change": "new in unit02",
+    "before_sha256": null,
+    "after_sha256": "25220962bdf63d65dc059869f1a14a36381d15c784a81896ce97c96fa9d46c9c",
+    "added_lines": 64,
+    "removed_lines": 0
+  },
+  {
+    "path": "task_plan.md",
+    "change": "modified since unit01 snapshot",
+    "before_sha256": "39fd564516ba64695bb59c5478c0073b91c5be95dbca4579174d4d7142fc7cca",
+    "after_sha256": "5e906fb31670a82fae6c74762482653dd270d82f5731646113d1470ee4081860",
+    "added_lines": 13,
+    "removed_lines": 0
+  }
+]

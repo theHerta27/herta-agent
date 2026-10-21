@@ -1,0 +1,130 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "584578137af1054ada3c9a759e0b5615fadd633f330d73ce09aed38c0c3ce880",
+    "after_sha256": "f272b1156253c12efb25b741e1c21f13f396e169d5733a0ed2c6fd2c8d6fbc16",
+    "added_lines": 17,
+    "removed_lines": 6
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/edit_file.py",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "42b4ff23b3fb059b68ec72b6b987eb04d5ef5116c73eceedc3514ba956e441a6",
+    "added_lines": 128,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/read_file.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "9a77f9f05bb5ea27336ad8a490020f2d15ce726dca0ad20d3b99de3ea20ef2b6",
+    "after_sha256": "5c5570875e1a09d7d2a9b1404b34404d5b222db628b68d0e3d917f557cccb7b6",
+    "added_lines": 4,
+    "removed_lines": 1
+  },
+  {
+    "path": "backend/herta_agent/tools/permissions.py",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "a1a90cb6adffc2e2e2e8cb9e4d43aae0a3d5c1d528fb82ca4fee048f0f97fac3",
+    "added_lines": 44,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/tests/cli_edit_interrupt_probe.py",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "c16669180e1d96074b514c01a3ef132d67ed73eff357de66e2eccd612f564fe1",
+    "added_lines": 63,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/tests/test_cli_edit.py",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "611bfd1062b4728b5a80ca19f2f7e7919f314a8aeeabce322a8f8a38c528f643",
+    "added_lines": 388,
+    "removed_lines": 0
+  },
+  {
+    "path": "backend/tests/test_cli_read.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "496fd4d264a39a3cc2ae53287c25c7176833b7244d1eb3c5e5ab3a4bfe26fe14",
+    "after_sha256": "a633be219116611678b395409e389ca5b65698c65042a3b8f21d066929afc833",
+    "added_lines": 3,
+    "removed_lines": 1
+  },
+  {
+    "path": "backend/tests/test_cli_search.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "ec3068cd78fb605c397169d942f049ac4bb1fb1d7f6a91ae99a9b18bec023d79",
+    "after_sha256": "5e980763c943e73709a37878dd29b2ee7164363cd2b49fdb723dd2b03d3488a2",
+    "added_lines": 1,
+    "removed_lines": 1
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "d8c8c223d5993aaedfb0af77de318ffa0a512f08587276f963e72126682eff69",
+    "after_sha256": "a846345e5d1dd049f2a71ca57d0fdd646d6e361f94c087e6a8dae41c595e09e1",
+    "added_lines": 6,
+    "removed_lines": 5
+  },
+  {
+    "path": "docs/learning/unit-03-confirmed-edit.md",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "5b0835fbe4a8a3ae52dbebfec497a6a526f0efee5f045c4e2ce50a468ac39410",
+    "added_lines": 56,
+    "removed_lines": 0
+  },
+  {
+    "path": "examples/cli-edit/demo.py",
+    "change": "new in unit03",
+    "before_sha256": null,
+    "after_sha256": "e40b0a892a7efd744c5cc4f375098c5125616e3e941a7b3de4d975a70b5912a6",
+    "added_lines": 75,
+    "removed_lines": 0
+  },
+  {
+    "path": "README.md",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "497ea9e9d01033a1b4a569db5d9ae78d50030200558bd0b6c36ebf5c136d1576",
+    "after_sha256": "11cac1a94b483e4413c5d438a79cc79e0ab3623a73cd4f217f0de90fb9fb0119",
+    "added_lines": 12,
+    "removed_lines": 4
+  },
+  {
+    "path": "backend/herta_agent/runtime/agent.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "00f7f5428e56fe29db620d3e2ac156374f941e77672a7221f2363a66e4f4006c",
+    "after_sha256": "0204e2ba388661db43d0da24f2fb09498d5937fff59cb8a1f16b6133440ceecb",
+    "added_lines": 5,
+    "removed_lines": 1
+  },
+  {
+    "path": "backend/herta_agent/tools/executor.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "da56b7ced7fa723caeaa253c3a054530131003ac315b7c2f06ba6b1a392666b4",
+    "after_sha256": "7e0a5929a7108098826a6de55f5317d0b6e2497238e3b3350350f81436c22779",
+    "added_lines": 19,
+    "removed_lines": 3
+  },
+  {
+    "path": "backend/tests/test_tool_permissions.py",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "98b43417578ff6eb7fa5a3662717b17d74442942e535c23ea4593f277ba2b5ee",
+    "after_sha256": "9dd2542355933947420f6190382cfe836e4290a32bdc9566363a8c26dc05d61a",
+    "added_lines": 56,
+    "removed_lines": 0
+  },
+  {
+    "path": "task_plan.md",
+    "change": "modified since unit02 snapshot",
+    "before_sha256": "5e906fb31670a82fae6c74762482653dd270d82f5731646113d1470ee4081860",
+    "after_sha256": "715e52ffca1be22674de995323c3e0fda8114c6faf1eb473f4da6cb35bf3e5d8",
+    "added_lines": 12,
+    "removed_lines": 0
+  }
+]

@@ -1,0 +1,72 @@
+test_cli_confirmation_writes_then_reads_real_result_in_same_loop (test_cli_edit.CLIEditTests.test_cli_confirmation_writes_then_reads_real_result_in_same_loop) ... FAIL
+test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) ... 
+  test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=['no']) ... FAIL
+  test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=['']) ... FAIL
+  test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=[EOFError()]) ... FAIL
+test_edit_is_denied_without_an_authorizer (test_cli_edit.CLIEditTests.test_edit_is_denied_without_an_authorizer) ... FAIL
+test_read_returns_fingerprint_of_actual_bytes (test_cli_edit.CLIEditTests.test_read_returns_fingerprint_of_actual_bytes) ... FAIL
+
+======================================================================
+FAIL: test_cli_confirmation_writes_then_reads_real_result_in_same_loop (test_cli_edit.CLIEditTests.test_cli_confirmation_writes_then_reads_real_result_in_same_loop)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 117, in test_cli_confirmation_writes_then_reads_real_result_in_same_loop
+    self.assertEqual(content, b"value = 2\r\nuntouched = True\r\n")
+AssertionError: b'value = 1\r\nuntouched = True\r\n' != b'value = 2\r\nuntouched = True\r\n'
+
+======================================================================
+FAIL: test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=['no'])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 132, in test_cli_denial_blank_and_eof_leave_file_unchanged
+    self.assertEqual(feedback["error"]["code"], "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=[''])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 132, in test_cli_denial_blank_and_eof_leave_file_unchanged
+    self.assertEqual(feedback["error"]["code"], "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) (approval=[EOFError()])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 132, in test_cli_denial_blank_and_eof_leave_file_unchanged
+    self.assertEqual(feedback["error"]["code"], "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_edit_is_denied_without_an_authorizer (test_cli_edit.CLIEditTests.test_edit_is_denied_without_an_authorizer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 61, in test_edit_is_denied_without_an_authorizer
+    self.assertEqual(result.error.code, "permission_denied")
+AssertionError: 'unknown_tool' != 'permission_denied'
+- unknown_tool
++ permission_denied
+
+
+======================================================================
+FAIL: test_read_returns_fingerprint_of_actual_bytes (test_cli_edit.CLIEditTests.test_read_returns_fingerprint_of_actual_bytes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 36, in test_read_returns_fingerprint_of_actual_bytes
+    self.assertEqual(result.data.get("sha256"), hashlib.sha256(content).hexdigest())
+AssertionError: None != 'f8e0f1568dd9254c3262d199d5dcfc9ff6d4855e18ec53a7176f9eab948ed93e'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.076s
+
+FAILED (failures=6)

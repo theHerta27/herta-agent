@@ -1,0 +1,14 @@
+test_one_sigint_during_confirmation_refuses_without_stalled_input (test_cli_edit.CLIEditTests.test_one_sigint_during_confirmation_refuses_without_stalled_input) ... FAIL
+
+======================================================================
+FAIL: test_one_sigint_during_confirmation_refuses_without_stalled_input (test_cli_edit.CLIEditTests.test_one_sigint_during_confirmation_refuses_without_stalled_input)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_edit.py", line 32, in test_one_sigint_during_confirmation_refuses_without_stalled_input
+    self.assertNotIn("INPUT_STALLED", result.stdout)
+AssertionError: 'INPUT_STALLED' unexpectedly found in '本次编辑差异（未写入；终端控制字符已转义）：\n--- a/note.py\n+++ b/note.py\n@@ -1 +1 @@\n-value = 1\n+value = 2\n\nINPUT_STALLED\nCANCELLED_AFTER_INPUT_STALLED\nUNCHANGED:True\n'
+
+----------------------------------------------------------------------
+Ran 1 test in 1.467s
+
+FAILED (failures=1)

@@ -1,0 +1,17 @@
+离线固定脚本：Read→确认Edit→Read，不调用模型、不读取API Key。
+只修改本次创建的临时演示文件；结束时自动清理。
+本次编辑差异（未写入；终端控制字符已转义）：
+--- a/note.py
++++ b/note.py
+@@ -1,2 +1,2 @@
+-value = 1
++value = 2
+ untouched = True
+
+输入 yes 仅确认本次修改；其他输入或直接回车拒绝：Assistant: 固定脚本收到工具错误：{"code": "permission_denied", "message": "用户未确认本次工具调用。"}
+[steps=3]
+[context_sha256=0848071800e42bedec24baed42a58ab73901a252ab3ae583e7427754977300e7]
+演示结束时的实际文件：
+value = 1
+untouched = True
+

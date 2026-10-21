@@ -1,0 +1,31 @@
+{
+  "symbol_lines": {
+    "cli.py": {
+      "print_result": 33,
+      "run_turn": 38,
+      "chat": 53,
+      "create_agent": 82,
+      "run_cli": 96,
+      "main": 123
+    },
+    "llm/demo.py": {
+      "DemoProvider": 10,
+      "ToolDemoProvider": 19,
+      "ReadDemoProvider": 48
+    },
+    "tools/coding/paths.py": {
+      "excluded": 30,
+      "Repository": 34
+    },
+    "tools/coding/read_file.py": {
+      "ReadParameters": 13,
+      "_read_file": 19,
+      "read_file": 61
+    }
+  },
+  "port_source_commit": "e121d8207f74af98e22f2c100348b05160a0560b",
+  "port_source_sha256": {
+    "backend/herta_agent/tools/coding/paths.py": "977510fa8d524c046ff087741f310f2506c8a38cc7b0187755f8d909ead713ae",
+    "backend/herta_agent/tools/coding/read_file.py": "48c32f71c146f24a8715b355cf3015ae435a00e79522de1ad7473c70db5c5785"
+  }
+}

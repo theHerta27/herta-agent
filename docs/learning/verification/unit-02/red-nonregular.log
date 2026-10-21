@@ -1,0 +1,27 @@
+test_nonregular_directory_entries_are_not_opened (test_cli_search.SearchToolTests.test_nonregular_directory_entries_are_not_opened) ... FAIL
+
+======================================================================
+FAIL: test_nonregular_directory_entries_are_not_opened (test_cli_search.SearchToolTests.test_nonregular_directory_entries_are_not_opened)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_search.py", line 143, in test_nonregular_directory_entries_are_not_opened
+    self.assertEqual([hit["path"] for hit in result.data["matches"]], ["ordinary.txt"])
+AssertionError: Lists differ: ['ordinary.txt', 'pipe-fixture'] != ['ordinary.txt']
+
+First list contains 1 additional elements.
+First extra element 1:
+'pipe-fixture'
+
+- ['ordinary.txt', 'pipe-fixture']
++ ['ordinary.txt']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.039s
+
+FAILED (failures=1)

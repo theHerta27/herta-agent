@@ -1,0 +1,28 @@
+test_cancelled_search_stops_between_files_and_worker_finishes (test_cli_search.SearchToolTests.test_cancelled_search_stops_between_files_and_worker_finishes) ... FAIL
+
+Mutation check: missing cooperative stop is detected; product source unchanged.
+======================================================================
+FAIL: test_cancelled_search_stops_between_files_and_worker_finishes (test_cli_search.SearchToolTests.test_cancelled_search_stops_between_files_and_worker_finishes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_search.py", line 181, in test_cancelled_search_stops_between_files_and_worker_finishes
+    self.assertEqual(opened, ["a.txt"])
+AssertionError: Lists differ: ['a.txt', 'b.txt'] != ['a.txt']
+
+First list contains 1 additional elements.
+First extra element 1:
+'b.txt'
+
+- ['a.txt', 'b.txt']
++ ['a.txt']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.049s
+
+FAILED (failures=1)

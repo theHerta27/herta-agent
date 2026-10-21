@@ -9,7 +9,9 @@ from pydantic import BaseModel, ConfigDict, JsonValue, ValidationError
 
 from herta_agent.runtime.errors import ToolExecutionError
 from herta_agent.runtime.messages import ToolCall
-from herta_agent.tools.registry import ToolRegistry, ToolSpec
+from herta_agent.tools.registry import ToolParameters, ToolRegistry, ToolSpec
+
+ToolAuthorizer = Callable[[ToolSpec, ToolParameters], Awaitable[bool]]
 
 
 class ToolError(BaseModel):
@@ -40,6 +42,7 @@ class ToolExecutor:
         *,
         max_result_bytes: int = 64_000,
         tool_policy: Callable[[ToolSpec], bool] | None = None,
+        authorize: ToolAuthorizer | None = None,
     ) -> None:
         if isinstance(timeout, bool) or not math.isfinite(timeout) or not 0 < timeout <= 600:
             raise ValueError("Tool timeout must be finite and within (0, 600]")
@@ -51,7 +54,10 @@ class ToolExecutor:
             raise ValueError("Tool result size limit must be a positive integer")
         self.registry, self.timeout = registry, timeout
         self.max_result_bytes = max_result_bytes
+        if tool_policy is not None and authorize is not None:
+            raise ValueError("Use either a spec policy or a call authorizer, not both")
         self.tool_policy = tool_policy
+        self.authorize = authorize
 
     def _permitted(self, spec):
         return spec.permission == "read_only" or (
@@ -64,7 +70,7 @@ class ToolExecutor:
         spec = self.registry.get(call.name)
         if spec is None:
             return ToolResult.failure("unknown_tool", "没有注册此工具，请使用提供的工具名称。")
-        if not self._permitted(spec):
+        if self.authorize is None and not self._permitted(spec):
             return ToolResult.failure("permission_denied", "此工具有副作用，当前运行未授权执行。")
         try:
             parameters = spec.parameters.model_validate_json(call.arguments)
@@ -72,9 +78,19 @@ class ToolExecutor:
             return ToolResult.failure(
                 "invalid_arguments", "参数不符合工具 JSON schema，请检查字段和类型。"
             )
+        if self.authorize is not None and spec.permission == "side_effect":
+            try:
+                approved = await self.authorize(spec, parameters.model_copy(deep=True))
+            except ToolExecutionError as exc:
+                return ToolResult.failure(exc.code, str(exc))
+            except Exception:
+                return ToolResult.failure("approval_failed", "无法完成确认，此工具未执行。")
+            if approved is not True:
+                return ToolResult.failure("permission_denied", "用户未确认本次工具调用。")
+            await asyncio.sleep(0)
         if on_started is not None:
             await on_started()  # Infrastructure errors must not become tool failures.
-        if not self._permitted(spec):
+        if self.authorize is None and not self._permitted(spec):
             return ToolResult.failure("permission_denied", "此工具有副作用，当前运行未授权执行。")
         try:
             async with asyncio.timeout(spec.timeout if spec.timeout is not None else self.timeout):

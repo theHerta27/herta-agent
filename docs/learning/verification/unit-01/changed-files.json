@@ -1,0 +1,62 @@
+[
+  {
+    "path": "README.md",
+    "status": "modified"
+  },
+  {
+    "path": "backend/herta_agent/__main__.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/herta_agent/llm/demo.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/tests/cli_interrupt_probe.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/tests/service_probe.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/tests/test_persona_integration.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/tests/test_rag_integration.py",
+    "status": "modified"
+  },
+  {
+    "path": "backend/herta_agent/cli.py",
+    "status": "new"
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/__init__.py",
+    "status": "new"
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/paths.py",
+    "status": "new"
+  },
+  {
+    "path": "backend/herta_agent/tools/coding/read_file.py",
+    "status": "new"
+  },
+  {
+    "path": "backend/tests/test_cli_read.py",
+    "status": "new"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "status": "new"
+  },
+  {
+    "path": "docs/learning/unit-01-cli-read.md",
+    "status": "new"
+  },
+  {
+    "path": "examples/cli-read/notes/demo.md",
+    "status": "new"
+  }
+]

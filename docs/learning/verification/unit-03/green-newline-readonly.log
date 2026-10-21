@@ -1,0 +1,26 @@
+test_cli_confirmation_writes_then_reads_real_result_in_same_loop (test_cli_edit.CLIEditTests.test_cli_confirmation_writes_then_reads_real_result_in_same_loop) ... ok
+test_cli_denial_blank_and_eof_leave_file_unchanged (test_cli_edit.CLIEditTests.test_cli_denial_blank_and_eof_leave_file_unchanged) ... ok
+test_edit_is_denied_without_an_authorizer (test_cli_edit.CLIEditTests.test_edit_is_denied_without_an_authorizer) ... ok
+test_one_sigint_during_confirmation_refuses_without_stalled_input (test_cli_edit.CLIEditTests.test_one_sigint_during_confirmation_refuses_without_stalled_input) ... ok
+test_read_returns_fingerprint_of_actual_bytes (test_cli_edit.CLIEditTests.test_read_returns_fingerprint_of_actual_bytes) ... ok
+test_cancelled_prepare_never_writes_later (test_cli_edit.EditBoundaryTests.test_cancelled_prepare_never_writes_later) ... ok
+test_change_during_temporary_write_is_not_overwritten (test_cli_edit.EditBoundaryTests.test_change_during_temporary_write_is_not_overwritten) ... ok
+test_changes_made_while_user_reviews_are_preserved (test_cli_edit.EditBoundaryTests.test_changes_made_while_user_reviews_are_preserved) ... ok
+test_failed_replace_keeps_original_and_removes_temporary_file (test_cli_edit.EditBoundaryTests.test_failed_replace_keeps_original_and_removes_temporary_file) ... ok
+test_internal_symlinks_and_hardlinks_are_not_editable (test_cli_edit.EditBoundaryTests.test_internal_symlinks_and_hardlinks_are_not_editable) ... ok
+test_invalid_text_and_unshowable_diff_are_rejected (test_cli_edit.EditBoundaryTests.test_invalid_text_and_unshowable_diff_are_rejected) ... ok
+test_newline_only_edit_does_not_hide_carriage_return_in_preview (test_cli_edit.EditBoundaryTests.test_newline_only_edit_does_not_hide_carriage_return_in_preview) ... ok
+test_readonly_target_is_rejected_without_leaving_readonly_temporary (test_cli_edit.EditBoundaryTests.test_readonly_target_is_rejected_without_leaving_readonly_temporary) ... ok
+test_stale_missing_duplicate_and_overlapping_matches_do_not_write (test_cli_edit.EditBoundaryTests.test_stale_missing_duplicate_and_overlapping_matches_do_not_write) ... ok
+test_terminal_preview_escapes_controls_and_marks_missing_newline (test_cli_edit.EditBoundaryTests.test_terminal_preview_escapes_controls_and_marks_missing_newline) ... ok
+test_unsafe_targets_are_not_written_even_with_test_authority (test_cli_edit.EditBoundaryTests.test_unsafe_targets_are_not_written_even_with_test_authority) ... ok
+test_authorization_errors_and_non_boolean_answers_fail_closed (test_tool_permissions.ToolPermissionTests.test_authorization_errors_and_non_boolean_answers_fail_closed) ... ok
+test_call_authorization_uses_validated_arguments_and_only_approves_once (test_tool_permissions.ToolPermissionTests.test_call_authorization_uses_validated_arguments_and_only_approves_once) ... ok
+test_large_output_is_rejected_without_partial_success (test_tool_permissions.ToolPermissionTests.test_large_output_is_rejected_without_partial_success) ... ok
+test_permission_and_result_limit_are_validated (test_tool_permissions.ToolPermissionTests.test_permission_and_result_limit_are_validated) ... ok
+test_side_effect_is_denied_before_started_or_handler (test_tool_permissions.ToolPermissionTests.test_side_effect_is_denied_before_started_or_handler) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 1.029s
+
+OK
