@@ -1,0 +1,45 @@
+E501 Line too long (101 > 100)
+  --> backend\tests\test_cli_context.py:50:101
+   |
+48 |                 with self.subTest(window=value):
+49 |                     result = self.invoke(
+50 |                         root, "--context-window", value, "--provider", "openai", "--message", "hello"
+   |                                                                                                     ^
+51 |                     )
+52 |                     self.assertIn(result.returncode, (1, 2))
+   |
+
+E501 Line too long (110 > 100)
+   --> backend\tests\test_cli_context.py:111:101
+    |
+109 |                     provider, session, sink = RecordingReadProvider(), Session(), Sink()
+110 |                     agent = create_agent(
+111 |                         provider, RunSettings(context=ContextSettings(window_tokens=window)), Repository(root)
+    |                                                                                                     ^^^^^^^^^^
+112 |                     )
+113 |                     for number in range(1, 4):
+    |
+
+E501 Line too long (102 > 100)
+   --> backend\tests\test_cli_context.py:123:101
+    |
+121 |                     self.assertEqual(len(sink.diagnostics), 6)
+122 |                     self.assertEqual(
+123 |                         any(d["omitted_message_count"] > 0 for d in sink.diagnostics), expect_omission
+    |                                                                                                     ^^
+124 |                     )
+125 |                     for diagnostic in sink.diagnostics:
+    |
+
+E501 Line too long (106 > 100)
+   --> backend\tests\test_cli_context.py:130:101
+    |
+128 |                     for messages in provider.inputs:
+129 |                         calls = [call.id for message in messages for call in message.tool_calls]
+130 |                         results = [message.tool_call_id for message in messages if message.role == "tool"]
+    |                                                                                                     ^^^^^^
+131 |                         self.assertEqual(calls, results)
+132 |                     tasks = [m.content.splitlines()[0] for m in provider.inputs[-1]
+    |
+
+Found 4 errors.

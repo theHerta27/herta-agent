@@ -1,0 +1,1 @@
+{"loaded_from": "D:\\Desktop\\herta-agent\\.local\\worktrees\\unit-01-cli-read\\.venv-cli\\Lib\\site-packages\\herta_agent\\__init__.py", "optional_absent": {"fastapi": true, "numpy": true, "mcp": true, "torch": true, "piper": true, "uvicorn": true}}

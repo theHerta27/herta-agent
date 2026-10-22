@@ -1,0 +1,21 @@
+Using CPython 3.12.13 interpreter at: D:\Desktop\herta-agent\.venv\Scripts\python.exe
+Creating virtual environment at: .venv-cli
+Activate with: .venv-cli\Scripts\activate
+Using Python 3.12.13 environment at: .venv-cli
+Resolved 12 packages in 7.32s
+Downloading pydantic-core (2.1MiB)
+ Downloaded pydantic-core
+Prepared 12 packages in 4.22s
+Installed 12 packages in 121ms
+ + annotated-types==0.8.0
+ + anyio==4.15.1
+ + certifi==2026.10.19
+ + h11==0.16.0
+ + herta-agent==0.1.0 (from file:///D:/Desktop/herta-agent/.local/worktrees/unit-01-cli-read/.local/cli-v1-dist/herta_agent-0.1.0-py3-none-any.whl)
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + idna==3.20
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4

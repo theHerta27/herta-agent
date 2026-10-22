@@ -1,0 +1,11 @@
+[步骤1] 上下文：估算输入 7687/14080 Token，省略 0 条历史消息
+[步骤1] 请求 Provider
+项目约定文件：AGENTS.md（每轮读取）
+模式：真实模型（非流式；读取、搜索；edit_file/create_file/run_tests需逐次确认）
+[session=495b6a359eeb4472989b58c4eac01dec]
+会话数据库：D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\.local\cli-v1-live-state\e807e794626c4adc55efbc46da5e0f843f14bf02a5b288e2d4a0164d3fe7c32b\sessions.sqlite3
+已恢复14条历史；后续编辑和测试仍需重新确认。
+Assistant: 修复的是 `metrics.py`。原因是其中的 `average(values)` 直接执行 `sum(values) / len(values)`，空列表时除数为 0 会抛 `ZeroDivisionError`。我在函数开头加了 `if not values: return 0`，使空列表返回 0，非空列表行为不变，且未改动或弱化现有测试。
+[steps=1]
+[session=495b6a359eeb4472989b58c4eac01dec]
+[context_sha256=5fe9925119bbf6802c24b6e2c3ae44ff1992665f0b930072bebfcfdddafc66a5]

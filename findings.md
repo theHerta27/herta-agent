@@ -1,4 +1,13 @@
-# Phase 0 发现
+# Herta 工程发现
+
+## 2026-10-22 终端界面
+
+- 用户批准Rich与prompt_toolkit后，只新增TerminalUI呈现层，复用原Loop、事件、审批和SQLite；没有第二个Agent或权限服务。实际安装版本Rich14.3.4、prompt_toolkit3.0.53，锁定传递依赖。
+- 固定Claude Code 2.1.88快照554bc4514ebaf83ef54d95bc44f4add7272d4f46，只读Clawd/PromptInput/Markdown/FileEditPermissionRequest选定片段，不复制非开源实现；Herta使用Python库自行接线。
+- 不能为了清爽抹掉真实CRLF差异；审查指出后恢复字面\\r并补双向测试。TERM=dumb会让prompt_toolkit返回文本而非按键结果；入口退回plain，UI内部也严格检查完整yes，不能用bool(result)批准任意非空输入。
+- CLI113和核心31通过；旧全套两轮分别遇到临时文件PermissionError和MCP启动超时，单独重跑通过但根因未确认。报告保留失败，不当作全套绿灯。本轮未调用付费模型；此前真实任务证据不冒充新UI模型验收。
+
+2026-10-22当前方向：Python CLI Coding Agent v1，按真实任务验收、CLI产品交付和工程证据三个阶段收敛。以下旧桌面/教学记录按历史事实保留，最新审计见docs/CLI_V1_AUDIT.md。
 
 ## 2026-10-13 资料笔记对话闭环
 - 当前交付限于两份短Markdown读取、整理新笔记、聊天预览、原生确认保存、真实结果读取及原会话核对。没有新增依赖或第二套文件/审批/Loop。
@@ -181,3 +190,40 @@
 - 当前实际依赖与backend/uv.lock一致：MCP1.30.0、pypdf6.20.0、python-docx1.2.0、Pillow12.3.0。backend/pyproject.toml的MCP范围为>=1.26,<2，没有版本漂移；旧会话摘要不能代替本轮源码核查。
 - 公共GitHub API限流403后，改用git ls-remote固定官方源码提交：Codex f82e36592278a0a782fb0d0fc97e5fa10e832ac2；Filesystem MCP bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c，其源码package.json为1.0.0（不推断npm已发布）。来源/路径/哈希保存.local/capability-audit/sources.json。
 - 本轮现有workspace19、file_plans18、documents17、MCP16项定向测试通过。Provider路由是确定性夹具；外部Filesystem MCP与Codex/Hermes代码未安装运行，不能称已验证替代。
+
+## 2026-10-22 CLI v1审计初始事实
+
+- 教学工作树HEAD683b38a，实际仍有08未提交成果；主目录HEAD9ab9796且有既有文档/规划改动，不将两棵工作树混为同一版本。
+- CLI实际支持demo/openai，默认demo；chat新建进程内Session，尚无CLI恢复参数。主线SQLite仍在，需读取适配耦合后再决定如何复用。
+- backend/pyproject.toml的基础依赖仍含FastAPI、文档处理、MCP等旧业务；不能称已能最小依赖独立安装。当前仅核对元数据，尚未做干净环境安装试验。
+- GitHub连接器读取镜像package/package.json成功，声明@anthropic-ai/claude-code 2.1.88，blob SHA e03808eac2ac6c7ed4362c04d6828198c3944231；这不是镜像的Git提交SHA，仍需分别固定。
+
+### 固定版本与本机基线
+
+- 镜像固定到554bc4514ebaf83ef54d95bc44f4add7272d4f46（提交日期2026-03-31）；Python学习实现固定到ce8f9f186058939da54c9d6fead78dfb5d0fd6c3（2026-09-28）。递归文件树完整返回，19份选定文件保存于Git忽略的.local/v1-audit-20261022；仅作只读研究，不放入产品源码/发布内容，不运行上游代码。
+- 原终端GitHub GET被沙箱网络拦截，随后经授权的沙箱外只读GET成功；不是上游文件缺失。每份缓存单独记录Git blob SHA与SHA256，和仓库提交SHA分开。
+- 本轮CLI相关84项通过（27.825秒）；核心Loop/工具/Provider/上下文/Session Store相关103项通过（6.508秒），均离线。上轮完整435项/3跳过是2026-10-21历史记录，本轮没有重跑完整旧后端，不能冒称今日全量验收。
+- CLI静态本地导入闭包29个Herta模块；包含documents.process、companion.worker_process、workspace.paths等已有标准库助手。静态闭包不能证明最小依赖安装成功；当前pyproject仍声明10个基础依赖，需做实际独立安装验收。
+- 已读上游query/queryLoop、QueryEngine.submitMessage及runTools片段：外层QueryEngine组织输入并委托query；runTools按isConcurrencySafe分批，串行/并发均落到runToolUse。Herta当前顺序执行，保留简单明确的副作用顺序；不为对齐上游而加入并发工具系统。
+
+- 补查权限回调时hooks/useCanUseTool.ts返回404；完整树显示真实扩展名为.tsx。改按树中实际路径读取，不把路径猜错当成快照缺文件。query/deps.ts已确认将callModel映射到queryModelWithStreaming，将autocompact映射到autoCompactIfNeeded。
+- 已读compactConversation片段及autoCompactIfNeeded阈值/失败熔断/调用分支：compactConversation调用streamCompactSummary生成摘要，buildPostCompactMessages重建消息；utils/messages.getMessagesAfterCompactBoundary选择最后压缩边界后的视图。Herta当前只做整轮预算与文字节录，未实现这套模型语义摘要和自动重试。
+
+- 最终缓存24份选定资料，Git blob SHA与固定树一致；4份仅缓存、不作为行为结论，其余只读选定声明/调用片段，未运行上游。QueryEngine所读submitMessage路径标为sdk；canUseTool为可注入回调，useCanUseTool.tsx只是已读的一种交互路径，不把两者强行连成所有入口的固定调用链。
+- 用户明确要求工程优先后，同步分支AGENTS与计划首页，替代旧“每个教学单元继续”的推进方式；业务实现保持原样。建议先P0再P1再P2；P0准备阶段不付费，实际调用前单独提供范围/上限并征求同意。
+
+## 简单真实任务准备
+
+- 用户要求简化验收，并明确“按计划进行”；第一轮只准备average空列表修复闭环，不把五个真实场景或评测平台当作前置条件。现有拒绝/冲突/取消本地保护保留。
+- examples/coding-task/project是故意有缺陷的非私人模板，3个测试中空列表一项报ZeroDivisionError，另外2项通过；该失败是演示起点，不是Harness回归失败。
+- prepare.py新建.local/coding-demo/average-*副本，不覆盖旧文件、不读Key、不调用模型；check.py位于目标项目外，独立核对项目测试和四组数值，拒绝把模型自述当通过。
+- 已观察未修复副本检查失败；另一个明确标为人工参考解的自建副本3项测试及四组行为检查通过，用来核查检查器，未改真实验收目标，不冒称模型修复。
+
+## CLI v1实施决定与结果
+
+- Ruling：最新用户授权连续交付与真实模型验收，替代旧教学等待/付费同意状态；只用专门新建项目，不扩大私人文件、旧数据库或GitHub发布权限。
+- Ruling：抽取原PersistentTurn的store-first通用部分为storage.StoredTurn，原服务用薄子类保留RunManager终态策略；CLI不引入HTTP服务、不复制Loop/存储。额外成本是共享适配回归，已跑全后端验证。
+- Ruling：真实模式默认保存、demo默认临时；项目路径哈希分库，进程字节锁保护启动恢复。新data-dir表示独立库，不声称全系统项目互斥或外部编辑器锁。恢复中断只标记未知，不自动重放副作用。
+- 实际DeepSeek平均值修复由模型自主调用工具，独立安装版含7个tool_calls、两Run共7请求，14条修复历史恢复后增加2条；加上开发环境首跑共13请求。完整导出无Key，路径前缀明确替换。
+- 打包只改依赖分组，uv.lock其余版本未升级。干净安装实际pydantic2.14.1、httpx0.28.1，旧环境pydantic2.13.5；97个打包源码字节与当前工作树一致。
+- 不宣称任意任务成功率、不实现Shell/pytest/OS沙箱/复杂Hooks/多Agent。可选语音和Electron交互本轮未验，旧测试格式问题保留。安装、真实小任务和源码对照各自有证据，不能互相替代。

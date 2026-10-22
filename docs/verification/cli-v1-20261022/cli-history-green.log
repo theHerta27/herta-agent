@@ -1,0 +1,59 @@
+test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable) ... ERROR
+test_list_is_local_and_does_not_create_another_session (test_cli_history.CLIHistoryTests.test_list_is_local_and_does_not_create_another_session) ... ok
+test_new_process_resumes_real_saved_history (test_cli_history.CLIHistoryTests.test_new_process_resumes_real_saved_history) ... ok
+test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart) ... ERROR
+test_resume_is_bound_to_selected_repository (test_cli_history.CLIHistoryTests.test_resume_is_bound_to_selected_repository) ... ok
+test_unknown_session_and_conflicting_options_are_safe_errors (test_cli_history.CLIHistoryTests.test_unknown_session_and_conflicting_options_are_safe_errors) ... ok
+
+======================================================================
+ERROR: test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 633, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpwsd4skyf\\state\\8c42989076ec5145e4747d583b027b2bc04df0ec92cedb665a4b4141076a02e4\\sessions.sqlite3'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 781, in rmtree
+    return _rmtree_unsafe(path, onexc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 635, in _rmtree_unsafe
+    onexc(os.unlink, fullname, err)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 909, in onexc
+    _os.unlink(path)
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpwsd4skyf\\state\\8c42989076ec5145e4747d583b027b2bc04df0ec92cedb665a4b4141076a02e4\\sessions.sqlite3'
+
+======================================================================
+ERROR: test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 633, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpsl5symer\\state\\b3f8e2fbf3d8893e4591a61da9493be5734937a22b285dac4de713fcb09a2bc5\\sessions.sqlite3'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 781, in rmtree
+    return _rmtree_unsafe(path, onexc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\shutil.py", line 635, in _rmtree_unsafe
+    onexc(os.unlink, fullname, err)
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\tempfile.py", line 909, in onexc
+    _os.unlink(path)
+PermissionError: [WinError 32] 另一个程序正在使用此文件，进程无法访问。: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\tmpsl5symer\\state\\b3f8e2fbf3d8893e4591a61da9493be5734937a22b285dac4de713fcb09a2bc5\\sessions.sqlite3'
+
+----------------------------------------------------------------------
+Ran 6 tests in 7.056s
+
+FAILED (errors=2)

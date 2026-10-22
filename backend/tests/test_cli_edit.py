@@ -168,6 +168,7 @@ class CLIEditTests(unittest.TestCase):
                     [
                         "--provider",
                         "openai",
+                        "--no-save",
                         "--repo",
                         str(root),
                         "--message",

@@ -1,0 +1,137 @@
+PASS Seven source/document files recorded, excluding raw evidence.
+PASS Manifest hash matches backend/herta_agent/cli.py
+PASS Manifest hash matches backend/tests/test_cli_context.py
+PASS Manifest hash matches examples/cli-context/demo.py
+PASS Manifest hash matches README.md
+PASS Manifest hash matches docs/learning/project-map.md
+PASS Manifest hash matches docs/learning/unit-08-context-budget.md
+PASS Manifest hash matches task_plan.md
+PASS HEAD remains uploaded 683b38a; unit08 not committed.
+PASS Upstream tracking ref equals uploaded checkpoint.
+PASS Runtime, provider, tools, permissions, storage, configuration, dependencies, frontend and scripts unchanged.
+PASS Primary checkout business code unchanged.
+PASS No unexpected worktree changes outside seven files and unit08 evidence.
+PASS Tracked source/document whitespace check passed; raw patches/logs excluded.
+PASS New source/document files also have no trailing whitespace.
+PASS Local documentation link resolves: docs/learning/unit-02-search-read.md
+PASS Local documentation link resolves: docs/learning/unit-03-confirmed-edit.md
+PASS Local documentation link resolves: docs/learning/unit-04-test-and-verify.md
+PASS Local documentation link resolves: docs/learning/unit-01-cli-read.md
+PASS Local documentation link resolves: docs/learning/unit-05-project-instructions.md
+PASS Local documentation link resolves: docs/learning/unit-06-execution-trace.md
+PASS Local documentation link resolves: docs/learning/unit-07-confirmed-create.md
+PASS Local documentation link resolves: docs/learning/unit-08-context-budget.md
+PASS Local documentation link resolves: docs/NOTE_TASK.md
+PASS Local documentation link resolves: docs/COMPANION_ACCEPTANCE.md
+PASS Local documentation link resolves: docs/READONLY_WORKBENCH_ACCEPTANCE.md
+PASS Local documentation link resolves: docs/VOICE_PLAYBACK_FIX.md
+PASS Local documentation link resolves: docs/PORTABLE_README.md
+PASS Local documentation link resolves: examples/mcp/README.md
+PASS Local documentation link resolves: docs/AGENT_CAPABILITY_AUDIT.md
+PASS Local documentation link resolves: docs/PRODUCT_COMPLETION_REPORT.md
+PASS Local documentation link resolves: docs/VOICE_PLAYBACK_FIX.md
+PASS Local documentation link resolves: docs/MUSIC_REMOVAL_ACCEPTANCE.md
+PASS Local documentation link resolves: docs/HARNESS_EVAL_REPORT.md
+PASS Local documentation link resolves: docs/IMPLEMENTATION_STATUS.md
+PASS Local documentation link resolves: docs/phase-5-walkthrough.md
+PASS Local documentation link resolves: docs/HERTA_HARNESS_DESIGN.md
+PASS Local documentation link resolves: docs/HERMES_SOURCE_MAP.md
+PASS Local documentation link resolves: docs/V1_IMPLEMENTATION_PLAN.md
+PASS Local documentation link resolves: docs/phase-6-ui-design.md
+PASS Local documentation link resolves: docs/phase-4-walkthrough.md
+PASS Local documentation link resolves: docs/hermes-analysis.md
+PASS Local documentation link resolves: unit-01-cli-read.md
+PASS Local documentation link resolves: unit-02-search-read.md
+PASS Local documentation link resolves: unit-03-confirmed-edit.md
+PASS Local documentation link resolves: unit-04-test-and-verify.md
+PASS Local documentation link resolves: unit-05-project-instructions.md
+PASS Local documentation link resolves: unit-06-execution-trace.md
+PASS Local documentation link resolves: unit-07-confirmed-create.md
+PASS Local documentation link resolves: unit-08-context-budget.md
+PASS Local documentation link resolves: ../../backend/herta_agent/__main__.py
+PASS Local documentation link resolves: ../../backend/herta_agent/cli.py
+PASS Local documentation link resolves: ../../backend/herta_agent/service/__main__.py
+PASS Local documentation link resolves: ../../backend/herta_agent/service/app.py
+PASS Local documentation link resolves: ../../backend/herta_agent/cli.py
+PASS Local documentation link resolves: ../../backend/herta_agent/cli_events.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/read_file.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/paths.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/grep_code.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/edit_file.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/permissions.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/create_file.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/run_tests.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/coding/test_worker.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/agent.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/registry.py
+PASS Local documentation link resolves: ../../backend/herta_agent/tools/executor.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/context_engine.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/context.py
+PASS Local documentation link resolves: ../../backend/herta_agent/project_context.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/session.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/turn.py
+PASS Local documentation link resolves: ../../backend/herta_agent/storage/sqlite.py
+PASS Local documentation link resolves: ../../backend/herta_agent/service/turn.py
+PASS Local documentation link resolves: ../../backend/herta_agent/service/runs.py
+PASS Local documentation link resolves: ../../backend/herta_agent/llm/base.py
+PASS Local documentation link resolves: ../../backend/herta_agent/llm/openai_compatible.py
+PASS Local documentation link resolves: ../../backend/herta_agent/llm/streaming.py
+PASS Local documentation link resolves: ../../backend/tests/test_tool_loop.py
+PASS Local documentation link resolves: unit-00-architecture-audit.md
+PASS Local documentation link resolves: ../../backend/herta_agent/cli.py
+PASS Local documentation link resolves: ../../backend/herta_agent/config.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/agent.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/context_engine.py
+PASS Local documentation link resolves: ../../backend/herta_agent/runtime/session.py
+PASS Local documentation link resolves: ../../examples/cli-context/demo.py
+PASS Local documentation link resolves: ../../backend/tests/test_cli_context.py
+PASS Local documentation link resolves: verification/unit-08/verification.md
+PASS Local documentation link resolves: verification/unit-08/key-diff.patch
+PASS Local documentation link resolves: upload-checkpoint.json
+PASS Local documentation link resolves: source-evidence.json
+PASS Local documentation link resolves: changed-files.json
+PASS Local documentation link resolves: key-diff.patch
+PASS Local documentation link resolves: baseline.log
+PASS Local documentation link resolves: red-budget.log
+PASS Local documentation link resolves: green-budget-initial.log
+PASS Local documentation link resolves: ruff-initial.log
+PASS Local documentation link resolves: format.log
+PASS Local documentation link resolves: focused-final.log
+PASS Local documentation link resolves: backend-final.log
+PASS Local documentation link resolves: session-overflow.log
+PASS Local documentation link resolves: focused-passed.log
+PASS Local documentation link resolves: backend-passed.log
+PASS Local documentation link resolves: ruff-passed.log
+PASS Local documentation link resolves: format-passed.log
+PASS Local documentation link resolves: demo-small.log
+PASS Local documentation link resolves: demo-large.log
+PASS Local documentation link resolves: final-static-check.log
+PASS Checked documentation links including raw evidence references.
+PASS Archive byte copy matches backend-final.log
+PASS Archive byte copy matches backend-passed.log
+PASS Archive byte copy matches base-commit.txt
+PASS Archive byte copy matches baseline.log
+PASS Archive byte copy matches before-files.json
+PASS Archive byte copy matches changed-files.json
+PASS Archive byte copy matches demo-large.log
+PASS Archive byte copy matches demo-small.log
+PASS Archive byte copy matches focused-final.log
+PASS Archive byte copy matches focused-passed.log
+PASS Archive byte copy matches format-final.log
+PASS Archive byte copy matches format-passed.log
+PASS Archive byte copy matches format-supplement.log
+PASS Archive byte copy matches format.log
+PASS Archive byte copy matches green-budget-initial.log
+PASS Archive byte copy matches key-diff.patch
+PASS Archive byte copy matches red-budget.log
+PASS Archive byte copy matches ruff-final.log
+PASS Archive byte copy matches ruff-initial.log
+PASS Archive byte copy matches ruff-passed.log
+PASS Archive byte copy matches session-overflow.log
+PASS Archive byte copy matches source-evidence.json
+PASS Archive byte copy matches upload-checkpoint.json
+PASS Archive byte copy matches verification.md
+PASS Final test evidence matches focused-passed.log
+PASS Final test evidence matches backend-passed.log
+PASS Real offline demo evidence matches demo-small.log
+PASS Real offline demo evidence matches demo-large.log

@@ -1,0 +1,462 @@
+diff --git a/backend/herta_agent/cli.py b/backend/herta_agent/cli.py
+--- a/backend/herta_agent/cli.py
++++ b/backend/herta_agent/cli.py
+@@ -16,6 +16,7 @@
+ from herta_agent.project_context import ProjectContextBuilder
+ from herta_agent.runtime.agent import Agent
+ from herta_agent.runtime.context import StaticContextBuilder
++from herta_agent.runtime.context_engine import ContextSettings
+ from herta_agent.runtime.errors import AgentError
+ from herta_agent.runtime.events import EventSink
+ from herta_agent.runtime.messages import RunResult
+@@ -135,7 +136,10 @@
+ 
+ def run_cli(args: argparse.Namespace, runner: asyncio.Runner) -> None:
+     settings = RunSettings(
+-        max_steps=args.max_steps, request_timeout=args.timeout, tool_timeout=args.tool_timeout
++        max_steps=args.max_steps,
++        request_timeout=args.timeout,
++        tool_timeout=args.tool_timeout,
++        context=ContextSettings(window_tokens=args.context_window),
+     )
+     repository = Repository(args.repo)
+     observer = TerminalEventSink() if args.trace else None
+@@ -195,6 +199,12 @@
+         "--trace", action="store_true", help="在stderr显示步骤、工具状态和估算上下文用量"
+     )
+     parser.add_argument("--max-steps", type=int, default=8)
++    parser.add_argument(
++        "--context-window",
++        type=int,
++        default=ContextSettings().window_tokens,
++        help="本机预算的总窗口（估算Token）；须匹配模型能力，不改变服务上限",
++    )
+     parser.add_argument("--timeout", type=float, default=120.0, help="每次模型请求期限（秒）")
+     parser.add_argument("--tool-timeout", type=float, default=10.0, help="每个工具期限（秒）")
+     demo = parser.add_mutually_exclusive_group()
+diff --git a/backend/tests/test_cli_context.py b/backend/tests/test_cli_context.py
+--- /dev/null
++++ b/backend/tests/test_cli_context.py
+@@ -0,0 +1,191 @@
++"""CLI budget wiring and actual provider inputs, using the existing offline Read fixture."""
++
++import json
++import os
++import subprocess
++import sys
++import tempfile
++import unittest
++from pathlib import Path
++
++from herta_agent.cli import create_agent, run_turn
++from herta_agent.config import RunSettings
++from herta_agent.llm.demo import ReadDemoProvider
++from herta_agent.runtime.context_engine import ContextSettings
++from herta_agent.runtime.errors import ContextError
++from herta_agent.runtime.session import Session
++from herta_agent.tools.coding.paths import Repository
++
++
++class CLIContextTests(unittest.TestCase):
++    def invoke(self, root, *extra):
++        env = {
++            key: value
++            for key, value in os.environ.items()
++            if not key.startswith("HERTA_") and key != "DEEPSEEK_API_KEY"
++        }
++        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
++        return subprocess.run(
++            [sys.executable, "-B", "-X", "utf8", "-m", "herta_agent", "--repo", str(root), *extra],
++            cwd=root,
++            env=env,
++            capture_output=True,
++            text=True,
++            encoding="utf-8",
++            timeout=10,
++        )
++
++    def test_custom_and_default_window_reach_real_context_diagnostics(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            (root / "note.md").write_text("BUDGET_FIXTURE", encoding="utf-8")
++            args = ("--demo-read-file", "note.md", "--trace", "--message", "读取笔记")
++            default = self.invoke(root, *args)
++            selected = self.invoke(root, *args, "--context-window", "8192")
++        self.assertEqual(default.returncode, 0, default.stderr)
++        self.assertEqual(selected.returncode, 0, selected.stderr)
++        self.assertIn("/30464 Token", default.stderr)
++        self.assertIn("/5888 Token", selected.stderr)
++        self.assertIn("BUDGET_FIXTURE", selected.stdout)
++        self.assertIn("[steps=2]", selected.stdout)
++
++    def test_invalid_window_fails_before_provider_configuration_or_mode_start(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            for value in ("0", "512", "2304", "2000001", "abc"):
++                with self.subTest(window=value):
++                    result = self.invoke(
++                        root,
++                        "--context-window",
++                        value,
++                        "--provider",
++                        "openai",
++                        "--message",
++                        "hello",
++                    )
++                    self.assertIn(result.returncode, (1, 2))
++                    self.assertNotIn("HERTA_API_KEY", result.stderr)
++                    self.assertNotIn("Traceback", result.stderr)
++                    self.assertNotIn("模式：", result.stdout)
++                    self.assertNotIn("Assistant:", result.stdout)
++
++    def test_current_large_request_is_rejected_before_provider(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            result = self.invoke(
++                Path(temporary), "--context-window", "8192", "--trace", "--message", "字" * 4000
++            )
++        self.assertEqual(result.returncode, 1)
++        self.assertIn("context_budget_exceeded", result.stderr)
++        self.assertNotIn("请求 Provider", result.stderr)
++        self.assertNotIn("Assistant:", result.stdout)
++
++    def test_current_large_tool_result_is_not_silently_clipped_or_answered(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            content = "字" * 5000
++            (root / "note.md").write_text(content, encoding="utf-8")
++            result = self.invoke(
++                root,
++                "--context-window",
++                "8192",
++                "--trace",
++                "--demo-read-file",
++                "note.md",
++                "--message",
++                "读取这份笔记",
++            )
++            self.assertEqual((root / "note.md").read_text(encoding="utf-8"), content)
++        self.assertEqual(result.returncode, 1)
++        self.assertIn("工具 read_file 调用完成", result.stderr)
++        self.assertIn("context_budget_exceeded", result.stderr)
++        self.assertEqual(result.stderr.count("请求 Provider"), 1)
++        self.assertNotIn("Assistant:", result.stdout)
++
++
++class ContextHistoryIntegrationTests(unittest.IsolatedAsyncioTestCase):
++    async def test_tool_overflow_keeps_full_result_and_allows_a_following_short_turn(self):
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            target = root / "note.md"
++            target.write_text("字" * 5000, encoding="utf-8")
++            session = Session()
++            agent = create_agent(
++                ReadDemoProvider("note.md"),
++                RunSettings(context=ContextSettings(window_tokens=8192)),
++                Repository(root),
++            )
++            with self.assertRaises(ContextError):
++                await run_turn(agent, session, "读取大笔记")
++            self.assertEqual(len(session.history), 3)
++            self.assertEqual(session.history[-1].role, "tool")
++            feedback = json.loads(session.history[-1].content)
++            self.assertTrue(feedback["ok"])
++            self.assertFalse(feedback["data"]["truncated"])
++            self.assertEqual(feedback["data"]["lines"], [{"line": 1, "text": "字" * 5000}])
++            target.write_text("短笔记。", encoding="utf-8")
++            result = await run_turn(agent, session, "重新读取短笔记")
++            self.assertEqual(result.steps, 2)
++            self.assertIn("短笔记。", result.reply)
++            self.assertEqual(len(session.history), 7)
++
++    async def test_budget_selects_complete_turns_without_deleting_session_history(self):
++        class RecordingReadProvider(ReadDemoProvider):
++            def __init__(self):
++                super().__init__("note.md")
++                self.inputs = []
++
++            async def complete(self, messages, *, tools=()):
++                self.inputs.append(messages)
++                return await super().complete(messages, tools=tools)
++
++        class Sink:
++            def __init__(self):
++                self.diagnostics = []
++
++            async def emit(self, event):
++                if event.type == "context.prepared":
++                    self.diagnostics.append(event.payload)
++
++        with tempfile.TemporaryDirectory() as temporary:
++            root = Path(temporary)
++            (root / "note.md").write_text("演示笔记。", encoding="utf-8")
++            for window, budget, expect_omission in ((8192, 5888, True), (32768, 30464, False)):
++                with self.subTest(window=window):
++                    provider, session, sink = RecordingReadProvider(), Session(), Sink()
++                    agent = create_agent(
++                        provider,
++                        RunSettings(context=ContextSettings(window_tokens=window)),
++                        Repository(root),
++                    )
++                    for number in range(1, 4):
++                        result = await run_turn(
++                            agent, session, f"任务{number}\n" + "背景资料" * 200, observer=sink
++                        )
++                        self.assertEqual(result.steps, 2)
++                    self.assertEqual(len(session.history), 12)
++                    self.assertTrue(session.history[0].content.startswith("任务1\n"))
++                    self.assertEqual(len(provider.inputs), 6)
++                    self.assertEqual(len(sink.diagnostics), 6)
++                    self.assertEqual(
++                        any(d["omitted_message_count"] > 0 for d in sink.diagnostics),
++                        expect_omission,
++                    )
++                    for diagnostic in sink.diagnostics:
++                        self.assertEqual(diagnostic["input_budget"], budget)
++                        self.assertLessEqual(diagnostic["estimated_input_tokens"], budget)
++                    for messages in provider.inputs:
++                        calls = [call.id for message in messages for call in message.tool_calls]
++                        results = [
++                            message.tool_call_id for message in messages if message.role == "tool"
++                        ]
++                        self.assertEqual(calls, results)
++                    tasks = [
++                        m.content.splitlines()[0]
++                        for m in provider.inputs[-1]
++                        if m.role == "user" and m.content.startswith("任务")
++                    ]
++                    self.assertEqual(tasks[-1], "任务3")
++                    if expect_omission:
++                        self.assertLess(len(tasks), 3)
++                    else:
++                        self.assertEqual(tasks, ["任务1", "任务2", "任务3"])
+diff --git a/examples/cli-context/demo.py b/examples/cli-context/demo.py
+--- /dev/null
++++ b/examples/cli-context/demo.py
+@@ -0,0 +1,83 @@
++"""Observe real context selection with the existing fixed Read provider, never an LLM."""
++
++import argparse
++import asyncio
++import tempfile
++from pathlib import Path
++
++from herta_agent.cli import create_agent, print_result, run_turn
++from herta_agent.cli_events import TerminalEventSink
++from herta_agent.config import RunSettings
++from herta_agent.llm.demo import ReadDemoProvider
++from herta_agent.runtime.context_engine import ContextSettings
++from herta_agent.runtime.session import Session
++from herta_agent.tools.coding.paths import Repository
++
++
++class ObservedReadFixture(ReadDemoProvider):
++    def __init__(self):
++        super().__init__("note.md")
++        self.inputs = []
++
++    async def complete(self, messages, *, tools=()):
++        self.inputs.append(messages)
++        return await super().complete(messages, tools=tools)
++
++
++def main():
++    parser = argparse.ArgumentParser(description="离线观察完整轮次选择，不调用模型")
++    parser.add_argument("--context-window", type=int, default=8192)
++    args = parser.parse_args()
++    try:
++        settings = RunSettings(
++            context=ContextSettings(window_tokens=args.context_window)
++        )
++    except ValueError:
++        parser.error("窗口无效；请使用2304以上、不超过2000000的整数。")
++    print(
++        "离线固定Read脚本：三轮新建的模拟背景资料；不调用模型、不读取API Key。",
++        flush=True,
++    )
++    print("每轮实际读取自己的临时笔记，无须yes；历史节录是程序摘取片段。", flush=True)
++    print(f"本机总窗口={args.context_window}，预留输出2048、安全余量256。", flush=True)
++    with tempfile.TemporaryDirectory(prefix="herta-context-demo-") as folder:
++        root = Path(folder)
++        (root / "note.md").write_text("演示笔记。", encoding="utf-8")
++        provider, session = ObservedReadFixture(), Session()
++        agent = create_agent(provider, settings, Repository(root))
++        with asyncio.Runner() as runner:
++            for number in range(1, 4):
++                print(f"开始任务{number}（背景内容不在终端展开）：", flush=True)
++                result = runner.run(
++                    run_turn(
++                        agent,
++                        session,
++                        f"任务{number}\n" + "背景资料" * 200,
++                        observer=TerminalEventSink(),
++                    )
++                )
++                print_result(result)
++                messages = provider.inputs[-1]
++                tasks = [
++                    m.content.splitlines()[0]
++                    for m in messages
++                    if m.role == "user" and m.content.startswith("任务")
++                ]
++                excerpt = any(
++                    m.content and m.content.startswith("历史资料节录") for m in messages
++                )
++                print(
++                    f"Provider收到的完整任务轮次：{tasks}；另有历史节录：{excerpt}",
++                    flush=True,
++                )
++        paired = all(
++            [call.id for message in messages for call in message.tool_calls]
++            == [message.tool_call_id for message in messages if message.role == "tool"]
++            for messages in provider.inputs
++        )
++        print(f"Session保存的原始消息数：{len(session.history)}", flush=True)
++        print(f"Provider输入中的工具调用与结果始终配对：{paired}", flush=True)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,4 @@
+-# 当前教学分支：Python CLI 单元07
++# 当前教学分支：Python CLI 单元08
+ 
+ 当前目标是理解并构建一个独立的 Python CLI Coding Agent。当前可读取、字面搜索、确认后修改已有文件或新建单个文本文件，并经确认在Windows运行Python unittest，复用同一个Agent Loop。尚无通用Shell、Docker或操作系统沙箱。下面原有桌面版章节保留为历史说明，不代表当前教学分支的产品入口。
+ 
+@@ -60,6 +60,15 @@
+ ```
+ 
+ 输入`yes`后创建并回读，`steps=3`；输入`no`则拒绝且无目标文件，`steps=2`。文件系统不支持不覆盖式发布时明确失败，不退回覆盖写入。详见[单元07](docs/learning/unit-07-confirmed-create.md)。
++
++单元08新增`--context-window`，把CLI的本机总窗口预算传给原Context Engine。默认32768，减去输出预留2048和安全余量256后，输入预算为30464；设8192时为5888。它不改变服务端容量或强制输出上限。当前轮次超限明确报错；旧历史按完整轮次选择，必要时摘取节录，不删除Session原文。离线三轮对照无需yes或API Key：
++
++```powershell
++python examples/cli-context/demo.py --context-window 8192
++python examples/cli-context/demo.py --context-window 32768
++```
++
++小窗口第三轮只保留任务3的完整轮次并带旧历史节录，大窗口保留三个任务；两种情况下Session均保存12条消息，工具调用与结果配对。估算和节录不等于供应商精确Token计数或Claude Code完整自动压缩，详见[单元08](docs/learning/unit-08-context-budget.md)。01～07已推送私密教学分支，检查点`683b38a`；08仍在本地。
+ 
+ ---
+ 
+diff --git a/docs/learning/project-map.md b/docs/learning/project-map.md
+--- a/docs/learning/project-map.md
++++ b/docs/learning/project-map.md
+@@ -1,6 +1,6 @@
+ # Herta 项目地图
+ 
+-地图建立日期：2026-10-19，单元07更新于2026-10-21。当前已完成单元01～07，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；本次按用户要求提交04～07进度。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)分别对应单元01～07。
++地图建立日期：2026-10-19，单元08更新于2026-10-21。当前已完成单元01～08，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；私密GitHub已核对检查点`683b38a`，包含01～07；08仍在本地。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)、[窗口预算](unit-08-context-budget.md)分别对应单元01～08。
+ 
+ ## 先建立直觉
+ 
+@@ -50,7 +50,7 @@
+ | Loop | [runtime/agent.py](../../backend/herta_agent/runtime/agent.py)，`Agent.run:104`、`_request:70` | 每步问一次模型；有工具调用就执行并回填，无调用则返回；限制步数，取消时收尾；单元03只调整构造参数转发 |
+ | 工具说明与查找 | [tools/registry.py](../../backend/herta_agent/tools/registry.py)，`ToolSpec:17`、`ToolRegistry:44` | 名称、参数模型、handler、权限元数据放在一起；`definitions` 生成模型看到的 JSON Schema |
+ | 工具执行 | [tools/executor.py](../../backend/herta_agent/tools/executor.py)，`ToolExecutor.execute:67` | 查找、权限判断、参数校验、当前调用确认、期限、执行和结构化结果；工具错误可回到模型继续处理 |
+-| 上下文 | [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py)，`prepare:206`、`_turn_groups:117` | 保留完整用户轮次和工具配对；估算输入预算，必要时节录旧历史 |
++| 上下文 | [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py)，`prepare:206`、`_turn_groups:117`；原`ContextSettings` | 保留完整用户轮次和工具配对；估算输入预算，必要时节录旧历史。CLI以--context-window传入总窗口；Session保留原文，当前轮次超限则报错。算法未重写 |
+ | 系统文本 | [runtime/context.py](../../backend/herta_agent/runtime/context.py)，`ContextSnapshot`、`StaticContextBuilder` | Loop 可以使用普通系统文本，不强制加载大黑塔人格 |
+ | 项目约定 | [project_context.py](../../backend/herta_agent/project_context.py)，`ProjectContextBuilder.snapshot`；`cli.create_agent` | 显式`--instructions`选入一份项目内UTF-8文件，每Run取一次快照；不自动扫描或导入，不增加权限，未传参数沿用StaticContextBuilder |
+ | 会话 | [runtime/session.py](../../backend/herta_agent/runtime/session.py)，`Session.restore/begin_turn/record_calls/record_result` | 维护历史、忙碌状态和未完成工具 ID；阻止错配的结果进入历史 |
+diff --git a/docs/learning/unit-08-context-budget.md b/docs/learning/unit-08-context-budget.md
+--- /dev/null
++++ b/docs/learning/unit-08-context-budget.md
+@@ -0,0 +1,74 @@
++# 单元08：配置上下文窗口，观察历史如何取舍
++
++## 背景问题
++
++对话越来越长，每次都把全部记录发给模型会超过容量。可以把Session看成完整笔记本，把一次Provider请求看成有限大小的桌面：笔记本保留原文，桌面只摆本次需要的材料。
++
++项目已有Context Engine，负责估算预算、选择完整轮次和摘取旧历史。本单元只把它的窗口设置接到CLI，增加离线观察演示与验证，不重写上下文算法。
++
++## 核心原理
++
++`window_tokens`是本机预算采用的总窗口；可用输入预算是：
++
++```text
++输入预算 = 总窗口 - 输出预留 - 安全余量
++默认：32768 - 2048 - 256 = 30464
++本次演示：8192 - 2048 - 256 = 5888
++```
++
++Token是模型处理文字的单位，这里使用程序估算，不能当作精确计费。预算包含系统文本、所选消息和工具说明。`output_reserve`表示为回答留出空间；当前Provider并未据此发送`max_tokens`，所以2048不是服务端强制输出上限。CLI参数也不能扩大模型实际支持的窗口。
++
++不够放时，先保证系统文本、工具说明和当前用户轮次完整，再从近到远选择旧轮次，必要时增加旧历史节录。当前轮次自身已经放不下，就明确报`context_budget_exceeded`，停止请求Provider；不会截断当前工具结果来假装任务成功。
++
++## 真实源码和调用链
++
++| 实际文件与符号 | 本单元的关系 |
++|---|---|
++| [cli.py](../../backend/herta_agent/cli.py) `main/run_cli/create_agent` | 修改：解析`--context-window`，构造原ContextSettings，传入原RunSettings；先校验预算，再读取Provider配置 |
++| [config.py](../../backend/herta_agent/config.py) `RunSettings.context` | 原有：携带上下文配置，没有另造配置对象 |
++| [runtime/agent.py](../../backend/herta_agent/runtime/agent.py) `Agent.__init__/run` | 原有：创建ContextEngine；每个Step准备上下文，再交给Provider |
++| [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py) `ContextSettings/_turn_groups/ContextEngine.prepare/_summary` | 原有：验证预算、按用户轮次分组、选择消息、摘取旧记录；本单元未修改 |
++| [runtime/session.py](../../backend/herta_agent/runtime/session.py) `Session` | 原有：保存完整消息；prepare返回独立的消息包，不删除Session记录 |
++| [演示](../../examples/cli-context/demo.py) `ObservedReadFixture.complete/main` | 新建：记录固定Provider实际收到的消息，并执行原Read工具；不调用模型 |
++| [测试](../../backend/tests/test_cli_context.py) | 新建：CLI参数、超限、完整历史、工具配对和失败后的继续使用 |
++
++正式入口的调用链是：`main → run_cli → ContextSettings → RunSettings → create_agent → Agent.__init__ → chat/run_turn → Agent.run → ContextEngine.prepare → Provider.complete`。演示直接用相同组装函数与Loop，不经过CLI参数解析；CLI参数本身另由子进程测试验证。
++
++例如传入`--context-window 8192`，解析后`args.context_window`为整数8192，`ContextSettings.window_tokens`收到它，`prepare`算出5888。`package.messages`是这一次实际交给Provider的消息；`session.history`仍是完整记录。名称中的`package`表示打包好的请求材料，二者不能混为一谈。
++
++实际运行三轮输入`任务1/2/3`，每轮附带800个汉字的模拟背景，并读取自己新建的临时`note.md`。每轮经历“Provider提出Read → 真实读盘和回填 → Provider回答”，因此均为`steps=2`。最终观测：
++
++| 总窗口 | 第三轮最后一次Provider输入 | Session原始消息 | 工具调用与结果 |
++|---|---|---|---|
++| 8192 | 任务3的完整轮次，另有旧历史节录；估算5144/5888，省略8条原始消息 | 12条 | 全部配对 |
++| 32768 | 任务1、2、3的完整轮次，无需节录 | 12条 | 全部配对 |
++
++“省略8条”表示这些原始消息未完整进入本次请求，节录仍可能包含其中片段。每轮4条记录是用户、工具调用、工具结果、最终回答。窗口改变后`context_sha256`仍相同：它是系统文本快照指纹，不是全部请求消息的指纹，不能据此判断是否裁剪。
++
++## 关键设计取舍
++
++- 直接复用原ContextSettings、ContextEngine、Session和事件显示，不增加依赖、第二套Loop或持久化。默认值仍为32768；受原校验约束，CLI整数窗口须大于2304且不超过2000000。窗口有效不代表必然放得下某次任务。
++- 按完整用户轮次取舍，保留工具调用与结果的对应关系；不用“随便删前几条”的方式破坏工具协议。节录是`extractive-v1`程序摘取，不是额外模型生成的语义总结。
++- [Claude Code官方机制说明](https://code.claude.com/docs/en/how-claude-code-works)介绍了上下文窗口与自动压缩。本项目借鉴容量管理这个机制；当前实现仍是已有的估算和节录，不宣称实现了Claude Code完整自动压缩。
++- 超限会结束本次Run，但保留会话；测试直接核对5000字工具结果完整留存，并验证同一Session随后可完成短任务。它不代表超大的当前任务能够自动压缩并继续。
++
++## 测试验证
++
++相关基线44项通过。最初5项测试中3项因CLI不认识新参数失败，原有引擎行为验证已通过；接线后5项全部通过。审查后另补1项会话留存与恢复验证，属于加强证据，没有把已有行为虚构成新修复。初次规则检查的4处长行也已保留记录并修正。
++
++最终相关50项全部通过（17.069秒）；完整后端435项中432通过、3项可选语音跳过（133.841秒）。本轮3个Python文件规则与格式检查通过；独立静态审查无P0–P2问题。实际命令、审查边界与原始日志见[执行记录](verification/unit-08/verification.md)；本轮7个文件的关键差异见[Git Diff](verification/unit-08/key-diff.patch)。两种窗口演示均在本机实际运行；没有真实模型调用、私人文件或原数据库访问，也没有验证供应商的精确Token计数和语义回答质量。
++
++单元01～07已备份到私密GitHub的`learning/unit-01-cli-read`，检查点`683b38a`。本单元08在本地，尚未提交推送；完成后暂停，不进入09。
++
++## 动手练习
++
++可选5分钟，无须修改代码或输入yes。分别运行：
++
++```powershell
++Set-Location -LiteralPath 'D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read'
++$env:PYTHONPATH = (Join-Path (Get-Location) 'backend')
++& 'D:\Desktop\herta-agent\.venv\Scripts\python.exe' -B -X utf8 examples/cli-context/demo.py --context-window 8192
++& 'D:\Desktop\herta-agent\.venv\Scripts\python.exe' -B -X utf8 examples/cli-context/demo.py --context-window 32768
++```
++
++找到最后的“Provider收到的完整任务轮次”和“Session保存的原始消息数”。尝试解释为什么前者会变化、后者都是12，以及为什么两个`context_sha256`相同仍不代表请求内容相同。以上表格和源码中的`package.messages/session.history`可作为提示。演示结束自动清理临时资料，不用配置Key。
+diff --git a/task_plan.md b/task_plan.md
+--- a/task_plan.md
++++ b/task_plan.md
+@@ -256,3 +256,17 @@
+ 用户明确要求先上传当前全部进度，再进行下一单元。GitHub API本轮实际确认theHerta27/herta-agent为PRIVATE；上传前相关97项回归通过（21.086秒），待上传95个源码/文档/验证文件约987KB，凭据模式及异常路径/体积扫描无命中。单元07最终完整回归429项/3跳过的原始记录保留；本轮上传前不冒称重跑了完整回归。
+ 
+ 本次将04～07作为检查点提交并推送既有learning/unit-01-cli-read，不合并其他分支。原始日志和单元“未提交”状态按历史快照保留；推送结果另以Git和GitHub API核对。下一单元待推送核对后才开始。
++
++推送已完成：GitHub API核对远端SHA为683b38a78b30ff01cd68bc6cb850db3decb4b5fa，仓库为PRIVATE。单元01～07的源码、学习文档与验证副本已在该检查点；未上传模型、私人数据或.local目录。
++
++## 2026-10-21 教学单元08：CLI上下文窗口预算
++
++用户要求上传后进入下一单元。复用原ContextSettings/ContextEngine的完整轮次选择与历史节录，只接CLI参数并提供离线观察，不重新实现压缩算法。先解释有限请求与完整Session的区别，再实现。
++
++- [x] 原相关基线44项通过；原5项新测试中3项观察到CLI未知参数失败，另2项已验证的原有行为保留。
++- [x] CLI新增--context-window，默认沿用32768；通过原RunSettings传递，非法预算先于Provider配置校验。
++- [x] 新建三轮Read离线夹具，实际对照8192/32768；不调用模型、不读取Key，Session均保留12条记录，工具始终配对。
++- [x] 独立静态审查无P0–P2问题；补第6项集成验证，直接核对超限后工具正文完整留存、同一Session可继续短任务。
++- [x] 最终相关50项通过（17.069秒）；完整后端435项中432通过、3项旧语音跳过（133.841秒）。规则与3文件格式通过；来源/差异/日志归档和学习讲解完成后暂停，不进入09。
++
++范围：1个生产文件接线，新增测试/示例/学习文档；核心算法、Provider、Session、权限、存储和依赖未改。输出预留不等于Provider的max_tokens；估算/节录不等于精确计费或语义压缩。真实模型、私人文件、原数据库和语音验收均未运行。单元08本地未提交推送。

@@ -1,0 +1,14 @@
+unformatted: File would be reformatted
+  --> backend\tests\test_desktop_start_guard.py:42:37
+   |
+41 |                 ["powershell.exe", "-NoProfile", "-Command", command],
+   -                 capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15,
+42 +                 capture_output=True,
+43 +                 text=True,
+44 +                 encoding="utf-8",
+45 +                 errors="replace",
+46 +                 timeout=15,
+47 |             )
+   |
+
+1 file would be reformatted, 165 files already formatted

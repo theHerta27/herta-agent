@@ -1,0 +1,10 @@
+test_current_large_request_is_rejected_before_provider (test_cli_context.CLIContextTests.test_current_large_request_is_rejected_before_provider) ... ok
+test_current_large_tool_result_is_not_silently_clipped_or_answered (test_cli_context.CLIContextTests.test_current_large_tool_result_is_not_silently_clipped_or_answered) ... ok
+test_custom_and_default_window_reach_real_context_diagnostics (test_cli_context.CLIContextTests.test_custom_and_default_window_reach_real_context_diagnostics) ... ok
+test_invalid_window_fails_before_provider_configuration_or_mode_start (test_cli_context.CLIContextTests.test_invalid_window_fails_before_provider_configuration_or_mode_start) ... ok
+test_budget_selects_complete_turns_without_deleting_session_history (test_cli_context.ContextHistoryIntegrationTests.test_budget_selects_complete_turns_without_deleting_session_history) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 6.918s
+
+OK

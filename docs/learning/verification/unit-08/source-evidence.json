@@ -1,0 +1,143 @@
+{
+  "unit": "08",
+  "base_commit": "683b38a78b30ff01cd68bc6cb850db3decb4b5fa",
+  "upload": {
+    "repository": "https://github.com/theHerta27/herta-agent",
+    "visibility": "PRIVATE",
+    "branch": "learning/unit-01-cli-read",
+    "verified_remote_sha": "683b38a78b30ff01cd68bc6cb850db3decb4b5fa",
+    "uploaded_units": "01-07",
+    "fresh_related_tests": 97,
+    "test_seconds": 21.086,
+    "commit_files": 95
+  },
+  "runtime_versions": {
+    "python": "3.12.13",
+    "pydantic": "2.13.5",
+    "httpx": "0.28.1",
+    "ruff": "0.16.8"
+  },
+  "existing_helpers": [
+    {
+      "path": "backend/herta_agent/runtime/context_engine.py",
+      "sha256": "8c2c241f179ea4a820e2b914c8f7b8179b7b3ee7102ea5da189af00decbbb727",
+      "symbols": [
+        {
+          "name": "ContextSettings",
+          "line": 18
+        },
+        {
+          "name": "_turn_groups",
+          "line": 117
+        },
+        {
+          "name": "ContextEngine",
+          "line": 146
+        },
+        {
+          "name": "_summary",
+          "line": 165
+        },
+        {
+          "name": "prepare",
+          "line": 206
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/runtime/agent.py",
+      "sha256": "0204e2ba388661db43d0da24f2fb09498d5937fff59cb8a1f16b6133440ceecb",
+      "symbols": [
+        {
+          "name": "Agent",
+          "line": 39
+        },
+        {
+          "name": "run",
+          "line": 104
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/runtime/session.py",
+      "sha256": "0ebb69a260858e9cddde93818c5c77d15063922f548ce28302a360dce79a2c42",
+      "symbols": [
+        {
+          "name": "Session",
+          "line": 13
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/runtime/context.py",
+      "sha256": "0d554bc63b3d8329b7c432d0d042895a72076681e05e273ac17acafd8c56bf81",
+      "symbols": [
+        {
+          "name": "ContextSnapshot",
+          "line": 14
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/config.py",
+      "sha256": "e22f125ef61b9954934383d6416049e1e7f552b396ff94b895df71bbf7613454",
+      "symbols": [
+        {
+          "name": "RunSettings",
+          "line": 12
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/llm/demo.py",
+      "sha256": "cf2a3a74376d3f2ec01db1669a0a6f39b2a887946ef1647331fe694ebef4fd47",
+      "symbols": [
+        {
+          "name": "ReadDemoProvider",
+          "line": 48
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/llm/openai_compatible.py",
+      "sha256": "3d6a2acadbe2302b7e8708de8f3cf2419494b773747b230ad9205ec7a7ee0a34",
+      "symbols": [
+        {
+          "name": "OpenAICompatibleProvider",
+          "line": 45
+        },
+        {
+          "name": "complete",
+          "line": 79
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    },
+    {
+      "path": "backend/herta_agent/cli_events.py",
+      "sha256": "877c03e8fca141e5ad191b397a3976f6b0b78d34669c31d016207ecddced231a",
+      "symbols": [
+        {
+          "name": "TerminalEventSink",
+          "line": 16
+        }
+      ],
+      "reuse": "Direct existing implementation, unchanged in this unit; no copied parallel runtime."
+    }
+  ],
+  "external_reference": {
+    "url": "https://code.claude.com/docs/en/how-claude-code-works",
+    "read_date": "2026-10-21",
+    "use": "Official conceptual reference for bounded context and compaction; no copied code. Existing extractive-v1 is not Claude Code's full auto-compaction."
+  },
+  "dependencies": "No new, removed, or upgraded dependencies.",
+  "model_calls": "None; only fixed ReadDemoProvider and test fixtures.",
+  "data_boundary": "Only newly created synthetic temporary files, existing public test fixtures, source and test environment; no existing private data or database content.",
+  "review": "Independent static review of CLI, original five tests and demo found no P0-P2; noted max_tokens limitation and insufficient Session evidence from file-unchanged assertion. Added a sixth passing integration test checking full retained tool data and a subsequent short turn; no production change for that observation."
+}

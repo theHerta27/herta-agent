@@ -1,0 +1,37 @@
+test_cancellation_during_admission_does_not_block_next_turn (test_cli_history.CLIHistoryLifecycleTests.test_cancellation_during_admission_does_not_block_next_turn) ... Executing <Task pending name='Task-1' coro=<CLIHistoryLifecycleTests.asyncSetUp() running at D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py:147> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\tasks.py:922, Task.task_wakeup()] created at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py:448> cb=[_run_until_complete_cb() at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py:181] created at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py:100> took 0.203 seconds
+ok
+test_default_path_uses_localappdata_without_resolving_home (test_cli_history.CLIHistoryLifecycleTests.test_default_path_uses_localappdata_without_resolving_home) ... ERROR
+test_model_cancellation_persists_terminal_state_and_allows_next_turn (test_cli_history.CLIHistoryLifecycleTests.test_model_cancellation_persists_terminal_state_and_allows_next_turn) ... ok
+test_second_owner_cannot_recover_live_database (test_cli_history.CLIHistoryLifecycleTests.test_second_owner_cannot_recover_live_database) ... ok
+test_startup_closes_pending_calls_without_executing_them (test_cli_history.CLIHistoryLifecycleTests.test_startup_closes_pending_calls_without_executing_them) ... ok
+test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable) ... ok
+test_list_is_local_and_does_not_create_another_session (test_cli_history.CLIHistoryTests.test_list_is_local_and_does_not_create_another_session) ... ok
+test_new_process_resumes_real_saved_history (test_cli_history.CLIHistoryTests.test_new_process_resumes_real_saved_history) ... ok
+test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart) ... ok
+test_resume_is_bound_to_selected_repository (test_cli_history.CLIHistoryTests.test_resume_is_bound_to_selected_repository) ... ok
+test_unknown_session_and_conflicting_options_are_safe_errors (test_cli_history.CLIHistoryTests.test_unknown_session_and_conflicting_options_are_safe_errors) ... ok
+
+======================================================================
+ERROR: test_default_path_uses_localappdata_without_resolving_home (test_cli_history.CLIHistoryLifecycleTests.test_default_path_uses_localappdata_without_resolving_home)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 138, in test_default_path_uses_localappdata_without_resolving_home
+    self.assertTrue(history_path(Repository(self.path.parent)).is_relative_to(self.path.parent))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\herta_agent\cli_history.py", line 19, in history_path
+    or Path(os.environ.get("LOCALAPPDATA", Path.home() / ".local" / "share"))
+                                           ^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: no home
+
+----------------------------------------------------------------------
+Ran 11 tests in 7.773s
+
+FAILED (errors=1)

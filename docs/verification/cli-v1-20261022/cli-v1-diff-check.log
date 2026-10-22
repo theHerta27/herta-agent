@@ -1,0 +1,7 @@
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/herta_agent/cli.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_cli_edit.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_cli_read.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_cli_search.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/uv.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/learning/project-map.md', LF will be replaced by CRLF the next time Git touches it

@@ -176,7 +176,17 @@ class CLIReadTests(unittest.TestCase):
                 patch("herta_agent.cli.httpx.AsyncClient", return_value=client),
                 contextlib.redirect_stdout(output),
             ):
-                main(["--provider", "openai", "--repo", str(root), "--message", "读取第二行"])
+                main(
+                    [
+                        "--provider",
+                        "openai",
+                        "--no-save",
+                        "--repo",
+                        str(root),
+                        "--message",
+                        "读取第二行",
+                    ]
+                )
 
             self.assertTrue(client.is_closed)
             self.assertEqual(len(requests), 2)

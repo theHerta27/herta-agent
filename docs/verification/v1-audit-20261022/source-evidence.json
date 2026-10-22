@@ -1,0 +1,260 @@
+{
+  "date": "2026-10-22",
+  "herta_base": "683b38a78b30ff01cd68bc6cb850db3decb4b5fa plus existing uncommitted unit08成果",
+  "official_docs": {
+    "url": "https://code.claude.com/docs/en/how-claude-code-works",
+    "read_date": "2026-10-22",
+    "commit": null,
+    "scope": "rolling documentation, not a version-2.1.88 specification"
+  },
+  "mirror_package_version": "2.1.88",
+  "verified": "All cached bytes match Git blob IDs in the fixed recursive trees; no complete npm-archive/source-map comparison or upstream build/runtime verification.",
+  "observations": [
+    "query.ts imports bun:bundle feature gates; source presence does not prove a feature is enabled in the released binary.",
+    "hooks/useCanUseTool.tsx contains React compiler output; not all restored files are pristine pre-transform handwritten source.",
+    "Initial .ts lookup of useCanUseTool returned 404; actual tree uses .tsx, fetched successfully.",
+    "No upstream source is copied into product code or tracked documentation."
+  ],
+  "files": [
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/QueryEngine.ts",
+      "blob_sha": "0a80c6139b91551d105092016b9f8ce3240d37b0",
+      "sha256": "7df34a6a6d106927403d49e3405dfaf70da37cae5b644b658ebaf0b877988af6",
+      "bytes": 46630,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/QueryEngine.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/Tool.ts",
+      "blob_sha": "205cac09158b44a5bf5d72484bacb54a43896095",
+      "sha256": "29d555ab8e50de9fb005264b5334aba870f1da472198e14d0b3ab0bf86d7c49c",
+      "bytes": 29516,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/Tool.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/commands/compact/compact.ts",
+      "blob_sha": "62ed4d37d03158f95e8bd0d43557dac1d52df701",
+      "sha256": "c33d640823d01966cfcd04fa9af395217add1160e439693248e981ba1027b442",
+      "bytes": 10079,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/commands/compact/compact.ts",
+      "inspection": "cached only; not used for behavioral conclusions"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/constants/messages.ts",
+      "blob_sha": "718aec6dc1442b36dcea6faf15f4dc9973391e08",
+      "sha256": "af401887997bf0dd15b36786b042343a32e2ba73e42e68f9c0195f711faba5b3",
+      "bytes": 49,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/constants/messages.ts",
+      "inspection": "cached only; not used for behavioral conclusions"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/query.ts",
+      "blob_sha": "07e8b6fae53877a912424c0cdbbf321186eeca5f",
+      "sha256": "74e0ce0d86cfd453add8dc1d15ccb6311b02964b8321e3721b8e71fbd87252ce",
+      "bytes": 68683,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/query.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/compact/autoCompact.ts",
+      "blob_sha": "4025897ce03d8a71076c390e8c7ef8719b0858fb",
+      "sha256": "1946b5ea23fa2eda91955378641258fb8f19e7742f06ce17d6caae7f2d3c921a",
+      "bytes": 12905,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/compact/autoCompact.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/compact/compact.ts",
+      "blob_sha": "f8f86eafb26b70db955c58a34f402b425c285a9c",
+      "sha256": "80af045d9247de7dda0cbe7aab653329d0b7c8b62a2cdadfd86238305df71f53",
+      "bytes": 60814,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/compact/compact.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/tools/toolExecution.ts",
+      "blob_sha": "40ef38ec64b4ef81108045636acbc67b963c5d5d",
+      "sha256": "77aae23a5b8b68aa1ee32b99eb25c6360071d7a4c4c46e6d2c95d584fb6e25e0",
+      "bytes": 60309,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/tools/toolExecution.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/tools/toolOrchestration.ts",
+      "blob_sha": "95e02cbcc8fdc4f6f5fcef101ea2d2eb99eac79c",
+      "sha256": "6958bcd46006785e241f7226b4f28aeaaec2206ccc93772d4e473aa6dbdd4293",
+      "bytes": 5501,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/tools/toolOrchestration.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/types/permissions.ts",
+      "blob_sha": "32ef776b2a9ba356276e1834fc4a5e58fd9aa091",
+      "sha256": "740929e3fc28c1c4f6589c19d22b005a4c022b291b1eb5cc5de886e535637908",
+      "bytes": 13145,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/types/permissions.ts",
+      "inspection": "cached only; not used for behavioral conclusions"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/utils/messages.ts",
+      "blob_sha": "7d8db9746aefef225afd28869f828c9284a484f5",
+      "sha256": "24e36a51f351df9687cdac084d9b9573549a7bb5b8859b4ff39cc2d02ec7095a",
+      "bytes": 193203,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/utils/messages.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/utils/permissions/permissions.ts",
+      "blob_sha": "99db042d3170fe8b90e12e626907b9e8453902d0",
+      "sha256": "3a28acc854014fe49751aeaf7ca2648239cb309811fd948db3bcc91b46baed05",
+      "bytes": 52190,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/utils/permissions/permissions.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "package/package.json",
+      "blob_sha": "e03808eac2ac6c7ed4362c04d6828198c3944231",
+      "sha256": "e21f9e98fa4ea8b4d007063d92c631df1bbed6d11c9e79c5fcdeb9f4859dc8fa",
+      "bytes": 1242,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/package/package.json",
+      "inspection": "metadata/license/documentation inspected"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "extract-sources.js",
+      "blob_sha": "635f7047e848e5bf3bb812b573c75d554848f7f9",
+      "sha256": "a6c8d49e2366240dca71928a000716f2b23bb0ced4367bc48f6c2367e867d6be",
+      "bytes": 1612,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/extract-sources.js",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "shareAI-lab/learn-claude-code",
+      "commit": "ce8f9f186058939da54c9d6fead78dfb5d0fd6c3",
+      "path": "LICENSE",
+      "blob_sha": "ac5ab8405e8ead1ec7a8856b1c2c9baf86006f92",
+      "sha256": "204ff5ee216c8f895268a23b66d959f82aa4d868e871e0690fbf2844eff8a26b",
+      "bytes": 1068,
+      "permalink": "https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/LICENSE",
+      "inspection": "metadata/license/documentation inspected"
+    },
+    {
+      "repository": "shareAI-lab/learn-claude-code",
+      "commit": "ce8f9f186058939da54c9d6fead78dfb5d0fd6c3",
+      "path": "README.md",
+      "blob_sha": "cd068f31eb579f5ab7c4288f134358135408ec5a",
+      "sha256": "dd04e477feecf3c186ff9e97db12b26af3e0dfb0320f174b593463feb837998f",
+      "bytes": 25596,
+      "permalink": "https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/README.md",
+      "inspection": "metadata/license/documentation inspected"
+    },
+    {
+      "repository": "shareAI-lab/learn-claude-code",
+      "commit": "ce8f9f186058939da54c9d6fead78dfb5d0fd6c3",
+      "path": "s01_agent_loop/code.py",
+      "blob_sha": "a43d0f2f45719d8d8d91c96a6d6a17265d7623c1",
+      "sha256": "abe71cd04d1b63aaf6f4e7c6220aa831779d25fd00f6eec1abd3f12c742b0d16",
+      "bytes": 4796,
+      "permalink": "https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s01_agent_loop/code.py",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "shareAI-lab/learn-claude-code",
+      "commit": "ce8f9f186058939da54c9d6fead78dfb5d0fd6c3",
+      "path": "s03_permission/code.py",
+      "blob_sha": "375a2d2be5cb78800e6a9f864e10ea905baab3f9",
+      "sha256": "6854e6b2ad0b5343a8abc0213e80c010cd7c39dd501c396797e1aecb6c6c1a80",
+      "bytes": 9788,
+      "permalink": "https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s03_permission/code.py",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "shareAI-lab/learn-claude-code",
+      "commit": "ce8f9f186058939da54c9d6fead78dfb5d0fd6c3",
+      "path": "s08_context_compact/code.py",
+      "blob_sha": "9e9ca1c5c1b84798f9d200a60d177aa79685030f",
+      "sha256": "4eeedf2e3edeb526b88830d5ffc4c6cf928fe5a8178885a389f91a2eb88b1e15",
+      "bytes": 24096,
+      "permalink": "https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s08_context_compact/code.py",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/query/deps.ts",
+      "blob_sha": "7136888111e4ddaa41c4edd8318836c191b12b26",
+      "sha256": "28982b60c0c381875fbe38b7eeb68374b109dca658667dc70c803cae87f926be",
+      "bytes": 1445,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/query/deps.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/hooks/useCanUseTool.tsx",
+      "blob_sha": "1eb77d56acfe08262ecdfa0e1c5af2431d6d8a77",
+      "sha256": "3689b30326118e94bb53a8cc1fa1761d1c0b1bff6489162f1dd0771ec8b8b953",
+      "bytes": 40206,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/hooks/useCanUseTool.tsx",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/tools/StreamingToolExecutor.ts",
+      "blob_sha": "c4f06a9618711eb259dd973daf3df2029421fe6e",
+      "sha256": "ee17dce704af73787c9ed76dbbc638167521e5c1f68c9436149378bb3358601c",
+      "bytes": 17196,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/tools/StreamingToolExecutor.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/utils/toolResultStorage.ts",
+      "blob_sha": "f4dfef32663554772a53557930b5651c3ef0c976",
+      "sha256": "db2bf39064319eefccebf49cf5c4521b42a13bc63caf2c57b21113f6204e6bcd",
+      "bytes": 38384,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/utils/toolResultStorage.ts",
+      "inspection": "cached only; not used for behavioral conclusions"
+    },
+    {
+      "repository": "Hyper66666/claude-code-sourcemap",
+      "commit": "554bc4514ebaf83ef54d95bc44f4add7272d4f46",
+      "path": "restored-src/src/services/tools/toolHooks.ts",
+      "blob_sha": "cb2ef8fa007727ca7eb3c81ea3a4482a3f811ebb",
+      "sha256": "a2c02fca0f84cfa8995a5c6dfa11f8527ad5bc3cfe39b355a98d2f166c3e034a",
+      "bytes": 22333,
+      "permalink": "https://github.com/Hyper66666/claude-code-sourcemap/blob/554bc4514ebaf83ef54d95bc44f4add7272d4f46/restored-src/src/services/tools/toolHooks.ts",
+      "inspection": "read selected declarations/call sites; static only, not run"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+Using Python 3.12.13 environment at: .venv-cli
+Resolved 12 packages in 2.66s
+Prepared 1 package in 93ms
+Uninstalled 1 package in 40ms
+Installed 1 package in 108ms
+ ~ herta-agent==0.1.0 (from file:///D:/Desktop/herta-agent/.local/worktrees/unit-01-cli-read/.local/cli-v1-dist/herta_agent-0.1.0-py3-none-any.whl)

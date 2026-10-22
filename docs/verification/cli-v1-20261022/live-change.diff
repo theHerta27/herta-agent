@@ -1,0 +1,9 @@
+--- a/metrics.py
++++ b/metrics.py
+@@ -2,4 +2,6 @@
+ 
+ 
+ def average(values):
++    if not values:
++        return 0
+     return sum(values) / len(values)

@@ -1,0 +1,33 @@
+usage: herta-agent [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE]
+                   [--data-dir DATA_DIR] [--resume SESSION_ID]
+                   [--list-sessions] [--no-save] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+
+Herta Agent — Python CLI Coding Agent
+
+options:
+  -h, --help            show this help message and exit
+  --provider {demo,openai}
+  --repo REPO           允许读取的项目根目录
+  --instructions PATH   显式载入项目内的一份UTF-8约定，每轮读取，最多16 KiB
+  --message MESSAGE     发送一条消息后退出；省略则进入交互模式
+  --data-dir DATA_DIR   CLI会话数据目录；按项目分库，与旧桌面数据隔离
+  --resume SESSION_ID   恢复所选项目的CLI会话
+  --list-sessions       列出所选项目本机会话，不调用模型
+  --no-save             仅本次进程保留历史，不写会话数据库
+  --trace               在stderr显示步骤、工具状态和估算上下文用量
+  --max-steps MAX_STEPS
+  --context-window CONTEXT_WINDOW
+                        本机预算的总窗口（估算Token）；须匹配模型能力，不改变服务上限
+  --timeout TIMEOUT     每次模型请求期限（秒）
+  --tool-timeout TOOL_TIMEOUT
+                        每个工具期限（秒）
+  --demo-tools          保留的离线echo取消/超时演示
+  --demo-read-file PATH
+                        固定调用read_file的离线演示路径
+  --demo-delay DEMO_DELAY
+                        echo演示延时0–30秒

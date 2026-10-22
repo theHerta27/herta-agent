@@ -1,0 +1,44 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "before_sha256": "58d86891a413635a7b7fccf27d3e92cbbfeb272d676be323f1c9136d98c8eef8",
+    "after_sha256": "f3205518f8e1f6f31169a89c6378749f62dedd90480df07ed861b212535be7ba",
+    "change": "modified"
+  },
+  {
+    "path": "backend/tests/test_cli_context.py",
+    "before_sha256": null,
+    "after_sha256": "602e9b53e74ba12017aca2ea1b074cc892c0c5213a1a95c76e7a01154bb0df9e",
+    "change": "added"
+  },
+  {
+    "path": "examples/cli-context/demo.py",
+    "before_sha256": null,
+    "after_sha256": "58f76ca1bf0dab84e963e9992de69297a3a022a6ad23478a8c65b3afbb75ea1d",
+    "change": "added"
+  },
+  {
+    "path": "README.md",
+    "before_sha256": "5456594e98fe86bc93805f9c42c2d70b3b9b8c77bb64ddde7da295bdbb7823ca",
+    "after_sha256": "9c905d5a6321d8cee1ab08be648f888294417efe7b4214f1b24aab0b22cbb9c8",
+    "change": "modified"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "before_sha256": "6738a032d2d53117fcf83363051a2943f0d49c02776e2f002c058ab13ad590f4",
+    "after_sha256": "a7bfef2fba5557429e7073afe9c0ee9f1f6dc0bf2f681ad2aa40cfadadc680c5",
+    "change": "modified"
+  },
+  {
+    "path": "docs/learning/unit-08-context-budget.md",
+    "before_sha256": null,
+    "after_sha256": "32b66f1e80d2687d6a32b269964854f1311c6679ec27b01cbebc565452a7ae92",
+    "change": "added"
+  },
+  {
+    "path": "task_plan.md",
+    "before_sha256": "53b148da556e513d08740e5d7f9bd4238486214630c6f708db22830943216bcc",
+    "after_sha256": "cca40578098fbf6d53cc75d97ecba34dcc29dac1e0d37adfbfc4f4afd0b3fec2",
+    "change": "modified"
+  }
+]

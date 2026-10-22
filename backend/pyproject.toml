@@ -5,11 +5,18 @@ build-backend = "hatchling.build"
 [project]
 name = "herta-agent"
 version = "0.1.0"
-description = "A small, independent agent runtime built one learning phase at a time."
+description = "An independent Python CLI coding agent with explicit tool permissions and sessions."
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28,<0.29",
     "pydantic>=2.10,<3",
+    "rich>=14.1,<15",
+    "prompt-toolkit>=3.0.52,<3.1",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.11,<1"]
+desktop = [
     "numpy>=2,<3",
     "fastapi>=0.141,<0.142",
     "uvicorn>=0.41,<0.42",
@@ -19,9 +26,6 @@ dependencies = [
     "python-docx>=1.2,<2",
     "pillow>=12,<13",
 ]
-
-[project.optional-dependencies]
-dev = ["ruff>=0.11,<1"]
 local = ["torch>=2.6,<3", "transformers>=4.45,<5"]
 voice = [
     "faster-whisper>=1.2,<2",

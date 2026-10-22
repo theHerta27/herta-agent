@@ -259,7 +259,15 @@ class SearchReadCLITests(unittest.TestCase):
                 contextlib.redirect_stdout(output),
             ):
                 main(
-                    ["--provider", "openai", "--repo", str(root), "--message", "找到并读取add_tax"]
+                    [
+                        "--provider",
+                        "openai",
+                        "--no-save",
+                        "--repo",
+                        str(root),
+                        "--message",
+                        "找到并读取add_tax",
+                    ]
                 )
             self.assertTrue(client.is_closed)
             self.assertEqual(len(bodies), 3)

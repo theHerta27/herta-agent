@@ -1,0 +1,113 @@
+test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable) ... FAIL
+test_list_is_local_and_does_not_create_another_session (test_cli_history.CLIHistoryTests.test_list_is_local_and_does_not_create_another_session) ... FAIL
+test_new_process_resumes_real_saved_history (test_cli_history.CLIHistoryTests.test_new_process_resumes_real_saved_history) ... FAIL
+test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart) ... FAIL
+test_resume_is_bound_to_selected_repository (test_cli_history.CLIHistoryTests.test_resume_is_bound_to_selected_repository) ... FAIL
+test_unknown_session_and_conflicting_options_are_safe_errors (test_cli_history.CLIHistoryTests.test_unknown_session_and_conflicting_options_are_safe_errors) ... FAIL
+
+======================================================================
+FAIL: test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 68, in test_failed_turn_remains_recoverable
+    session_id = self.saved()
+                 ^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 36, in saved
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpsu8fdils\state
+
+
+======================================================================
+FAIL: test_list_is_local_and_does_not_create_another_session (test_cli_history.CLIHistoryTests.test_list_is_local_and_does_not_create_another_session)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 50, in test_list_is_local_and_does_not_create_another_session
+    session_id = self.saved()
+                 ^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 36, in saved
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpaw1b9wb0\state
+
+
+======================================================================
+FAIL: test_new_process_resumes_real_saved_history (test_cli_history.CLIHistoryTests.test_new_process_resumes_real_saved_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 42, in test_new_process_resumes_real_saved_history
+    session_id = self.saved()
+                 ^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 36, in saved
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpht21lmrq\state
+
+
+======================================================================
+FAIL: test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 89, in test_read_tool_messages_and_context_diagnostics_survive_restart
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpkv0cups6\state
+
+
+======================================================================
+FAIL: test_resume_is_bound_to_selected_repository (test_cli_history.CLIHistoryTests.test_resume_is_bound_to_selected_repository)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 59, in test_resume_is_bound_to_selected_repository
+    session_id = self.saved()
+                 ^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 36, in saved
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpv5jwzf_p\state
+
+
+======================================================================
+FAIL: test_unknown_session_and_conflicting_options_are_safe_errors (test_cli_history.CLIHistoryTests.test_unknown_session_and_conflicting_options_are_safe_errors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 103, in test_unknown_session_and_conflicting_options_are_safe_errors
+    self.assertEqual(result.returncode, 1, result.stderr)
+AssertionError: 2 != 1 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--context-window CONTEXT_WINDOW]
+                   [--timeout TIMEOUT] [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --data-dir C:\Users\ADMINI~1\AppData\Local\Temp\tmpfm7m66_l\state --resume missing
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 2.850s
+
+FAILED (failures=6)

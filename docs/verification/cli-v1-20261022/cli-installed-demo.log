@@ -1,0 +1,11 @@
+[步骤1] 上下文：估算输入 2342/30464 Token，省略 0 条历史消息
+[步骤1] 请求 Provider
+[步骤1] 开始工具 read_file
+[步骤1] 工具 read_file 调用完成
+[步骤2] 上下文：估算输入 2787/30464 Token，省略 0 条历史消息
+[步骤2] 请求 Provider
+模式：离线演示（固定脚本，不调用 LLM，不读取 API Key）
+Assistant: [离线读文件演示] 工具结果：{"ok": true, "data": {"path": "notes/demo.md", "sha256": "df01c8dfea6ef65b94258ff99e98d3e13da0508a38617044db5b4c0b285881d6", "lines": [{"line": 1, "text": "# 单元01演示"}, {"line": 2, "text": "这是新建的非私人演示文件。"}, {"line": 3, "text": "目标：让工具读取真实内容，再交回 Agent Loop。"}], "truncated": false, "next_line": null}, "error": null}
+[steps=2]
+[session=b580ab699d1d423ab75cb69449950b7c]
+[context_sha256=4e0726a6f37116122f127ec25737d77a3b24d0b83b79dd0156d04cc396b96109]

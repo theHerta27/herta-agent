@@ -1,0 +1,9 @@
+test_decimals (test_metrics.AverageTests.test_decimals) ... ok
+test_empty (test_metrics.AverageTests.test_empty) ... ok
+test_integers (test_metrics.AverageTests.test_integers) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+{"passed": true, "tests_run": 3, "tests_passed": true, "independent_behavior_passed": true, "model_called_by_checker": false}

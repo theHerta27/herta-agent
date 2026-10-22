@@ -1,6 +1,8 @@
 # Herta 项目地图
 
-地图建立日期：2026-10-19，单元07更新于2026-10-21。当前已完成单元01～07，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；本次按用户要求提交04～07进度。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)分别对应单元01～07。
+2026-10-22交付更新：当前已收敛为可单独安装的CLI v1，默认真实模式保存会话、可恢复。最新入口是`cli.main → run_cli → start_chat → chat/run_turn → CLIHistory.run → Agent.run`；StoredTurn与原SQLite复用。整体图与真实演示见[CLI架构](../architecture/cli-v1.md)，操作见[CLI指南](../CLI_GUIDE.md)。下列编号单元保留当时学习进度，不再作为后续开发目标。
+
+地图建立日期：2026-10-19，单元08更新于2026-10-21。当前已完成单元01～08，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；私密GitHub已核对检查点`683b38a`，包含01～07；08仍在本地。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)、[窗口预算](unit-08-context-budget.md)分别对应单元01～08。
 
 ## 先建立直觉
 
@@ -12,11 +14,11 @@
 
 | 入口 | 真实位置 | 当前行为 |
 |---|---|---|
-| Python CLI | [backend/herta_agent/__main__.py](../../backend/herta_agent/__main__.py) 转发到 [cli.py](../../backend/herta_agent/cli.py)，`main → run_cli → create_agent → chat → run_turn`；沿用 `herta-agent` 脚本 | 默认离线回显；注册Read、Search、确认Edit/Create/Test，不强制人格/RAG；只有进程内Session。examples中的搜索、编辑、新建、测试演示是固定Provider夹具，调用同一组装入口与Loop |
+| Python CLI | [backend/herta_agent/__main__.py](../../backend/herta_agent/__main__.py) 转发到 [cli.py](../../backend/herta_agent/cli.py)，`main → run_cli → start_chat → chat → run_turn`；沿用 `herta-agent` 脚本 | 默认离线回显；真实模式自主选Read/Search/Edit/Create/Test，逐次确认副作用；真实模式默认SQLite保存，可恢复。examples中的历史学习演示仍是固定Provider；coding-task模板用于真实模型任务 |
 | 桌面启动 | `启动Herta.cmd → scripts/Start-Herta.ps1 → Electron`；Python 服务入口 [service/__main__.py](../../backend/herta_agent/service/__main__.py) | 启动本机 HTTP 服务及桌面生命周期 |
 | 服务组装 | [service/app.py](../../backend/herta_agent/service/app.py) 的 `create_app`/`lifespan` | 创建人格、RAG、陪伴、语音、工作台和工具；这里是主要业务耦合点 |
 
-目标版本只保留 CLI 产品入口。旧桌面服务入口的源码和数据未修改；单元01没有做打包、依赖裁剪或发行迁移，不能把旧桌面启动脚本当成当前CLI入口。
+目标版本只有CLI产品入口。旧桌面入口与数据保留，共享持久化适配已小范围抽取并做后端回归；依赖拆分为CLI基础与桌面可选组。不能把旧桌面启动脚本当成当前CLI入口。
 
 ## 核心模块与调用关系
 
@@ -36,11 +38,12 @@ flowchart TD
     Finish -. 持久化适配 .-> Store
 ```
 
-SQLite 虚线是适配器可选行为，**不是** `Agent.run` 直接写数据库。内存入口用 `MemoryTurn`；现有服务通过 `PersistentTurn` 持久化。
+SQLite虚线是适配器行为，`Agent.run`不直接写数据库。内存入口用MemoryTurn；CLI用StoredTurn，服务用继承同一StoredTurn的PersistentTurn保留原RunManager终态策略。
 
 | 模块 | 真实文件/关键符号 | 要理解的核心 |
 |---|---|---|
 | CLI组装 | [cli.py](../../backend/herta_agent/cli.py)，`main/run_cli/create_agent/chat/run_turn` | 入口负责组装；循环、上下文和执行仍使用已有核心 |
+| 终端显示与输入 | [terminal_ui.py](../../backend/herta_agent/terminal_ui.py)，`TerminalUI.read/answer/emit/confirm` | Rich排版、prompt_toolkit输入；默认取消确认。只接入原事件和审批，不增加第二套Loop或存储；`--plain`可退回原显示 |
 | 执行进度 | [cli_events.py](../../backend/herta_agent/cli_events.py)，`TerminalEventSink.emit`；原`runtime/events.py` | 可选--trace将现有事件的有限元数据写stderr；不增加对话历史或权限，默认无轨迹 |
 | 只读文本 | [tools/coding/read_file.py](../../backend/herta_agent/tools/coding/read_file.py)，`ReadParameters/read_file/_read_file`；[paths.py](../../backend/herta_agent/tools/coding/paths.py)，`Repository.path` | Executor校验参数后，handler在线程中进行路径检查和有界读取；超过1MiB拒绝，结果分页保持完整行；目录限制不是操作系统沙箱 |
 | 字面搜索 | [grep_code.py](../../backend/herta_agent/tools/coding/grep_code.py)，`GrepParameters/grep_code/_search`；`Repository.files` | 搜索普通UTF-8文件，返回路径与行号供后续Read；不跟随链接/特殊文件，明确预算和跳过。与Read共用`read_bounded_bytes/decode_utf8`，没有第二套文件服务 |
@@ -50,16 +53,16 @@ SQLite 虚线是适配器可选行为，**不是** `Agent.run` 直接写数据�
 | Loop | [runtime/agent.py](../../backend/herta_agent/runtime/agent.py)，`Agent.run:104`、`_request:70` | 每步问一次模型；有工具调用就执行并回填，无调用则返回；限制步数，取消时收尾；单元03只调整构造参数转发 |
 | 工具说明与查找 | [tools/registry.py](../../backend/herta_agent/tools/registry.py)，`ToolSpec:17`、`ToolRegistry:44` | 名称、参数模型、handler、权限元数据放在一起；`definitions` 生成模型看到的 JSON Schema |
 | 工具执行 | [tools/executor.py](../../backend/herta_agent/tools/executor.py)，`ToolExecutor.execute:67` | 查找、权限判断、参数校验、当前调用确认、期限、执行和结构化结果；工具错误可回到模型继续处理 |
-| 上下文 | [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py)，`prepare:206`、`_turn_groups:117` | 保留完整用户轮次和工具配对；估算输入预算，必要时节录旧历史 |
+| 上下文 | [runtime/context_engine.py](../../backend/herta_agent/runtime/context_engine.py)，`prepare:206`、`_turn_groups:117`；原`ContextSettings` | 保留完整用户轮次和工具配对；估算输入预算，必要时节录旧历史。CLI以--context-window传入总窗口；Session保留原文，当前轮次超限则报错。算法未重写 |
 | 系统文本 | [runtime/context.py](../../backend/herta_agent/runtime/context.py)，`ContextSnapshot`、`StaticContextBuilder` | Loop 可以使用普通系统文本，不强制加载大黑塔人格 |
 | 项目约定 | [project_context.py](../../backend/herta_agent/project_context.py)，`ProjectContextBuilder.snapshot`；`cli.create_agent` | 显式`--instructions`选入一份项目内UTF-8文件，每Run取一次快照；不自动扫描或导入，不增加权限，未传参数沿用StaticContextBuilder |
 | 会话 | [runtime/session.py](../../backend/herta_agent/runtime/session.py)，`Session.restore/begin_turn/record_calls/record_result` | 维护历史、忙碌状态和未完成工具 ID；阻止错配的结果进入历史 |
 | 每轮写入边界 | [runtime/turn.py](../../backend/herta_agent/runtime/turn.py)，`TurnIO`、`MemoryTurn` | 同一 Loop 能换内存或持久化适配器，不再造一套循环 |
 | 持久化 | [storage/sqlite.py](../../backend/herta_agent/storage/sqlite.py)，`SQLiteSessionStore:149`、`admit_run:412`、`finish_run:498`、`recover_interrupted:586` | 事务保存消息与运行状态，恢复中断状态；数据库线程归单独 worker 所有 |
-| 服务适配 | [service/turn.py](../../backend/herta_agent/service/turn.py)，`PersistentTurn:10`；[service/runs.py](../../backend/herta_agent/service/runs.py)，`RunManager._execute:239` | 现有持久化适配依赖 RunManager；CLI 不能原样接上就宣称脱离服务层 |
+| CLI与服务适配 | [cli_history.py](../../backend/herta_agent/cli_history.py)，`CLIHistory.run`；[storage/turn.py](../../backend/herta_agent/storage/turn.py)，`StoredTurn`；[service/turn.py](../../backend/herta_agent/service/turn.py)，`PersistentTurn` | 共用store-first写入；CLI顺序接纳，服务保留RunManager并发/取消策略；没有复制存储或第二套Loop |
 | 模型适配 | [llm/base.py](../../backend/herta_agent/llm/base.py)、[llm/openai_compatible.py](../../backend/herta_agent/llm/openai_compatible.py)、[llm/streaming.py](../../backend/herta_agent/llm/streaming.py) | Provider 协议可替换；HTTP 与流式协议解析不进入 Loop；本轮未调用远程模型 |
 
-服务中持久化的实际顺序为：`RunManager.submit → _admit_and_launch → store.admit_run → _execute → store.start_run → Session.restore → PersistentTurn → Agent.run`。`PersistentTurn.complete` 再经 `manager._finish → store.finish_run` 事务提交；它不是一个只靠替换 import 就可复用的 CLI 适配器。
+服务中持久化顺序为`RunManager.submit → _admit_and_launch → store.admit_run → _execute → store.start_run → Session.restore → PersistentTurn → Agent.run`，最终通过原manager._finish提交。CLI则`CLIHistory.run → store.admit_run/start_run → StoredTurn → Agent.run`，复用同一SQLite事务与恢复校验。适配代码见最新CLI架构文档。
 
 ## 跟踪一个真实输入
 

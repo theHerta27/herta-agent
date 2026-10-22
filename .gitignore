@@ -18,6 +18,7 @@
 
 # 后续阶段产生的环境、构建产物与缓存。
 .venv/
+.venv-cli/
 __pycache__/
 *.py[cod]
 .pytest_cache/

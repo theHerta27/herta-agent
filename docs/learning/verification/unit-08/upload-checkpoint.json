@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/theHerta27/herta-agent",
+  "visibility": "PRIVATE",
+  "branch": "learning/unit-01-cli-read",
+  "verified_remote_sha": "683b38a78b30ff01cd68bc6cb850db3decb4b5fa",
+  "uploaded_units": "01-07",
+  "fresh_related_tests": 97,
+  "test_seconds": 21.086,
+  "commit_files": 95
+}

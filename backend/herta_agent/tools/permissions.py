@@ -21,26 +21,38 @@ def terminal_text(text: str) -> str:
 
 
 class TerminalApproval:
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository, *, presenter=None):
         self.repo = repo
+        self.presenter = presenter
 
     async def __call__(self, spec: ToolSpec, parameters: ToolParameters) -> bool:
         if spec.name == "edit_file" and isinstance(parameters, EditParameters):
             change = await asyncio.to_thread(prepare_edit, self.repo, parameters)
-            print("本次编辑差异（未写入；终端控制字符已转义）：")
-            print(terminal_text(change.diff))
+            if self.presenter is not None:
+                self.presenter.preview_change(parameters.path, change.diff)
+            else:
+                print("本次编辑差异（未写入；终端控制字符已转义）：")
+                print(terminal_text(change.diff))
         elif spec.name == "create_file" and isinstance(parameters, CreateParameters):
             change = await asyncio.to_thread(prepare_create, self.repo, parameters)
-            print("本次新建差异（未写入；终端控制字符已转义）：")
-            print(terminal_text(change.diff))
+            if self.presenter is not None:
+                self.presenter.preview_change(parameters.path, change.diff, created=True)
+            else:
+                print("本次新建差异（未写入；终端控制字符已转义）：")
+                print(terminal_text(change.diff))
         elif spec.name == "run_tests" and isinstance(parameters, TestParameters):
             command = test_command(self.repo, parameters, Path("<owned-temporary-report>"))
-            print("本次测试工作目录：" + terminal_text(str(self.repo.root)))
-            print("实际程序及参数（报告路径执行时由程序临时创建）：")
-            print(terminal_text(subprocess.list2cmdline(command)))
-            print("将执行该项目的Python代码，具有当前账号权限；这不是沙箱。")
+            if self.presenter is not None:
+                self.presenter.preview_test(self.repo.root, command)
+            else:
+                print("本次测试工作目录：" + terminal_text(str(self.repo.root)))
+                print("实际程序及参数（报告路径执行时由程序临时创建）：")
+                print(terminal_text(subprocess.list2cmdline(command)))
+                print("将执行该项目的Python代码，具有当前账号权限；这不是沙箱。")
         else:
             return False
+        if self.presenter is not None:
+            return await self.presenter.confirm()
         return confirm_once()
 
 

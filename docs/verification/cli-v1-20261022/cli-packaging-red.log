@@ -1,0 +1,22 @@
+test_core_install_only_requires_http_and_validation_libraries (test_cli_packaging.CLIPackagingTests.test_core_install_only_requires_http_and_validation_libraries) ... FAIL
+
+======================================================================
+FAIL: test_core_install_only_requires_http_and_validation_libraries (test_cli_packaging.CLIPackagingTests.test_core_install_only_requires_http_and_validation_libraries)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_packaging.py", line 14, in test_core_install_only_requires_http_and_validation_libraries
+    self.assertEqual(names, {"httpx", "pydantic"})
+AssertionError: Items in the first set but not the second:
+'python-docx'
+'mcp'
+'jsonschema'
+'uvicorn'
+'numpy'
+'fastapi'
+'pypdf'
+'pillow'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

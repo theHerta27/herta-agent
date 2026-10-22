@@ -1,0 +1,37 @@
+[
+  {
+    "path": "backend/herta_agent/cli.py",
+    "exists": true,
+    "sha256": "58d86891a413635a7b7fccf27d3e92cbbfeb272d676be323f1c9136d98c8eef8"
+  },
+  {
+    "path": "backend/tests/test_cli_context.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "examples/cli-context/demo.py",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "README.md",
+    "exists": true,
+    "sha256": "5456594e98fe86bc93805f9c42c2d70b3b9b8c77bb64ddde7da295bdbb7823ca"
+  },
+  {
+    "path": "docs/learning/project-map.md",
+    "exists": true,
+    "sha256": "6738a032d2d53117fcf83363051a2943f0d49c02776e2f002c058ab13ad590f4"
+  },
+  {
+    "path": "docs/learning/unit-08-context-budget.md",
+    "exists": false,
+    "sha256": null
+  },
+  {
+    "path": "task_plan.md",
+    "exists": true,
+    "sha256": "53b148da556e513d08740e5d7f9bd4238486214630c6f708db22830943216bcc"
+  }
+]

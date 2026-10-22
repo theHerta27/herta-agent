@@ -1,0 +1,33 @@
+test_cancellation_during_admission_does_not_block_next_turn (test_cli_history.CLIHistoryLifecycleTests.test_cancellation_during_admission_does_not_block_next_turn) ... Executing <Task pending name='Task-1' coro=<CLIHistoryLifecycleTests.asyncSetUp() running at D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py:119> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\tasks.py:922, Task.task_wakeup()] created at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py:448> cb=[_run_until_complete_cb() at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py:181] created at D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py:100> took 0.219 seconds
+FAIL
+test_model_cancellation_persists_terminal_state_and_allows_next_turn (test_cli_history.CLIHistoryLifecycleTests.test_model_cancellation_persists_terminal_state_and_allows_next_turn) ... ok
+test_second_owner_cannot_recover_live_database (test_cli_history.CLIHistoryLifecycleTests.test_second_owner_cannot_recover_live_database) ... ok
+test_startup_closes_pending_calls_without_executing_them (test_cli_history.CLIHistoryLifecycleTests.test_startup_closes_pending_calls_without_executing_them) ... ok
+test_failed_turn_remains_recoverable (test_cli_history.CLIHistoryTests.test_failed_turn_remains_recoverable) ... ok
+test_list_is_local_and_does_not_create_another_session (test_cli_history.CLIHistoryTests.test_list_is_local_and_does_not_create_another_session) ... ok
+test_new_process_resumes_real_saved_history (test_cli_history.CLIHistoryTests.test_new_process_resumes_real_saved_history) ... ok
+test_read_tool_messages_and_context_diagnostics_survive_restart (test_cli_history.CLIHistoryTests.test_read_tool_messages_and_context_diagnostics_survive_restart) ... ok
+test_resume_is_bound_to_selected_repository (test_cli_history.CLIHistoryTests.test_resume_is_bound_to_selected_repository) ... ok
+test_unknown_session_and_conflicting_options_are_safe_errors (test_cli_history.CLIHistoryTests.test_unknown_session_and_conflicting_options_are_safe_errors) ... ok
+
+======================================================================
+FAIL: test_cancellation_during_admission_does_not_block_next_turn (test_cli_history.CLIHistoryLifecycleTests.test_cancellation_during_admission_does_not_block_next_turn)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\python\cpython-3.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_history.py", line 190, in test_cancellation_during_admission_does_not_block_next_turn
+    self.assertEqual(run.status, "cancelled")
+AssertionError: 'created' != 'cancelled'
+- created
++ cancelled
+
+
+----------------------------------------------------------------------
+Ran 10 tests in 7.896s
+
+FAILED (failures=1)

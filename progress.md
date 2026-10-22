@@ -1,5 +1,15 @@
 # Herta Agent 工作记录
 
+## 2026-10-22 简洁终端交付
+
+完成用户已批准的终端改动：文字标识与启动信息、可编辑输入和多行粘贴、中文进度与等待动画、Markdown/代码/真实差异排版、默认取消的确认菜单。方向键回车或完整yes确认；D只展示测试命令。--trace保留详细元数据，--plain及管道/dumb终端回退原交互，回答仍非流式。
+
+最终CLI113项通过45.169秒，核心31项通过2.608秒，新UI17项通过并独立复核。全backend Ruff和本轮7文件格式检查通过；旧完整后端两轮各1错误3跳过，分别单独重跑通过，未改旧失败且不宣称已根治。具体见docs/verification/terminal-ui-20261022/verification.md。
+
+wheel重新构建并安装到启动器使用的.venv-cli，98个Python文件逐字节一致，无桌面/本地模型依赖。实际Windows PowerShell启动器离线退出成功；自有PTY下临时文件完成输入→预览→方向键确认→写入→排版回答→退出。用户旧窗口未关闭、旧练习未覆盖；新练习目录average-co6whj8z已写入直白指南。无新付费API调用、Git提交或推送。
+
+2026-10-22：当前以CLI v1工程交付为目标；历史桌面和教学记录保留。工作基线为learning/unit-01-cli-read及未提交成果，详细当前判断见docs/CLI_V1_AUDIT.md。
+
 ## 2026-10-13 当前资料笔记接线
 - 后端6项新笔记用例与前端状态用例RED→GREEN；本机Electron读取两份资料、取消再确认、新文件实际内容、自动续接、保留草稿与历史恢复通过。
 - 完整回归：后端347项中346通过/1可选GPU跳过；前端79通过、typecheck/lint/Ruff通过；Electron完整28项中27通过/1缺公共音频夹具跳过，补入既有公开合成夹具后该录音/朗读/停止/会话切换用例单独通过。
@@ -298,3 +308,25 @@
 - 选定普通笔记归档副本任务，接线方案与仅演示资料的DeepSeek验收分别等待用户确认。尚未改产品代码、未调用真实模型。
 - 补核本机Python3.12.13/Pydantic2.13.5/LibreOffice26.8.1.1版本；原产品规划增加候选场景说明，防止后续按旧清单扩张。
 - 用户最终选择先保留审查、不改产品代码、继续只做本地测试。本轮按此结束，第一条接线任务暂缓；不再等待方案批准或调用DeepSeek。
+
+## 2026-10-22 CLI v1交付审计开始
+
+用户明确调整为工程优先、教学伴随，以少量交付阶段替代继续增加教学单元。只读核对主目录phase-6-ui@9ab9796与教学隔离目录learning/unit-01-cli-read@683b38a；后者保留08的未提交源码/文档/证据，主目录也有此前未提交资料，均不清理或覆盖。准备固定上游源码版本、追踪真实调用链和运行本地相关测试，不调用付费模型、不自动提交推送。
+
+审计完成：CLI84项通过（27.825秒）、核心103项通过（6.508秒），无跳过；未重跑全量旧后端/UI/语音，不冒称真实模型通过。固定镜像554bc4514ebaf83ef54d95bc44f4add7272d4f46与Python学习仓库ce8f9f186058939da54c9d6fead78dfb5d0fd6c3，24份缓存逐份Git blob/SHA256核对，记录实际函数和未展开分支。新增docs/CLI_V1_AUDIT.md、docs/architecture/claude-code-2.1.88-audit.md及证据；仅同步协作约定/规划，没有修改业务代码、安装依赖、调用付费API或提交推送。阶段A/B/C仍待实施，不自动开始下一阶段。
+
+阶段A按用户“按计划进行”开始：仅新增简单任务模板和准备/核查脚本，复用原CLI、Provider、Loop与TerminalApproval。真实任务副本为.local/coding-demo/average-mq5p9qdr，故意保留average([])异常；人工参考解仅在另一个自建副本核查检查器。模板及未修复副本确实失败，参考解副本通过；没有把参考解当成模型结果。已单独询问最多8次DeepSeek请求的付费同意，收到明确同意前不调用模型；未提交推送。
+
+本次最终相关Read/Search/Edit/Test共51项通过（12.420秒），示例规则与格式检查通过，原260个业务/配置/测试文件哈希不变。原始准备与核查日志在.local/coding-task-preparation，演示说明examples/coding-task/README.md。真实模型验收仍待本次付费同意，未因本地准备通过而标记阶段A完成。
+
+## 2026-10-22 CLI v1实施与真实验收
+
+用户明确授权真实DeepSeek与连续交付，替代逐单元暂停；没有自动提交/推送。首跑6请求、独立安装版6请求完成同类小修复，恢复会话1请求，共13请求。模型自主选择工具，原测试字节未变，独立4组行为断言通过；操作助手逐次审阅diff/测试范围后批准，不声称用户亲自输入过yes。
+
+复用SQLite/Session/TurnIO，抽取StoredTurn供原服务与CLI共用；CLI增加项目分库、进程锁、保存/恢复/列出、取消接纳收尾，保留唯一Agent Loop和审批。基础依赖裁为httpx/pydantic，其余旧依赖转desktop extra，锁文件版本未无关升级；旧语音安装脚本保留desktop依赖。
+
+验证：CLI最终96项通过40.121秒；完整后端447项444通过3可选语音跳过152.855秒。首次完整回归旧DOCX转换因工作区无LibreOffice路径失败，指定主目录既有引擎后通过；首次CLI旧Mock测试需显式no-save避免清空环境时使用真实默认数据目录，已修正并由新存储测试覆盖。取消提交边界测试确实先失败再修复。详细红灯与结果在docs/verification/cli-v1-20261022。
+
+全新.venv-cli由wheel非editable安装，不含FastAPI/NumPy/MCP/Torch/Piper/Uvicorn；最终97个打包Python文件字节与源码核对一致，CLI读/保存/列会话冒烟通过。全backend Ruff检查通过，10个变更Python文件格式通过；全局格式检查发现一个未改旧test_desktop_start_guard.py原有格式问题，保留不做无关改动。独立审查进行中。README已改为CLI产品入口，旧桌面说明移入docs/legacy-desktop.md，新增演示/架构/面试资料。
+
+CLI v1最终状态：A/B/C按收敛标准完成本地交付。独立审查无Critical/Important，审查者在精简环境另补跑46项及SIGINT提交/写入故障/跨进程锁探针；1项.venv-cli搜索副本Minor延期，CLI指南已有范围缩小办法。见docs/verification/cli-v1-20261022/review.md。无自动commit/push，主目录旧业务代码与数据未修改。最终入口为当前工作区启动CLI.cmd，旧启动Herta.cmd仍桌面入口。

@@ -1,0 +1,6 @@
+test_tool_overflow_keeps_full_result_and_allows_a_following_short_turn (test_cli_context.ContextHistoryIntegrationTests.test_tool_overflow_keeps_full_result_and_allows_a_following_short_turn) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.093s
+
+OK

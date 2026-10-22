@@ -1,0 +1,60 @@
+PASS 260 business/config/test file hashes equal pre-audit snapshot.
+PASS Evidence byte copy matches source-evidence.json
+PASS Evidence byte copy matches business-before.json
+PASS Evidence byte copy matches cli-import-closure.json
+PASS Evidence byte copy matches cli-tests.log
+PASS Evidence byte copy matches core-tests.log
+PASS Actual test result matches cli-tests.log
+PASS Actual test result matches core-tests.log
+PASS 24 cached upstream records; no source bodies in evidence.
+PASS Document whitespace clean: CLI_V1_AUDIT.md
+PASS Local document link resolves: verification/v1-audit-20261022/verification.md
+PASS Local document link resolves: architecture/claude-code-2.1.88-audit.md
+PASS Document whitespace clean: claude-code-2.1.88-audit.md
+PASS Local document link resolves: ../verification/v1-audit-20261022/source-evidence.json
+PASS Permanent source link matches inspected record: src/QueryEngine.ts
+PASS Source line anchor exists: L209
+PASS Permanent source link matches inspected record: src/query.ts
+PASS Source line anchor exists: L219
+PASS Permanent source link matches inspected record: src/query/deps.ts
+PASS Source line anchor exists: L33
+PASS Permanent source link matches inspected record: src/Tool.ts
+PASS Source line anchor exists: L358
+PASS Permanent source link matches inspected record: src/services/tools/toolOrchestration.ts
+PASS Source line anchor exists: L19
+PASS Permanent source link matches inspected record: src/services/tools/toolExecution.ts
+PASS Source line anchor exists: L337
+PASS Permanent source link matches inspected record: src/services/tools/toolHooks.ts
+PASS Source line anchor exists: L332
+PASS Permanent source link matches inspected record: src/hooks/useCanUseTool.tsx
+PASS Source line anchor exists: L28
+PASS Permanent source link matches inspected record: src/utils/permissions/permissions.ts
+PASS Source line anchor exists: L1158
+PASS Permanent source link matches inspected record: src/services/tools/StreamingToolExecutor.ts
+PASS Source line anchor exists: L265
+PASS Permanent source link matches inspected record: src/utils/messages.ts
+PASS Source line anchor exists: L4643
+PASS Permanent source link matches inspected record: src/services/compact/autoCompact.ts
+PASS Source line anchor exists: L241
+PASS Permanent source link matches inspected record: src/services/compact/compact.ts
+PASS Source line anchor exists: L387
+PASS Permanent source link matches inspected record: src/services/compact/compact.ts
+PASS Source line anchor exists: L330
+PASS Permanent source link matches inspected record: https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s01_agent_loop/code.py
+PASS Source line anchor exists: L96
+PASS Permanent source link matches inspected record: https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s03_permission/code.py
+PASS Source line anchor exists: L201
+PASS Permanent source link matches inspected record: https://github.com/shareAI-lab/learn-claude-code/blob/ce8f9f186058939da54c9d6fead78dfb5d0fd6c3/s08_context_compact/code.py
+PASS Source line anchor exists: L498
+PASS Document whitespace clean: verification.md
+PASS Local document link resolves: cli-tests.log
+PASS Local document link resolves: core-tests.log
+PASS Local document link resolves: source-evidence.json
+PASS Local document link resolves: ../../architecture/claude-code-2.1.88-audit.md
+PASS Local document link resolves: ../../CLI_V1_AUDIT.md
+PASS Local document link resolves: final-static-check.log
+PASS Local document link resolves: business-before.json
+PASS Source and local evidence links checked.
+PASS No audit commit created.
+PASS Tracked audit/agreement whitespace check passes.
+PASS Primary checkout business code unchanged.

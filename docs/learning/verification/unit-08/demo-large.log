@@ -1,0 +1,38 @@
+离线固定Read脚本：三轮新建的模拟背景资料；不调用模型、不读取API Key。
+每轮实际读取自己的临时笔记，无须yes；历史节录是程序摘取片段。
+本机总窗口=32768，预留输出2048、安全余量256。
+开始任务1（背景内容不在终端展开）：
+[步骤1] 上下文：估算输入 3937/30464 Token，省略 0 条历史消息
+[步骤1] 请求 Provider
+[步骤1] 开始工具 read_file
+[步骤1] 工具 read_file 调用完成
+[步骤2] 上下文：估算输入 4266/30464 Token，省略 0 条历史消息
+[步骤2] 请求 Provider
+Assistant: [离线读文件演示] 工具结果：{"ok": true, "data": {"path": "note.md", "sha256": "a9443039f05b7a6a94612ab4a1c2647d63181a96ec6224a21a7e86103f3d5c06", "lines": [{"line": 1, "text": "演示笔记。"}], "truncated": false, "next_line": null}, "error": null}
+[steps=2]
+[context_sha256=4e0726a6f37116122f127ec25737d77a3b24d0b83b79dd0156d04cc396b96109]
+Provider收到的完整任务轮次：['任务1']；另有历史节录：False
+开始任务2（背景内容不在终端展开）：
+[步骤1] 上下文：估算输入 6101/30464 Token，省略 0 条历史消息
+[步骤1] 请求 Provider
+[步骤1] 开始工具 read_file
+[步骤1] 工具 read_file 调用完成
+[步骤2] 上下文：估算输入 6430/30464 Token，省略 0 条历史消息
+[步骤2] 请求 Provider
+Assistant: [离线读文件演示] 工具结果：{"ok": true, "data": {"path": "note.md", "sha256": "a9443039f05b7a6a94612ab4a1c2647d63181a96ec6224a21a7e86103f3d5c06", "lines": [{"line": 1, "text": "演示笔记。"}], "truncated": false, "next_line": null}, "error": null}
+[steps=2]
+[context_sha256=4e0726a6f37116122f127ec25737d77a3b24d0b83b79dd0156d04cc396b96109]
+Provider收到的完整任务轮次：['任务1', '任务2']；另有历史节录：False
+开始任务3（背景内容不在终端展开）：
+[步骤1] 上下文：估算输入 8265/30464 Token，省略 0 条历史消息
+[步骤1] 请求 Provider
+[步骤1] 开始工具 read_file
+[步骤1] 工具 read_file 调用完成
+[步骤2] 上下文：估算输入 8594/30464 Token，省略 0 条历史消息
+[步骤2] 请求 Provider
+Assistant: [离线读文件演示] 工具结果：{"ok": true, "data": {"path": "note.md", "sha256": "a9443039f05b7a6a94612ab4a1c2647d63181a96ec6224a21a7e86103f3d5c06", "lines": [{"line": 1, "text": "演示笔记。"}], "truncated": false, "next_line": null}, "error": null}
+[steps=2]
+[context_sha256=4e0726a6f37116122f127ec25737d77a3b24d0b83b79dd0156d04cc396b96109]
+Provider收到的完整任务轮次：['任务1', '任务2', '任务3']；另有历史节录：False
+Session保存的原始消息数：12
+Provider输入中的工具调用与结果始终配对：True

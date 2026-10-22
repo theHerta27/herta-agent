@@ -1,0 +1,41 @@
+test_current_large_request_is_rejected_before_provider (test_cli_context.CLIContextTests.test_current_large_request_is_rejected_before_provider) ... FAIL
+test_current_large_tool_result_is_not_silently_clipped_or_answered (test_cli_context.CLIContextTests.test_current_large_tool_result_is_not_silently_clipped_or_answered) ... FAIL
+test_custom_and_default_window_reach_real_context_diagnostics (test_cli_context.CLIContextTests.test_custom_and_default_window_reach_real_context_diagnostics) ... FAIL
+test_invalid_window_fails_before_provider_configuration_or_mode_start (test_cli_context.CLIContextTests.test_invalid_window_fails_before_provider_configuration_or_mode_start) ... ok
+test_budget_selects_complete_turns_without_deleting_session_history (test_cli_context.ContextHistoryIntegrationTests.test_budget_selects_complete_turns_without_deleting_session_history) ... ok
+
+======================================================================
+FAIL: test_current_large_request_is_rejected_before_provider (test_cli_context.CLIContextTests.test_current_large_request_is_rejected_before_provider)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_context.py", line 63, in test_current_large_request_is_rejected_before_provider
+    self.assertEqual(result.returncode, 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_current_large_tool_result_is_not_silently_clipped_or_answered (test_cli_context.CLIContextTests.test_current_large_tool_result_is_not_silently_clipped_or_answered)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_context.py", line 78, in test_current_large_tool_result_is_not_silently_clipped_or_answered
+    self.assertEqual(result.returncode, 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_custom_and_default_window_reach_real_context_diagnostics (test_cli_context.CLIContextTests.test_custom_and_default_window_reach_real_context_diagnostics)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read\backend\tests\test_cli_context.py", line 38, in test_custom_and_default_window_reach_real_context_diagnostics
+    self.assertEqual(selected.returncode, 0, selected.stderr)
+AssertionError: 2 != 0 : usage: __main__.py [-h] [--provider {demo,openai}] [--repo REPO]
+                   [--instructions PATH] [--message MESSAGE] [--trace]
+                   [--max-steps MAX_STEPS] [--timeout TIMEOUT]
+                   [--tool-timeout TOOL_TIMEOUT]
+                   [--demo-tools | --demo-read-file PATH]
+                   [--demo-delay DEMO_DELAY]
+__main__.py: error: unrecognized arguments: --context-window 8192
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 6.131s
+
+FAILED (failures=3)
