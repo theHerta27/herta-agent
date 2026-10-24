@@ -1,0 +1,87 @@
+--- a/tests/test_json_output.py
++++ b/tests/test_json_output.py
+@@ -0,0 +1,54 @@
++import contextlib
++import io
++import json
++import unittest
++
++from wordcount.cli import main
++from wordcount.counts import summarize
++from wordcount.json_output import to_json
++
++
++class JsonOutputTests(unittest.TestCase):
++    def test_to_json_fields(self):
++        result = summarize("pear apple pear")
++        self.assertEqual(json.loads(to_json(result)), result)
++        self.assertEqual(
++            json.loads(to_json(result)),
++            {"total": 3, "unique": 2, "counts": {"apple": 1, "pear": 2}},
++        )
++
++    def test_to_json_unicode_not_escaped(self):
++        result = summarize("café 日本 café")
++        payload = to_json(result)
++        self.assertIn("café", payload)
++        self.assertIn("日本", payload)
++        self.assertEqual(
++            json.loads(payload),
++            {"total": 3, "unique": 2, "counts": {"café": 2, "日本": 1}},
++        )
++
++    def test_to_json_empty_input(self):
++        self.assertEqual(
++            json.loads(to_json(summarize(""))),
++            {"total": 0, "unique": 0, "counts": {}},
++        )
++
++    def test_cli_json_output(self):
++        output = io.StringIO()
++        with contextlib.redirect_stdout(output):
++            main(["--text", "pear apple pear", "--format", "json"])
++        payload = output.getvalue()
++        self.assertEqual(payload, json.dumps(json.loads(payload)) + "\n")
++        self.assertEqual(
++            json.loads(payload),
++            {"total": 3, "unique": 2, "counts": {"apple": 1, "pear": 2}},
++        )
++
++    def test_cli_json_empty_output(self):
++        output = io.StringIO()
++        with contextlib.redirect_stdout(output):
++            main(["--format", "json"])
++        self.assertEqual(
++            json.loads(output.getvalue()),
++            {"total": 0, "unique": 0, "counts": {}},
++        )
+--- a/wordcount/cli.py
++++ b/wordcount/cli.py
+@@ -1,14 +1,18 @@
+ import argparse
+ 
+ from wordcount.counts import summarize
++from wordcount.json_output import to_json
+ 
+ 
+ def main(argv=None):
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--text", default="")
+-    parser.add_argument("--format", choices=("text",), default="text")
++    parser.add_argument("--format", choices=("text", "json"), default="text")
+     args = parser.parse_args(argv)
+     result = summarize(args.text)
++    if args.format == "json":
++        print(to_json(result))
++        return
+     print(f"total={result['total']} unique={result['unique']}")
+     for word, count in result["counts"].items():
+         print(f"{word}: {count}")
+--- a/wordcount/json_output.py
++++ b/wordcount/json_output.py
+@@ -0,0 +1,5 @@
++import json
++
++
++def to_json(result):
++    return json.dumps(result, ensure_ascii=False, sort_keys=False)

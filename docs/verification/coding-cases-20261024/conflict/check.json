@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "expected_error_received": "edit_conflict",
+  "expected_file_preserved": true,
+  "final_sha256": "030ff50f4d07e82ed088ba4b53163a76ae38921c13ec641cc63dd62f8bf2abd9",
+  "external_edit_injection": {
+    "injected": true,
+    "purpose": "external edit after native preview, before confirmation",
+    "before_sha256": "b1a268e80bd16e676bdbbd1931f0140786263252e7dfb9d8d3a4148e0644cbcc",
+    "external_sha256": "030ff50f4d07e82ed088ba4b53163a76ae38921c13ec641cc63dd62f8bf2abd9",
+    "expected_retries": 7
+  }
+}

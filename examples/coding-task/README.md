@@ -1,5 +1,15 @@
 # 一条真实编码任务
 
+## 新增小型多文件案例
+
+原average入口保持兼容。可用`prepare.py --case checkout`准备两个模块的结算Bug，或`--case wordcount`准备增加JSON输出的新功能任务。输出仍含project与task；按原CLI运行方式将两者传入，并将max-steps设为16，再用同一个check.py检查project。每次创建新副本，不覆盖旧任务。
+
+checkout原7项测试中有3个初始失败；wordcount原3测试通过但尚不支持JSON，旧测试通过不能证明新需求完成。新检查器核对实际行为，并从目标外模板计算原测试hash，原测试有任何变更都会失败；新增测试允许创建和修改。approval模板用于明确拒绝和外部编辑冲突，不是成功修改演示。
+
+最短现场步骤和已完成的真实记录见[面试演示](../../docs/DEMO.md)，完整结果见[2026-10-24验证](../../docs/verification/coding-cases-20261024/verification.md)。不必新建评测平台或先学习所有历史文档。
+
+## 原平均值任务
+
 目标：让真实模型通过现有CLI修复`average([])`的除零异常，使其返回0，并运行测试验证。模型自主选择工具；这里没有固定工具调用Provider或另一套Agent Loop。
 
 `project/`是故意保留缺陷的模板。三个测试中，空列表测试在修复前报ZeroDivisionError，另两个通过；这是任务起点，不是Herta回归失败。每次prepare新建副本，不修改模板，不覆盖原项目。

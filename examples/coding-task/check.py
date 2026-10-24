@@ -18,8 +18,14 @@ def main() -> int:
     if not root.is_relative_to(DEMO_ROOT.resolve()) or not marker.is_file():
         parser.error("只检查prepare.py在.local/coding-demo中新建的演示项目。")
     if marker.read_text(encoding="utf-8") != "average-v1\n":
-        parser.error("演示标记不匹配。")
+        from cases import check_case
 
+        try:
+            result = check_case(root)
+        except ValueError as exc:
+            parser.error(str(exc))
+        print(json.dumps(result, ensure_ascii=False))
+        return 0 if result["passed"] else 1
     sys.dont_write_bytecode = True
     sys.path.insert(0, str(root))
     suite = unittest.TestLoader().discover(str(root / "tests"))

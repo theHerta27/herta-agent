@@ -1,0 +1,15 @@
+{
+  "tests_run": 8,
+  "tests_passed": true,
+  "skipped": 0,
+  "expected_failures": 0,
+  "independent_behavior_passed": true,
+  "test_output": "test_counts (test_existing.ExistingTests.test_counts) ... ok\ntest_empty_text_output (test_existing.ExistingTests.test_empty_text_output) ... ok\ntest_text_output (test_existing.ExistingTests.test_text_output) ... ok\ntest_cli_json_empty_output (test_json_output.JsonOutputTests.test_cli_json_empty_output) ... ok\ntest_cli_json_output (test_json_output.JsonOutputTests.test_cli_json_output) ... ok\ntest_to_json_empty_input (test_json_output.JsonOutputTests.test_to_json_empty_input) ... ok\ntest_to_json_fields (test_json_output.JsonOutputTests.test_to_json_fields) ... ok\ntest_to_json_unicode_not_escaped (test_json_output.JsonOutputTests.test_to_json_unicode_not_escaped) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.014s\n\nOK\n",
+  "passed": true,
+  "case": "wordcount",
+  "original_tests_unchanged": true,
+  "original_test_sha256": {
+    "tests/test_existing.py": "716a07a34ed04567fbeb66e62e8b52478b01f295f4366c8cbd2231025537a1bf"
+  },
+  "model_called_by_checker": false
+}

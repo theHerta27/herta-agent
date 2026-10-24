@@ -1,0 +1,7 @@
+--- a/settings.py
++++ b/settings.py
+@@ -1,2 +1,3 @@
+-DEFAULT_RETRIES = 2
++DEFAULT_RETRIES = 7
+ ENABLE_LOGGING = True
++# changed by external editor during approval

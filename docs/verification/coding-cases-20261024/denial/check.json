@@ -1,0 +1,6 @@
+{
+  "passed": true,
+  "expected_error_received": "permission_denied",
+  "expected_file_preserved": true,
+  "final_sha256": "b1a268e80bd16e676bdbbd1931f0140786263252e7dfb9d8d3a4148e0644cbcc"
+}

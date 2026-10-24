@@ -4,6 +4,8 @@
 
 当前交付分支：`learning/unit-01-cli-read`。支持Windows、Python 3.12+；不需要Electron。旧桌面源码保留，但不是本版入口。**`启动CLI.cmd`打开CLI，`启动Herta.cmd`仍打开旧桌面。**
 
+**面试展示先看[演示指南](docs/DEMO.md)**：跨模块Bug修复、CLI新增JSON输出，以及拒绝、冲突和恢复的真实记录与独立检查。
+
 ## 安装与启动
 
 在本分支仓库根目录：
@@ -37,7 +39,10 @@ py -3.12 -m venv .venv-cli
 
 已用真实DeepSeek完成平均值函数的空列表Bug修复：模型自主Search/Read，经确认Edit、回读、运行3个unittest，独立行为检查通过且测试未变。独立安装版退出后恢复同一会话，再由真实模型说明上轮修改。真实行为与本地固定Provider测试分别记录。
 
+2026-10-24补充：跨模块结算修复7测试通过；字频CLI增加JSON输出并补测试，经历新增断言失败后修正，8测试通过；拒绝和外部编辑冲突按实际文件核查。只使用自建小型项目，不宣称通用任务成功率。
+
 - [五分钟演示步骤](docs/CLI_GUIDE.md)：准备新演示项目、运行Agent、独立检查。
+- [面试演示与新案例证据](docs/DEMO.md)、[本轮实际结果](docs/verification/coding-cases-20261024/verification.md)：包含失败、外部编辑注入和终端中断恢复。
 - [本次验收与限制](docs/verification/cli-v1-20261022/verification.md)：真实会话、差异、安装和本地回归证据。
 - [终端界面验证](docs/verification/terminal-ui-20261022/verification.md)：新界面、键盘确认和安装检查；区分本轮本地测试与此前真实模型演示。
 - [架构及真实调用链](docs/architecture/cli-v1.md)：从一句任务走到结果。

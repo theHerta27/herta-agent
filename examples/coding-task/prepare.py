@@ -1,5 +1,6 @@
 """Create a fresh, owned task copy; never reads credentials or calls a model."""
 
+import argparse
 import json
 import shutil
 import tempfile
@@ -25,4 +26,19 @@ def prepare() -> Path:
 
 
 if __name__ == "__main__":
-    print(json.dumps({"project": str(prepare()), "task": TASK}, ensure_ascii=False))
+    from cases import TASKS, prepare_case
+
+    parser = argparse.ArgumentParser(description="新建独立编码演示；不调用模型")
+    parser.add_argument("--case", choices=("average", *TASKS), default="average")
+    name = parser.parse_args().case
+    target = prepare() if name == "average" else prepare_case(name)
+    print(
+        json.dumps(
+            {
+                "project": str(target),
+                "case": name,
+                "task": TASK if name == "average" else TASKS[name],
+            },
+            ensure_ascii=False,
+        )
+    )

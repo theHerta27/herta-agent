@@ -1,0 +1,16 @@
+{
+  "tests_run": 7,
+  "tests_passed": true,
+  "skipped": 0,
+  "expected_failures": 0,
+  "independent_behavior_passed": true,
+  "test_output": "test_empty (test_cart.CartTests.test_empty) ... ok\ntest_quantity (test_cart.CartTests.test_quantity) ... ok\ntest_single (test_cart.CartTests.test_single) ... ok\ntest_below_threshold (test_checkout.CheckoutTests.test_below_threshold) ... ok\ntest_quantity_and_discount (test_checkout.CheckoutTests.test_quantity_and_discount) ... ok\ntest_threshold_after_discount (test_checkout.CheckoutTests.test_threshold_after_discount) ... ok\ntest_threshold_is_free (test_checkout.CheckoutTests.test_threshold_is_free) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.000s\n\nOK\n",
+  "passed": true,
+  "case": "checkout",
+  "original_tests_unchanged": true,
+  "original_test_sha256": {
+    "tests/test_cart.py": "070e0c6de4a8136e0e4d8a62a78d36775c751369f194995aca46de652b5b620a",
+    "tests/test_checkout.py": "5639e5aab403bf5e16917f25a5863031b4b49792b40374cc44625c63bdb29c1b"
+  },
+  "model_called_by_checker": false
+}

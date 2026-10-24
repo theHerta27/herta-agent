@@ -1,5 +1,15 @@
 # Herta 工程发现
 
+## 2026-10-24 初始核对
+
+- 最终范围仅P1/P4；已有唯一Harness足以完成多文件修复和新功能，本轮不需要生产代码或依赖变化。独立checker的skip判断发现真实漏洞，先红后修复；原生产unittest部分skip语义不动。结构职责与新测试质量由人工读diff确认，避免扩成静态分析框架。
+- 真实JSON任务的模型新增断言自己出错，工具返回failed后模型修正自己的测试；这是新增测试纠错，不是再次修复业务逻辑。原测试hash未变，独立Unicode/空输入检查通过。
+- 工具终端丢失后，原resume恢复中断记录并补未知结果，模型重新读取后继续；不能把旧approval自动记为no或已成功。实际先读文件比依赖自然语言总结可靠，模型最终__init__.py提示就与文件不符。
+
+- 工作树干净，当前learning/unit-01-cli-read，4821d53；不新建重复工作树。现有examples/coding-task/prepare.py只复制average模板；check.py独立断言，但不适合证明多文件任务。扩展既有示例入口，不另起Loop。
+- 当前run_tests的解释器为sys.executable，仅unittest；用户已同意P2按优先级完善。Provider当前忽略usage；P3按真实字段记录，不把估算当计费。
+- 决定：先做2个正常任务和2个边界Run，而非5个复杂项目；初始请求上限48，复用真实TerminalApproval，不批量预批准。用固定模板计算原测试hash，避免模型改测试得到假通过。
+
 ## 2026-10-22 终端界面
 
 - 用户批准Rich与prompt_toolkit后，只新增TerminalUI呈现层，复用原Loop、事件、审批和SQLite；没有第二个Agent或权限服务。实际安装版本Rich14.3.4、prompt_toolkit3.0.53，锁定传递依赖。

@@ -1,0 +1,58 @@
+[
+  {
+    "case": "checkout",
+    "requests": 6,
+    "runs": [
+      {
+        "status": "completed",
+        "steps": 6
+      }
+    ],
+    "check_passed": true,
+    "changed_python_files": 2
+  },
+  {
+    "case": "wordcount",
+    "requests": 13,
+    "runs": [
+      {
+        "status": "interrupted",
+        "steps": 5
+      },
+      {
+        "status": "completed",
+        "steps": 8
+      }
+    ],
+    "check_passed": true,
+    "changed_python_files": 3
+  },
+  {
+    "case": "denial",
+    "requests": 5,
+    "runs": [
+      {
+        "status": "interrupted",
+        "steps": 2
+      },
+      {
+        "status": "completed",
+        "steps": 3
+      }
+    ],
+    "check_passed": true,
+    "changed_python_files": 0
+  },
+  {
+    "case": "conflict",
+    "requests": 4,
+    "runs": [
+      {
+        "status": "completed",
+        "steps": 4
+      }
+    ],
+    "check_passed": true,
+    "changed_python_files": 1
+  }
+]

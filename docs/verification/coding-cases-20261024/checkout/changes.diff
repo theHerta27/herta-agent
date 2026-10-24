@@ -1,0 +1,19 @@
+--- a/shop/cart.py
++++ b/shop/cart.py
+@@ -2,4 +2,4 @@
+ 
+ 
+ def subtotal(items):
+-    return sum(item["unit_cents"] for item in items)
++    return sum(item["unit_cents"] * item["quantity"] for item in items)
+--- a/shop/checkout.py
++++ b/shop/checkout.py
+@@ -5,7 +5,7 @@
+ def checkout(items, discount_percent=0):
+     gross = subtotal(items)
+     discount = gross * discount_percent // 100
+-    shipping = shipping_fee(gross)
++    shipping = shipping_fee(gross - discount)
+     return {
+         "subtotal": gross,
+         "discount": discount,

@@ -1,0 +1,12 @@
+test_feature_grader_accepts_a_reference_implementation_and_added_tests (test_cli_coding_cases.CodingCaseTests.test_feature_grader_accepts_a_reference_implementation_and_added_tests) ... ok
+test_initial_bug_is_failed_and_reference_solution_is_independently_verified (test_cli_coding_cases.CodingCaseTests.test_initial_bug_is_failed_and_reference_solution_is_independently_verified) ... ok
+test_initial_feature_case_passes_old_tests_but_fails_new_contract (test_cli_coding_cases.CodingCaseTests.test_initial_feature_case_passes_old_tests_but_fails_new_contract) ... ok
+test_modified_original_test_fails_grading_even_when_all_assertions_pass (test_cli_coding_cases.CodingCaseTests.test_modified_original_test_fails_grading_even_when_all_assertions_pass) ... ok
+test_prepare_creates_distinct_copies_and_never_overwrites_first (test_cli_coding_cases.CodingCaseTests.test_prepare_creates_distinct_copies_and_never_overwrites_first) ... ok
+test_skipped_added_test_does_not_count_as_a_fully_passing_demo (test_cli_coding_cases.CodingCaseTests.test_skipped_added_test_does_not_count_as_a_fully_passing_demo) ... ok
+test_unknown_case_and_unowned_directory_are_rejected (test_cli_coding_cases.CodingCaseTests.test_unknown_case_and_unowned_directory_are_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.124s
+
+OK

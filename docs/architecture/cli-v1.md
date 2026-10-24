@@ -44,6 +44,8 @@ flowchart TD
 
 ## 一次实际输入如何经过代码
 
+2026-10-24增加了更完整的[真实案例](../verification/coding-cases-20261024/verification.md)：结算任务仍走下述同一调用链，先run_tests得到3项失败，再读取并编辑cart.py/checkout.py，回读并复测7项通过。JSON任务则新建模块和测试，收到新增断言失败后修正并复测8项通过。终端丢失后通过CLIHistory恢复，旧Run标interrupted，模型先读取真实文件再继续。这里只扩展示例、外部核查与证据；没有给案例新建另一套Agent Loop。
+
 真实输入：“修复average空列表异常，保留非空行为，运行测试”。独立安装版实际记录见[验收](../verification/cli-v1-20261022/verification.md)。以下是实际发生的流程，模型每次运行可能选择不同工具顺序。
 
 1. `main → run_cli`组装真实Provider与5个工具，`start_chat`打开专用SQLite；`chat → run_turn → CLIHistory.run`创建Run，使用StoredTurn调用`Agent.run`。

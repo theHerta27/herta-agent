@@ -1,5 +1,7 @@
 # Herta 项目地图
 
+2026-10-24面试收敛更新：只补真实任务证据和展示，不新增教学单元。先看[面试演示](../DEMO.md)，再看[本轮实际结果](../verification/coding-cases-20261024/verification.md)；包含跨模块修复、新功能新增、真实测试失败反馈、拒绝、冲突和原会话恢复。项目Python/pytest与上下文扩展本轮暂缓。
+
 2026-10-22交付更新：当前已收敛为可单独安装的CLI v1，默认真实模式保存会话、可恢复。最新入口是`cli.main → run_cli → start_chat → chat/run_turn → CLIHistory.run → Agent.run`；StoredTurn与原SQLite复用。整体图与真实演示见[CLI架构](../architecture/cli-v1.md)，操作见[CLI指南](../CLI_GUIDE.md)。下列编号单元保留当时学习进度，不再作为后续开发目标。
 
 地图建立日期：2026-10-19，单元08更新于2026-10-21。当前已完成单元01～08，沿用`learning/unit-01-cli-read`，未合并主线。首个备份`e765b48`包含01～03；私密GitHub已核对检查点`683b38a`，包含01～07；08仍在本地。历史执行记录中的“未提交/未推送”保留其生成时状态，后续备份以Git实际记录为准。原始审计见单元00；[读取](unit-01-cli-read.md)、[搜索](unit-02-search-read.md)、[确认编辑](unit-03-confirmed-edit.md)、[测试验证](unit-04-test-and-verify.md)、[项目约定](unit-05-project-instructions.md)、[执行进度](unit-06-execution-trace.md)、[确认新建](unit-07-confirmed-create.md)、[窗口预算](unit-08-context-budget.md)分别对应单元01～08。
