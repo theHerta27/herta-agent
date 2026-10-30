@@ -39,6 +39,8 @@ if __name__ == "__main__":
                 "case": name,
                 "task": TASK if name == "average" else TASKS[name],
             },
-            ensure_ascii=False,
+            # ASCII wire JSON survives Windows PowerShell 5.1 native-pipe decoding.
+            # ConvertFrom-Json restores the original Unicode task and paths.
+            ensure_ascii=True,
         )
     )
