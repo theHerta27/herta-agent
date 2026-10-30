@@ -410,7 +410,7 @@ Python + asyncio + Pydantic。
 
 这些可以成为后续探索内容，但必须有具体使用需求才引入。
 
-现有 `mihoyo-agent-project` 继续作为独立的游戏研发 Agent 工程项目维护，不要求合并进 Herta。
+现有 `graytower-agent` 继续作为独立的游戏研发 Agent 工程项目维护，不要求合并进 Herta。
 
 ## 七、开发与交付原则
 

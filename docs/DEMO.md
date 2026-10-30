@@ -15,44 +15,39 @@
 
 ## 想现场再跑一次，照着做
 
-**1. 打开PowerShell，复制这一行并回车。**
+**先按Ctrl+C，确认光标前面是正常的PS提示符。** 如果看到单独的`>>`，说明上一条命令还没结束，不要继续粘贴新命令。只复制下面代码框里的内容，不复制`PS ...>`或`>>`。
+
+**演示结算任务，只需复制这一整行并回车。** 在下载后的仓库根目录运行，不需要设置$p或粘贴if代码。
 
 ```powershell
-Set-Location 'D:\Desktop\herta-agent\.local\worktrees\unit-01-cli-read'
+.\启动CLI.cmd -Case checkout
 ```
 
-**2. 创建一份没修过的新练习。**
-
-```powershell
-$p = & '.\.venv-cli\Scripts\python.exe' -B -X utf8 examples/coding-task/prepare.py --case checkout | ConvertFrom-Json
-$p.project
-$p.task
-```
-
-屏幕显示新目录和要交给Agent的任务。每次都会新建副本，之前修好的文件保留。
-
-**3. 加载本机已有密钥并运行Agent。** 不会显示密钥；接下来的真实模型请求会产生服务费用。
-
-```powershell
-if (-not $env:DEEPSEEK_API_KEY) {
-    $env:DEEPSEEK_API_KEY = [Environment]::GetEnvironmentVariable('DEEPSEEK_API_KEY', 'User')
-}
-& '.\.venv-cli\Scripts\herta-agent.exe' --provider openai --repo $p.project --instructions AGENTS.md --max-steps 16 --message $p.task
-```
+启动器会创建一份没修过的新副本、显示目录和任务，自动读取本机已有密钥，再进入真实模型任务。密钥不会显示；请求会产生所选模型服务的费用。之前修好的目录会保留。
 
 它会先请求运行现有测试。核对项目目录后，选“确认运行”再回车，或输入完整yes再回车。初始3个测试失败是练习故意保留的Bug。
 
 接下来它会自己搜索和读取文件。看到编辑差异时检查内容，再逐次确认；最后确认复测。正常结果是修改shop/cart.py和shop/checkout.py，7项测试通过。步骤顺序和耗时可能变化；16次请求是这一轮的上限，不是费用金额上限。模型失败要如实展示，不要现场手改后说是Agent修好的。
 
-**4. Agent退出后，独立检查实际结果。** 这条命令不调用模型。
+**任务结束后，独立检查实际结果。** 启动器会打印“要独立检查，请复制下一整行”，后面是包含本次实际目录的完整命令。需要检查时复制那一行并回车；它运行演示代码，不调用模型。不会在你拒绝操作后偷偷自动执行。
+
+看到passed、tests_passed、independent_behavior_passed、original_tests_unchanged都为true才算这次检查通过。也可以直接打开屏幕显示的演示目录查看文件。
+
+想演示JSON新功能，把同一命令末尾的checkout换成wordcount即可。换电脑时先按[安装指南](CLI_GUIDE.md)准备环境，并把命令中的安装位置改为新电脑实际路径。
+
+## 平时处理自己的项目，怎样启动
+
+在Herta仓库目录打开PowerShell，把目标目录传给启动器：
 
 ```powershell
-& '.\.venv-cli\Scripts\python.exe' -B -X utf8 examples/coding-task/check.py $p.project
+.\启动CLI.cmd -Repo '你的项目目录'
 ```
 
-看到passed、tests_passed、independent_behavior_passed、original_tests_unchanged都为true才算这次检查通过。还能直接打开$p.project中的实际文件。
+这里填写要分析和修改的项目目录。看到Herta输入提示后，直接用中文交代任务；输入/exit退出。这是持续聊天方式，和上面“一次性演示任务”分开。
 
-换一台电脑时先按[安装指南](CLI_GUIDE.md)准备Python环境；第一步改成新电脑的仓库路径。想演示新功能，将第2步的checkout换成wordcount，其他步骤相同。
+也可以双击当前工作区的启动CLI.cmd，再按提示输入项目目录。启动Herta.cmd仍然是旧桌面入口。
+
+脚本化使用prepare.py | ConvertFrom-Json的方式仍保留；2026-10-25已修复Windows PowerShell 5.1的中文JSON乱码。普通使用无需手动处理JSON、环境变量或多行代码。
 
 ## 3～5分钟怎么讲
 
@@ -70,4 +65,4 @@ if (-not $env:DEEPSEEK_API_KEY) {
 - [Claude Code源码对照](architecture/claude-code-2.1.88-audit.md)：固定快照中的真实调用关系，以及Herta简化了什么。
 - [面试问答与简历要点](INTERVIEW.md)：权限、上下文、Provider解耦、异步取消等。
 
-当前GitHub是私密仓库，交付分支为learning/unit-01-cli-read；不要把默认main当成CLI最新版。4821d53是2026-10-23检查点，新增案例与材料维护在同一交付分支，演示前以实际分支提交为准。是否公开或授予面试官访问权由用户决定。
+当前CLI入口在[GitHub主干](https://github.com/theHerta27/herta-agent)。`learning/unit-01-cli-read`保留开发历史；较早记录中的提交号用于定位当时的代码。

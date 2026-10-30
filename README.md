@@ -1,54 +1,101 @@
-# Herta Agent
+# Herta Agent — 轻量级 CLI Coding Agent
 
-参考Claude Code核心机制、使用Python独立实现的轻量CLI Coding Agent。指定项目目录，用自然语言提出编码任务，模型自主搜索、读取、修改文件并执行受控测试；Harness负责工具调度、权限、上下文、会话与错误处理。
+在终端里指定一个项目，用自然语言交代编码任务，模型自己选择工具搜索代码、读取文件、提出修改并运行测试。Herta 用 Python 实现模型请求、工具执行、结果回填的主循环，并处理人工审批、编辑冲突、上下文和会话恢复。
 
-当前交付分支：`learning/unit-01-cli-read`。支持Windows、Python 3.12+；不需要Electron。旧桌面源码保留，但不是本版入口。**`启动CLI.cmd`打开CLI，`启动Herta.cmd`仍打开旧桌面。**
+**技术栈：** Python · asyncio · Pydantic · httpx · SQLite · DeepSeek API（Tool Calling）· Rich / prompt_toolkit
 
-**面试展示先看[演示指南](docs/DEMO.md)**：跨模块Bug修复、CLI新增JSON输出，以及拒绝、冲突和恢复的真实记录与独立检查。
+[安装与使用](docs/CLI_GUIDE.md) · [任务演示](docs/DEMO.md) · [核心调用链](docs/architecture/cli-v1.md) · [项目案例](https://herta27.top/posts/herta-cli-case-study/) · [个人博客](https://herta27.top/)
 
-## 安装与启动
+## 核心流程
 
-在本分支仓库根目录：
+```mermaid
+flowchart LR
+    A[用户提出任务] --> B[模型选择下一步]
+    B --> C[校验工具参数]
+    C --> D{需要修改或运行测试?}
+    D -->|需要| E[展示内容并请求确认]
+    D -->|只读操作| F[执行工具]
+    E -->|同意| F
+    E -->|拒绝| G[将拒绝结果告诉模型]
+    F --> H[返回实际结果]
+    G --> B
+    H --> B
+    B --> I[给出任务结果]
+```
+
+## 主要实现
+
+| 模块 | 具体做了什么 |
+| --- | --- |
+| Agent 主循环 | 模型请求、工具执行、结果回填的有界循环；分离模型适配、工具注册和执行逻辑 |
+| 工具系统 | Pydantic 校验参数；提供搜索、读取、编辑、新建文件和 unittest 测试五类工具 |
+| 人工审批 | 编辑前展示实际 Diff；编辑、新建文件和运行测试都逐次确认 |
+| 编辑冲突检测 | SHA-256 核对读取、预览与写入期间的文件变化，发现外部修改时拒绝覆盖 |
+| 上下文管理 | 按 Token 预算选取完整消息轮次，保留工具调用与结果的对应关系 |
+| 会话恢复 | SQLite 保存会话和执行结果，支持跨进程继续对话，恢复时不重放历史工具操作 |
+
+## 验证结果
+
+接入 DeepSeek API，用两项实际编码任务验证模型自主选择工具、修改代码并运行测试：
+
+| 任务 | 实际结果 |
+| --- | --- |
+| 修复购物车结算错误 | 定位商品数量与运费计算的关联问题，修改两个模块，7 项测试通过，并由独立检查器核对行为与原测试是否保留 |
+| 给字频 CLI 增加 JSON 输出 | 新增输出模块与 5 项测试；读取新增测试的失败信息后修正，最终 8 项测试通过 |
+| 审批、冲突与恢复 | 保留拒绝编辑、外部修改导致写入冲突、会话中断后恢复的操作记录 |
+| CLI 工程回归 | 原有 120 项 CLI 与检查器测试通过；另有 4 项 Windows 启动测试通过 |
+
+需求、工具轨迹、实际改动与独立检查见 [案例验证记录](docs/verification/coding-cases-20261024/verification.md)。安装、终端入口和恢复检查见 [CLI 验收](docs/verification/cli-v1-20261022/verification.md) 与 [Windows 启动修复](docs/verification/startup-20261025.md)。
+
+## 安装
+
+当前 CLI 支持 Windows、Python 3.12+。
 
 ```powershell
+git clone https://github.com/theHerta27/herta-agent.git
+cd herta-agent
 py -3.12 -m venv .venv-cli
 .\.venv-cli\Scripts\python.exe -m pip install ./backend
+```
+
+配置 `DEEPSEEK_API_KEY` 环境变量后，指定要处理的项目目录：
+
+```powershell
 .\.venv-cli\Scripts\herta-agent.exe --provider openai --repo '你的项目目录'
 ```
 
-默认DeepSeek配置为`https://api.deepseek.com` / `deepseek-flash`，密钥从`DEEPSEEK_API_KEY`环境变量读取。其他兼容服务可设置`HERTA_BASE_URL`、`HERTA_MODEL`、`HERTA_API_KEY`。详情见[安装与演示指南](docs/CLI_GUIDE.md)。真实请求会发送当前任务及必要项目资料；密钥不落库。
+输入任务后开始交互，输入 `/exit` 退出。也可以双击 **启动CLI.cmd**，按提示选择项目目录。默认模型配置为 DeepSeek；可通过 `HERTA_BASE_URL`、`HERTA_MODEL`、`HERTA_API_KEY` 接入其他支持 Tool Calling 的兼容服务。
 
-本机工作区已准备`.venv-cli`，可直接运行其中的`herta-agent.exe`，或双击当前工作区的`启动CLI.cmd`并输入项目目录。默认不指定Provider时是明确标注的离线回显模式。
+## 跑一次编码演示
 
-## 当前能力
+在仓库根目录运行以下一行，新建一份未修复的演示项目并启动任务：
 
-| 工具/机制 | 实际范围 |
-|---|---|
-| grep_code / read_file | 项目内字面搜索与有界UTF-8读取，返回路径、行号、截断信息和指纹 |
-| edit_file / create_file | 逐次预览并确认；单处唯一替换、SHA256冲突检查；只在已有目录新建，不覆盖 |
-| run_tests | 逐次确认后执行Windows Python unittest，区分passed/failed/no_tests/skipped，处理超时、输出限制和进程树收尾 |
-| Agent Loop / Provider | 同一模型→工具→模型循环，参数校验、结构化错误、步数和期限限制；模型适配器可替换 |
-| Context / 项目约定 | 完整轮次预算与旧历史摘录；显式`--instructions AGENTS.md`每轮加载项目约定 |
-| Session / SQLite | 多轮、自动保存、`--list-sessions`和`--resume ID`，项目分库；中断标记、不重放副作用 |
+```powershell
+.\启动CLI.cmd -Case checkout
+```
 
-终端中默认显示简洁启动画面、可编辑输入区、中文进度、代码排版与红绿差异。输入`/exit`退出；Ctrl+C取消当前轮。编辑、新建和测试每次单独确认：菜单默认取消，左右键选择后回车，或输入完整`yes`再回车。读取和搜索无须逐次确认。测试具有当前账号权限；审批和目录检查不是操作系统沙箱。详细日志用`--trace`，普通文本用`--plain`，管道自动使用普通文本。
+演示 JSON 输出功能时，改为 `-Case wordcount`。编辑和测试均需确认；结束后终端会打印独立检查命令。先体验启动流程而不请求模型，可以加 `-Demo`，该模式只回显，不修改演示代码。
 
-第一版不提供通用Shell、pytest、自动安装依赖、目录创建/删除、多Agent、MCP或复杂Hooks。旧桌面业务的同名能力不计入CLI。一次真实小任务通过不代表任意代码库都能自动修好。
+## 会话恢复
 
-## 真实演示与工程证据
+```powershell
+.\.venv-cli\Scripts\herta-agent.exe --repo '你的项目目录' --list-sessions
+.\.venv-cli\Scripts\herta-agent.exe --provider openai --repo '你的项目目录' --resume '会话ID'
+```
 
-已用真实DeepSeek完成平均值函数的空列表Bug修复：模型自主Search/Read，经确认Edit、回读、运行3个unittest，独立行为检查通过且测试未变。独立安装版退出后恢复同一会话，再由真实模型说明上轮修改。真实行为与本地固定Provider测试分别记录。
+恢复后继续输入任务。历史工具结果会进入对话，已经执行过的操作不会因恢复而再次执行。
 
-2026-10-24补充：跨模块结算修复7测试通过；字频CLI增加JSON输出并补测试，经历新增断言失败后修正，8测试通过；拒绝和外部编辑冲突按实际文件核查。只使用自建小型项目，不宣称通用任务成功率。
+## 运行测试
 
-- [五分钟演示步骤](docs/CLI_GUIDE.md)：准备新演示项目、运行Agent、独立检查。
-- [面试演示与新案例证据](docs/DEMO.md)、[本轮实际结果](docs/verification/coding-cases-20261024/verification.md)：包含失败、外部编辑注入和终端中断恢复。
-- [本次验收与限制](docs/verification/cli-v1-20261022/verification.md)：真实会话、差异、安装和本地回归证据。
-- [终端界面验证](docs/verification/terminal-ui-20261022/verification.md)：新界面、键盘确认和安装检查；区分本轮本地测试与此前真实模型演示。
-- [架构及真实调用链](docs/architecture/cli-v1.md)：从一句任务走到结果。
-- [Claude Code源码对照](docs/architecture/claude-code-2.1.88-audit.md)：固定提交、关键函数与取舍。
-- [面试介绍与追问](docs/INTERVIEW.md)、[学习地图](docs/learning/project-map.md)。
+```powershell
+$env:PYTHONPATH = 'backend'
+.\.venv-cli\Scripts\python.exe -m unittest discover -s backend/tests -p 'test_cli*.py' -v
+```
 
-直接依赖为httpx、pydantic、Rich与prompt_toolkit；旧桌面依赖在`desktop`可选组，本地模型与语音依赖仍为可选。源码研究以官方文档为主要机制依据，第三方2.1.88还原快照只读学习；未直接复制非开源代码，也未用Claude Agent SDK代替核心Harness。
+## 设计取舍
 
-历史资料：[旧桌面使用说明](docs/legacy-desktop.md)、[v1初始审计](docs/CLI_V1_AUDIT.md)。不把历史功能计划当作本版待办。
+Herta 参考编码助手的公开机制，自行实现核心 Harness。当前工具重点支持 Python unittest；文件权限检查和人工审批用于控制操作，测试仍以当前用户权限执行。
+
+`main` 展示当前 CLI。旧桌面界面、角色互动与相关学习资料保留在历史目录和分支中，日常入口使用 **启动CLI.cmd**。
+
+[灰塔](https://github.com/theHerta27/graytower-agent) 是另一个独立项目：用 LangGraph / LangChain 面向游戏规则修复，进一步处理 Git 工作树、Docker 检查、项目记忆和人工交付。
