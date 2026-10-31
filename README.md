@@ -1,4 +1,4 @@
-# Herta Agent — 轻量级 CLI Coding Agent
+# Herta Agent — 轻量级 CLI Coding Agent Harness
 
 在终端里指定一个项目，用自然语言交代编码任务，模型自己选择工具搜索代码、读取文件、提出修改并运行测试。Herta 用 Python 实现模型请求、工具执行、结果回填的主循环，并处理人工审批、编辑冲突、上下文和会话恢复。
 
